@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@cosmos.gl/graph": "^2.6.4"
+  }
+}

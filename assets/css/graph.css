@@ -1,0 +1,94 @@
+.graph-container {
+  display: flex;
+  height: 100vh;
+  background: #0a0a1a;
+  color: #fff;
+}
+
+.sidebar {
+  width: 320px;
+  background: #1a1a2e;
+  padding: 2rem;
+  overflow-y: auto;
+  border-right: 1px solid #2a2a3e;
+}
+
+.sidebar h2 {
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+  color: #00d4ff;
+}
+
+.topic-selector button {
+  display: block;
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background: #2a2a3e;
+  border: 1px solid #3a3a4e;
+  color: #fff;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.topic-selector button:hover {
+  background: #3a3a4e;
+  border-color: #00d4ff;
+}
+
+.topic-selector button.active {
+  background: #00d4ff;
+  color: #0a0a1a;
+  border-color: #00d4ff;
+}
+
+.search-box {
+  margin: 2rem 0;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 0.75rem;
+  background: #2a2a3e;
+  border: 1px solid #3a3a4e;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: #00d4ff;
+}
+
+.stats {
+  padding: 1rem;
+  background: #2a2a3e;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.node-details {
+  padding: 1rem;
+  background: #2a2a3e;
+  border-radius: 4px;
+  margin-top: 1rem;
+}
+
+.node-details h3 {
+  color: #00d4ff;
+  margin-bottom: 1rem;
+}
+
+.node-details .summary {
+  margin-top: 1rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: #ccc;
+}
+
+.graph-canvas {
+  flex: 1;
+  position: relative;
+}
