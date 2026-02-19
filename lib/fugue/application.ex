@@ -11,8 +11,8 @@ defmodule Fugue.Application do
       FugueWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:fugue, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Fugue.PubSub},
-      # Start a worker by calling: Fugue.Worker.start_link(arg)
-      # {Fugue.Worker, arg},
+      # SQLite database repository for graph data
+      Fugue.Repo,
       # Start to serve requests, typically the last entry
       FugueWeb.Endpoint
     ]

@@ -14,7 +14,17 @@ defmodule FugueWeb.GraphLive do
   end
 
   def handle_event("load_topic", %{"topic" => topic}, socket) do
-    {:ok, graph_data} = Loader.load_topic(topic)
+    graph_data =
+      case Loader.search_articles(topic) do
+        {:ok, [seed_id | _]} ->
+          case Loader.load_subgraph(seed_id) do
+            {:ok, data} -> data
+            _ -> %{nodes: [], links: []}
+          end
+
+        _ ->
+          %{nodes: [], links: []}
+      end
 
     {:noreply,
     socket
@@ -24,15 +34,13 @@ defmodule FugueWeb.GraphLive do
   end
 
   def handle_event("search", %{"query" => query}, socket) do
-    topic = socket.assigns.current_topic
-
-    if topic do
-      {:ok, subgraph} = Loader.search_subgraph(topic, query)
+    if socket.assigns.current_topic do
+      {:ok, matching_ids} = Loader.search_articles(query)
 
       {:noreply,
       socket
       |> assign(:search_query, query)
-      |> push_event("highlight-nodes", %{node_ids: subgraph.matching_ids})}
+      |> push_event("highlight-nodes", %{node_ids: matching_ids})}
     else
       {:noreply, socket}
     end
