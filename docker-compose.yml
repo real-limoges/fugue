@@ -1,0 +1,32 @@
+services:
+  probalisp:
+    build: ../probalisp
+    expose:
+      - "4001"
+    restart: unless-stopped
+
+  fugue:
+    build: .
+    ports:
+      - "${PORT:-4000}:4000"
+    environment:
+      PHX_SERVER: "true"
+      SECRET_KEY_BASE: "${SECRET_KEY_BASE}"
+      PHX_HOST: "${PHX_HOST:-localhost}"
+      PORT: "4000"
+      DATABASE_PATH: "/data/fugue.db"
+      PROBALISP_HOST: "probalisp"
+      PROBALISP_PORT: "4001"
+    volumes:
+      - fugue_data:/data
+    restart: unless-stopped
+    depends_on:
+      - probalisp
+
+  # future: funktor
+  # funktor:
+  #   build: ../funktor
+  #   ...
+
+volumes:
+  fugue_data:
