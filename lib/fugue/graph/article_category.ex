@@ -5,7 +5,7 @@ defmodule Fugue.Graph.ArticleCategory do
   @timestamps_opts false
 
   schema "article_categories" do
-    field :article_id, :integer
-    field :category_id, :integer
+    field(:article_id, :integer)
+    field(:category_id, :integer)
   end
 end

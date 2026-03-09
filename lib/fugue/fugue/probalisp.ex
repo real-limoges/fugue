@@ -1,6 +1,6 @@
 defmodule Fugue.Probalisp do
   @moduledoc false
-  
+
   use GenServer
 
   def start_link(state, opts) do
