@@ -5,6 +5,6 @@ defmodule Fugue.Graph.Category do
   @timestamps_opts false
 
   schema "categories" do
-    field :name, :string
+    field(:name, :string)
   end
 end

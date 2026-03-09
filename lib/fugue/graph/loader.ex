@@ -36,15 +36,18 @@ defmodule Fugue.Graph.Loader do
   # Private
 
   defp fetch_articles(ids) do
-    articles = Repo.all(from a in Article, where: a.id in ^ids)
+    articles = Repo.all(from(a in Article, where: a.id in ^ids))
     {:ok, articles}
   end
 
   defp fetch_links(ids) do
-    links = Repo.all(
-      from l in Link,
-      where: l.source_id in ^ids and l.target_id in ^ids
-    )
+    links =
+      Repo.all(
+        from(l in Link,
+          where: l.source_id in ^ids and l.target_id in ^ids
+        )
+      )
+
     {:ok, links}
   end
 
@@ -60,6 +63,7 @@ defmodule Fugue.Graph.Loader do
     )
     SELECT DISTINCT id FROM bfs LIMIT ?
     """
+
     case Repo.query(sql, [seed_id, max_nodes]) do
       {:ok, %{rows: rows}} -> {:ok, Enum.map(rows, fn [id] -> id end)}
       {:error, _} = err -> err

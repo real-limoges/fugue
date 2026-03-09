@@ -6,11 +6,11 @@ defmodule FugueWeb.GraphLive do
 
   def mount(_params, _session, socket) do
     {:ok,
-    socket
-    |> assign(:topics, @topics)
-    |> assign(:current_topic, nil)
-    |> assign(:search_query, "")
-    |> assign(:node_count, 0)}
+     socket
+     |> assign(:topics, @topics)
+     |> assign(:current_topic, nil)
+     |> assign(:search_query, "")
+     |> assign(:node_count, 0)}
   end
 
   def handle_event("load_topic", %{"topic" => topic}, socket) do
@@ -27,10 +27,10 @@ defmodule FugueWeb.GraphLive do
       end
 
     {:noreply,
-    socket
-    |> assign(:current_topic, topic)
-    |> assign(:node_count, length(graph_data.nodes))
-    |> push_event("render_graph", graph_data)}
+     socket
+     |> assign(:current_topic, topic)
+     |> assign(:node_count, length(graph_data.nodes))
+     |> push_event("render_graph", graph_data)}
   end
 
   def handle_event("search", %{"query" => query}, socket) do
@@ -38,9 +38,9 @@ defmodule FugueWeb.GraphLive do
       {:ok, matching_ids} = Loader.search_articles(query)
 
       {:noreply,
-      socket
-      |> assign(:search_query, query)
-      |> push_event("highlight-nodes", %{node_ids: matching_ids})}
+       socket
+       |> assign(:search_query, query)
+       |> push_event("highlight-nodes", %{node_ids: matching_ids})}
     else
       {:noreply, socket}
     end
@@ -60,7 +60,7 @@ defmodule FugueWeb.GraphLive do
               phx-value-topic={topic}
               class={if @current_topic == topic, do: "active", else: ""}
             >
-              <%= topic |> String.replace("_", " ") |> String.capitalize() %>
+              {topic |> String.replace("_", " ") |> String.capitalize()}
             </button>
           <% end %>
         </div>
@@ -77,20 +77,20 @@ defmodule FugueWeb.GraphLive do
           </div>
 
           <div class="stats">
-            <p><strong>Nodes:</strong> <%= @node_count %></p>
+            <p><strong>Nodes:</strong> {@node_count}</p>
           </div>
         <% end %>
 
         <%= if @selected_node do %>
           <div class="node-details">
-            <h3><%= @selected_node.title %></h3>
+            <h3>{@selected_node.title}</h3>
             <p><strong>Categories:</strong></p>
             <ul>
               <%= for cat <- @selected_node.categories do %>
-                <li><%= cat %></li>
+                <li>{cat}</li>
               <% end %>
             </ul>
-            <p class="summary"><%= @selected_node.summary %></p>
+            <p class="summary">{@selected_node.summary}</p>
           </div>
         <% end %>
       </div>

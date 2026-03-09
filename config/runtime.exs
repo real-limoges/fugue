@@ -39,6 +39,10 @@ if config_env() == :prod do
 
   config :fugue, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
+  if database = System.get_env("DATABASE_PATH") do
+    config :fugue, Fugue.Repo, database: database
+  end
+
   config :fugue, FugueWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [
