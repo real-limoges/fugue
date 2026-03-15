@@ -4,9 +4,22 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
-    <.live_title default="Fugue" suffix=" · Phoenix Framework">
+    <.live_title default="Fugue" suffix=" · realcomplex.systems">
       {assigns[:page_title]}
     </.live_title>
+    <%= if assigns[:meta_description] do %>
+      <meta name="description" content={@meta_description} />
+      <meta property="og:description" content={@meta_description} />
+    <% end %>
+    <%= if assigns[:page_title] do %>
+      <meta property="og:title" content={@page_title} />
+    <% end %>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>
@@ -25,12 +38,60 @@
           setTheme(localStorage.getItem("phx:theme") || "system");
         }
         window.addEventListener("storage", (e) => e.key === "phx:theme" && setTheme(e.newValue || "system"));
-        
+
         window.addEventListener("phx:set-theme", (e) => setTheme(e.target.dataset.phxTheme));
       })();
     </script>
   </head>
   <body>
-    {@inner_content}
+    <header class="border-b-2 border-primary/30 backdrop-blur-sm sticky top-0 z-50 bg-base-100/80">
+      <nav class="navbar px-4 sm:px-6 lg:px-8">
+        <div class="flex-1">
+          <a
+            href="/"
+            class="flex items-center gap-2 font-bold text-lg tracking-tight hover:text-primary transition-colors"
+          >
+            <span class="font-mono text-primary">Real -&gt; Complex</span>
+          </a>
+        </div>
+        <div class="flex-none">
+          <ul class="flex px-1 space-x-1 items-center">
+            <li>
+              <a
+                href="/blog"
+                class="btn btn-ghost btn-sm font-mono text-xs tracking-wider uppercase"
+              >
+                Blog
+              </a>
+            </li>
+            <li>
+              <a href="/blog/feed.xml" class="btn btn-ghost btn-sm btn-square" title="RSS Feed">
+                <FugueWeb.CoreComponents.icon name="hero-rss-micro" class="size-4" />
+              </a>
+            </li>
+            <li>
+              <FugueWeb.Layouts.theme_toggle />
+            </li>
+          </ul>
+        </div>
+      </nav>
+    </header>
+
+    <main class="px-4 py-12 sm:px-6 lg:px-8 min-h-[calc(100vh-8rem)]">
+      <div class="mx-auto max-w-5xl">
+        {@inner_content}
+      </div>
+    </main>
+
+    <footer class="border-t-2 border-primary/30 py-5 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-base-content/40 font-mono">
+        <span>&copy; 2026 realcomplex.systems</span>
+        <div class="flex items-center gap-4">
+          <a href="/blog/feed.xml" class="hover:text-primary transition-colors">feed</a>
+          <span class="text-base-content/20">|</span>
+          <a href="https://github.com" class="hover:text-primary transition-colors">github</a>
+        </div>
+      </div>
+    </footer>
   </body>
 </html>

@@ -35,29 +35,52 @@ defmodule FugueWeb.Layouts do
 
   def app(assigns) do
     ~H"""
-    <header class="navbar px-4 sm:px-6 lg:px-8">
-      <div class="flex-1">
-        <a href="/" class="flex items-center gap-2 font-semibold text-lg">
-          Fugue
-        </a>
-      </div>
-      <div class="flex-none">
-        <ul class="flex px-1 space-x-2 items-center">
-          <li>
-            <a href="/garcon" class="btn btn-ghost btn-sm">Garcon</a>
-          </li>
-          <li>
-            <.theme_toggle />
-          </li>
-        </ul>
-      </div>
+    <header class="border-b-2 border-primary/30 backdrop-blur-sm sticky top-0 z-50 bg-base-100/80">
+      <nav class="navbar px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+        <div class="flex-1">
+          <a
+            href="/"
+            class="flex items-center gap-2 font-bold text-lg tracking-tight hover:text-primary transition-colors"
+          >
+            <span class="font-mono text-primary">&gt;</span> fugue
+          </a>
+        </div>
+        <div class="flex-none">
+          <ul class="flex px-1 space-x-1 items-center">
+            <li>
+              <a href="/blog" class="btn btn-ghost btn-sm font-mono text-xs tracking-wider uppercase">
+                Blog
+              </a>
+            </li>
+            <li>
+              <a href="/blog/feed.xml" class="btn btn-ghost btn-sm btn-square" title="RSS Feed">
+                <.icon name="hero-rss-micro" class="size-4" />
+              </a>
+            </li>
+            <li>
+              <.theme_toggle />
+            </li>
+          </ul>
+        </div>
+      </nav>
     </header>
 
-    <main class="px-4 py-10 sm:px-6 lg:px-8">
+    <main class="px-4 py-12 sm:px-6 lg:px-8 min-h-[calc(100vh-8rem)]">
       <div class="mx-auto max-w-5xl">
         {render_slot(@inner_block)}
       </div>
     </main>
+
+    <footer class="border-t-2 border-primary/30 py-8 px-4 sm:px-6 lg:px-8">
+      <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-base-content/40 font-mono">
+        <span>&copy; {DateTime.utc_now().year} realcomplex.systems</span>
+        <div class="flex items-center gap-4">
+          <a href="/blog/feed.xml" class="hover:text-primary transition-colors">feed</a>
+          <span class="text-base-content/20">|</span>
+          <a href="https://github.com" class="hover:text-primary transition-colors">github</a>
+        </div>
+      </div>
+    </footer>
 
     <.flash_group flash={@flash} />
     """

@@ -1,72 +1,98 @@
 # Fugue
 
-A Phoenix/Elixir web platform that integrates four specialized research and data science tools, each implemented in the language best suited to its domain. Phoenix handles routing, UI, and data serving; each tool runs as an independent backend service.
+The orchestration layer and public face of [realcomplex.systems](http://realcomplex.systems) — a multi-service portfolio that demonstrates emergent complexity through interactive computational systems.
 
-## Tools
+Fugue is a Phoenix/Elixir application that serves the website and coordinates six independent services, each built in the language best suited to its domain. The name borrows from the musical form: independent voices entering one at a time, each self-contained, building toward something larger than any individual part.
 
-### Bloom — Wikipedia Knowledge Graph
-Visualize the link structure of Wikipedia as an interactive graph. Search for articles, explore their connections, and click nodes to see details.
+## Services
 
-- **Pipeline:** Wikipedia XML → [Dedalus](https://github.com/real-limoges/dedalus) (Rust extraction) → SQLite → Fugue (Elixir/BFS) → binary WebSocket → [Bloom](https://github.com/real-limoges/bloom) (Rust→WASM renderer)
-- **Rendering:** GPU-accelerated via `wgpu` with WebGPU (Tier 1) and WebGL2 (Tier 2) fallback
-- **Data protocol:** BLOM binary format — zero JSON parsing in the hot path
-- **Layout:** Barnes-Hut force-directed simulation in WASM, with SIMD paths
+### Bloom — Wikipedia Graph Visualizer
+Explore Wikipedia's link structure as an interactive force-directed graph.
 
-### Probalisp — Probability Programming
-Query interface for a Common Lisp probabilistic programming system.
+- **Stack:** Rust + WASM (data extraction via [Dedalus](https://github.com/real-limoges/dedalus)), Cosmograph (WebGL graph rendering)
+- **Data flow:** Wikipedia XML → Dedalus (Rust extraction) → SQLite → Fugue (Elixir/BFS) → WebSocket → Cosmograph
+- **Status:** ~50% complete
 
-- **Integration:** Port communication — Phoenix spawns and supervises an SBCL process
-- **UI:** Form → result pattern via LiveView
+### Funktor — Algorithmic Jazz
+Generative jazz composition with Launchpad Mini hardware integration.
 
-### Funktor — Jazz Theory Analysis
-Submit chord progressions and scales, get music theory analysis back.
+- **Stack:** Haskell (Servant API, music generation), Tone.js (browser audio), CoreMIDI → C bridge → Haskell (hardware input)
+- **Frontend:** Virtual Launchpad Mini grid in browser
+- **Status:** ~50% complete
 
-- **Integration:** Port communication — Phoenix spawns and supervises a GHC-compiled binary
-- **UI:** Modeled after the Probalisp UI
+### Ish — Mood Tracking
+The gravitational center of the system. A mood tracking microservice that uses fuzzy logic to model emotional states as gradients rather than categories.
 
-### Chirplet — Bird Song DSP
-Upload audio recordings and get spectrograms and bird song analysis.
+- **Stack:** Haskell (Servant API), Hazy (fuzzy logic library)
+- **Status:** Scaffolded
 
-- **Integration:** Julia (offline preprocessing) → Rust→WASM (runtime DSP) → Elixir (data serving)
-- **UI:** File upload → processing → spectrogram + audio playback
+### Garçon — NLP + Fuzzy Logic API
+A Haskell Servant wrapper that exposes Chompsky (NLP parser) and Hazy (fuzzy logic) as HTTP endpoints.
+
+- **Stack:** Haskell (Servant), Chompsky (Lua-configured parser), Hazy
+- **Status:** Not started (blocked on Bloom/Funktor completion)
+
+### Chirplet — Birdsong Dialect Analysis
+DSP analysis of bird vocalizations using xeno-canto field recording data.
+
+- **Stack:** Julia (signal processing, spectrogram generation), xeno-canto API
+- **Status:** Not started
+
+### Hazy — Fuzzy Logic Library
+Shared Haskell dependency used by Ish and Garçon. Models continuous/gradient states rather than binary ones.
+
+- **Status:** Essentially done
+
+### Chompsky — NLP Parser
+Lua-configured natural language parser, exposed through Garçon.
+
+- **Status:** Done
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│           Phoenix/Elixir Web Layer              │
-│  (Routing, Auth, UI, API Gateway, SQLite)       │
-└─────────────────┬───────────────────────────────┘
-                  │
-    ┌─────────────┼─────────────┬─────────────┐
-    │             │             │             │
-    ▼             ▼             ▼             ▼
-┌────────┐  ┌──────────────┐  ┌──────────┐  ┌──────────┐
-│Probalisp│  │Dedalus+Bloom │  │ Funktor  │  │ Chirplet │
-│(Lisp)   │  │(Rust→SQLite) │  │(Haskell) │  │(Julia+   │
-│ Port    │  │  WASM+wgpu   │  │  Port    │  │ Rust WASM│
-└────────┘  └──────────────┘  └──────────┘  └──────────┘
+┌─────────────────────────────────────────────────────┐
+│              Fugue — Phoenix/Elixir                  │
+│   (Routing, LiveView UI, API Gateway, SQLite)        │
+└──────────┬────────┬────────┬────────┬────────┬──────┘
+           │        │        │        │        │
+           ▼        ▼        ▼        ▼        ▼
+        ┌──────┐ ┌───────┐ ┌────┐ ┌───────┐ ┌────────┐
+        │Bloom │ │Funktor│ │Ish │ │Garçon │ │Chirplet│
+        │Rust  │ │Haskell│ │HSK │ │Haskell│ │Julia   │
+        │+WASM │ │+Tone  │ │    │ │       │ │        │
+        └──────┘ └───────┘ └──┬─┘ └──┬────┘ └────────┘
+                               │      │
+                               ▼      ▼
+                            ┌──────────────┐
+                            │  Hazy        │
+                            │  (fuzzy logic)│
+                            └──────────────┘
 ```
 
-Each tool is isolated — bugs in one don't affect others, and each can be developed and tested independently.
+Each service is isolated — developed and deployed independently. Cross-service connections (Ish mood state shaping Funktor's jazz parameters, Chompsky parsing queries routed to Bloom, etc.) are aspirational and expected to emerge from use rather than upfront design.
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Web framework | Phoenix/Elixir, LiveView |
-| Database | SQLite (via exqlite), FTS5 for full-text search |
-| Styling | Tailwind CSS |
-| Graph visualization | Bloom (Rust→WASM), wgpu (WebGPU/WebGL2) |
+| Web framework | Phoenix 1.8 / Elixir, LiveView |
+| HTTP server | Bandit |
+| Database | SQLite (ecto_sqlite3), WAL mode, FTS5 |
+| Graph visualization | Cosmograph (@cosmograph/graph) |
 | Graph data pipeline | Dedalus (Rust), Wikipedia XML |
-| Probability engine | Probalisp (SBCL / Common Lisp) |
-| Jazz analysis | Funktor (GHC / Haskell) |
-| Bird song DSP | Chirplet (Julia + Rust WASM) |
+| Jazz generation | Funktor (Haskell), Tone.js, Launchpad Mini |
+| Mood tracking | Ish (Haskell), Hazy (fuzzy logic) |
+| NLP | Chompsky (Lua-configured parser), Garçon (Haskell Servant) |
+| Birdsong DSP | Chirplet (Julia), xeno-canto |
+| Styling | Tailwind CSS v4, DaisyUI |
+| Build | esbuild (ES2022), Docker / Docker Compose |
+| Deployment | GCP Cloud Run (scale-to-zero) |
 
 ## Getting Started
 
 ```bash
-# Install dependencies and set up the database
+# Install dependencies, build assets, set up database
 mix setup
 
 # Start the development server
@@ -80,18 +106,13 @@ Visit [`localhost:4000`](http://localhost:4000).
 
 ### Bloom / Graph Visualization
 
-Bloom is included as a git submodule. After cloning:
+After cloning, install the JS dependency:
 
 ```bash
-git submodule update --init --recursive
+cd assets && npm install
 ```
 
-To rebuild Bloom from source:
-
-```bash
-cd assets/vendor/bloom
-wasm-pack build --target web
-```
+Graph data lives in SQLite at `priv/graph_data/fugue.db`. The Dedalus pipeline (separate repo) extracts Wikipedia XML into this database.
 
 ## Project Structure
 
@@ -99,29 +120,40 @@ wasm-pack build --target web
 fugue/
 ├── lib/
 │   ├── fugue/
-│   │   ├── graph/           # SQLite queries, BFS, search, BLOM encoder
-│   │   ├── probalisp/       # Port server + query interface
-│   │   ├── funktor/         # Port server + analysis interface
-│   │   └── chirplet/        # WASM bridge + audio pipeline
+│   │   ├── graph/           # SQLite queries, BFS, search
+│   │   └── repo.ex          # Ecto.Repo (ecto_sqlite3)
 │   └── fugue_web/
-│       ├── live/            # LiveView modules for each tool
+│       ├── live/            # LiveView modules
+│       ├── components/      # Shared UI components
 │       └── router.ex
 ├── assets/
+│   ├── js/
+│   │   ├── app.js           # Entry point
+│   │   └── hooks/
+│   │       └── graph_viz.js  # Cosmograph LiveView hook
+│   ├── css/
 │   └── vendor/
-│       └── bloom/           # Bloom git submodule (Rust→WASM)
-└── docs/                    # Architecture, roadmap, implementation plans
+├── config/
+├── priv/
+│   ├── graph_data/          # SQLite database
+│   └── repo/migrations/
+└── docs/                    # Architecture & planning docs
 ```
-
-## Documentation
-
-- [`docs/architecture.md`](docs/architecture.md) — System design, integration strategies, file layout
-- [`docs/roadmap.md`](docs/roadmap.md) — Phased rollout plan and success criteria
-- [`docs/bloom/`](docs/bloom/) — Bloom WASM engine: binary protocol, shaders, JS API
-- [`docs/implementation-plans/`](docs/implementation-plans/) — Per-tool detailed plans
-- [`docs/deployment/`](docs/deployment/) — Deployment guides (Cloud Run, GKE, SQLite strategies)
-- [`docs/frontend-patterns.md`](docs/frontend-patterns.md) — LiveView UI patterns for data science tools
 
 ## Related Repositories
 
-- [Bloom](https://github.com/real-limoges/bloom) — Rust→WASM graph visualization engine
-- [Dedalus](https://github.com/real-limoges/dedalus) — Rust pipeline that extracts Wikipedia graph data
+- [Dedalus](https://github.com/real-limoges/dedalus) — Rust pipeline: Wikipedia XML → SQLite graph data
+- Bloom, Funktor, Ish, Garçon, Chirplet, Hazy, Chompsky — sibling repos in the realcomplex.systems family
+
+## Development
+
+```bash
+# Pre-commit: compile (warnings-as-errors) + format + test
+mix precommit
+
+# Format code
+mix format
+
+# Run tests
+mix test
+```

@@ -1,23 +1,13 @@
-// Import existing stuff
 import "phoenix_html"
+import {initSplash, simNames} from "./petri_splash"
 import {Socket} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 
-// ADD THIS - your new import
-import { GraphViz } from "./hooks/graph_viz"
-
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
 
-// ADD THIS - hooks object
-let Hooks = {
-  GraphViz: GraphViz
-}
-
-// MODIFY THIS - add hooks to the config
 let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
-  hooks: Hooks,  // <-- ADD THIS LINE
   params: {_csrf_token: csrfToken}
 })
 
@@ -29,3 +19,15 @@ window.addEventListener("phx:page-loading-stop", _info => topbar.hide())
 liveSocket.connect()
 
 window.liveSocket = liveSocket
+
+if (document.getElementById("petri-canvas")) {
+  const picker = document.getElementById("sim-picker")
+  const defaultSim = picker ? picker.value : "physarum"
+  initSplash("petri-canvas", defaultSim)
+
+  if (picker) {
+    picker.addEventListener("change", (e) => {
+      initSplash("petri-canvas", e.target.value)
+    })
+  }
+}

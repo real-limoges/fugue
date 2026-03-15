@@ -18,7 +18,9 @@ defmodule FugueWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
-    live "/garcon", GarconLive
+    get "/blog", BlogController, :index
+    get "/blog/feed.xml", BlogController, :feed
+    get "/blog/:slug", BlogController, :show
   end
 
   # Other scopes may use custom stacks.
