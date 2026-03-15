@@ -1,3 +1,9 @@
 [submodule "assets/vendor/bloom"]
 	path = assets/vendor/bloom
 	url = https://github.com/real-limoges/bloom.git
+[submodule "assets/vendor/chirplet"]
+	path = assets/vendor/chirplet
+	url = https://github.com/real-limoges/chirplet.git
+[submodule "assets/vendor/petri"]
+	path = assets/vendor/petri
+	url = https://github.com/real-limoges/petri.git
