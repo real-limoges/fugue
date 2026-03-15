@@ -1,10 +1,4 @@
 services:
-  probalisp:
-    build: ../probalisp
-    expose:
-      - "4001"
-    restart: unless-stopped
-
   fugue:
     build: .
     ports:
@@ -15,18 +9,22 @@ services:
       PHX_HOST: "${PHX_HOST:-localhost}"
       PORT: "4000"
       DATABASE_PATH: "/data/fugue.db"
-      PROBALISP_HOST: "probalisp"
-      PROBALISP_PORT: "4001"
     volumes:
       - fugue_data:/data
     restart: unless-stopped
     depends_on:
-      - probalisp
+      - garcon
 
-  # future: funktor
-  # funktor:
-  #   build: ../funktor
-  #   ...
+  garcon:
+    build: ../garcon
+    ports:
+      - "${PORT:-4001}:4001"
+    environment:
+      PORT: "4001"
+    volumes:
+      - garcon_data:/data
+    restart: unless-stopped
 
 volumes:
   fugue_data:
+  garcon_data:

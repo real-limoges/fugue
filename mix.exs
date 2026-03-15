@@ -61,7 +61,8 @@ defmodule Fugue.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:ecto_sql, "~> 3.12"},
-      {:ecto_sqlite3, "~> 0.17"}
+      {:ecto_sqlite3, "~> 0.17"},
+      {:earmark, "~> 1.4"}
     ]
   end
 
@@ -76,9 +77,14 @@ defmodule Fugue.MixProject do
       setup: ["deps.get", "assets.setup", "assets.build", "ecto.migrate"],
       "ecto.setup": ["ecto.create", "ecto.migrate"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
-      "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
+      "assets.setup": [
+        "tailwind.install --if-missing",
+        "esbuild.install --if-missing",
+        "cmd mkdir -p priv/static/vendor/petri/wasm && cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/"
+      ],
       "assets.build": ["compile", "tailwind fugue", "esbuild fugue"],
       "assets.deploy": [
+        "cmd mkdir -p priv/static/vendor/petri/wasm && cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/",
         "tailwind fugue --minify",
         "esbuild fugue --minify",
         "phx.digest"

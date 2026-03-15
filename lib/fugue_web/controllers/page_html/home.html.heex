@@ -1,19 +1,28 @@
-<div class="hero min-h-[60vh]">
-  <div class="hero-content text-center">
-    <div class="max-w-lg space-y-6">
-      <h1 class="text-5xl font-bold">Fugue</h1>
-      <p class="text-lg text-base-content/70">
-        A collection of computational tools.
-      </p>
-      <div class="grid grid-cols-2 gap-4">
-        <a href="/bloom" class="card bg-base-200 p-6 hover:bg-base-300 transition">
-          <h2 class="card-title">Bloom</h2>
-          <p>Graph visualization</p>
+<div
+  class="relative -mx-4 sm:-mx-6 lg:-mx-8 -mt-12 overflow-hidden"
+  style="height: calc(100vh - 8rem);"
+>
+  <canvas id="petri-canvas" class="absolute inset-0 w-full h-full object-cover"></canvas>
+  <div class="absolute inset-0 flex items-end justify-center pb-12">
+    <div class="text-center space-y-4 px-4 py-3 rounded-box backdrop-blur-sm bg-base-100/20">
+      <div class="space-y-4">
+        <h1 class="text-5xl sm:text-6xl font-bold tracking-tight">
+          <span class="text-primary">Real -&gt; Complex</span>
+        </h1>
+        <p class="font-mono text-base-content/70 text-sm">
+          computational tools for complex systems
+        </p>
+      </div>
+      <div class="flex justify-center items-center gap-3">
+        <a href="/blog" class="btn btn-primary btn-sm font-mono tracking-wider glow-hover">
+          read the blog
         </a>
-        <a href="/garcon" class="card bg-base-200 p-6 hover:bg-base-300 transition">
-          <h2 class="card-title">Garcon</h2>
-          <p>Natural language parsing</p>
-        </a>
+        <select id="sim-picker" class="select select-sm select-ghost font-mono text-xs">
+          <option value="boids">boids</option>
+          <option value="physarum">physarum</option>
+          <option value="langton">langton's ant</option>
+          <option value="oscillators">oscillators</option>
+        </select>
       </div>
     </div>
   </div>
