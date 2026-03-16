@@ -46,10 +46,10 @@ jobs:
 
       - name: Import SurrealDB schema
         run: |
-          curl -sf http://localhost:8000/sql \
+          curl -s --show-error --fail-with-body http://localhost:8000/sql \
             -H "Accept: application/json" \
-            -H "NS: fugue_test" \
-            -H "DB: graph_test" \
+            -H "surreal-ns: fugue_test" \
+            -H "surreal-db: graph_test" \
             -u root:root \
             --data-binary @priv/surrealdb/schema.surql
 
