@@ -7,12 +7,7 @@ const sims = {
       if (Math.random() < 1 / 30) m.swapOne();
     },
   },
-  physarum: {
-    module: () => import("../vendor/petri/js/physarum.js"),
-    setup: async (m, w, h) => { await m.init(); m.start(80000, w, h); },
-    loop: (m) => m.step(2),
-  },
-  langton: {
+langton: {
     module: () => import("../vendor/petri/js/langton.js"),
     setup: async (m, w, h) => { await m.init(); m.start(8, w, h); },
     loop: (m) => m.step(500),
