@@ -48,7 +48,7 @@ jobs:
         run: curl -sSf https://install.surrealdb.com | sh
 
       - name: Import SurrealDB schema
-        run: surreal import --conn http://localhost:8000 --ns fugue_test --db graph_test --user root --pass root priv/surrealdb/schema.surql
+        run: surreal import --endpoint http://localhost:8000 --namespace fugue_test --database graph_test --username root --password root priv/surrealdb/schema.surql
 
       - name: Install dependencies
         run: mix deps.get
