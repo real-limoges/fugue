@@ -44,11 +44,14 @@ jobs:
           key: ${{ runner.os }}-build-${{ hashFiles('**/mix.lock') }}
           restore-keys: ${{ runner.os }}-build-
 
-      - name: Install SurrealDB CLI
-        run: curl -sSf https://install.surrealdb.com | sh
-
       - name: Import SurrealDB schema
-        run: surreal import --endpoint http://localhost:8000 --namespace fugue_test --database graph_test --username root --password root priv/surrealdb/schema.surql
+        run: |
+          curl -sf http://localhost:8000/sql \
+            -H "Accept: application/json" \
+            -H "NS: fugue_test" \
+            -H "DB: graph_test" \
+            -u root:root \
+            --data-binary @priv/surrealdb/schema.surql
 
       - name: Install dependencies
         run: mix deps.get
