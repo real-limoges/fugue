@@ -21,10 +21,5 @@ config :phoenix_live_view,
 config :phoenix,
   sort_verified_routes_query_params: true
 
-config :fugue, Fugue.Db,
-  hostname: "localhost",
-  port: 8000,
-  namespace: "fugue_test",
-  database: "graph_test",
-  username: "root",
-  password: "root"
+# Skip SurrealDB in test — no tests require it yet
+config :fugue, start_db: false

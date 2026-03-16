@@ -19,11 +19,6 @@ jobs:
         with:
           submodules: true
 
-      - name: Start SurrealDB
-        run: |
-          docker run -d --name surrealdb -p 8000:8000 surrealdb/surrealdb:latest start --user root --pass root memory
-          for i in $(seq 1 15); do curl -sf http://localhost:8000/health && break || sleep 1; done
-
       - name: Set up Elixir & OTP
         uses: erlef/setup-beam@v1
         with:
@@ -43,15 +38,6 @@ jobs:
           path: _build
           key: ${{ runner.os }}-build-${{ hashFiles('**/mix.lock') }}
           restore-keys: ${{ runner.os }}-build-
-
-      - name: Import SurrealDB schema
-        run: |
-          curl -s --show-error --fail-with-body http://localhost:8000/sql \
-            -H "Accept: application/json" \
-            -H "surreal-ns: fugue_test" \
-            -H "surreal-db: graph_test" \
-            -u root:root \
-            --data-binary @priv/surrealdb/schema.surql
 
       - name: Install dependencies
         run: mix deps.get
