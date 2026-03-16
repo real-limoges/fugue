@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-# First-time setup: install deps, build assets, create + migrate DB
+# First-time setup: install deps, build assets
 mix setup
 
 # Start dev server (auto-reloads Elixir, JS, CSS)
@@ -27,14 +27,17 @@ mix precommit
 # Format Elixir code
 mix format
 
-# Database operations
-mix ecto.migrate                          # run pending migrations
-mix ecto.setup                            # create DB + migrate
-mix ecto.reset                            # drop + recreate + migrate
-mix ecto.gen.migration name_of_migration  # generate a new migration
+# SurrealDB (must be running for dev/test)
+docker run --rm -p 8000:8000 surrealdb/surrealdb:latest start --user root --pass root memory
+
+# Import schema into SurrealDB
+surreal import --conn http://localhost:8000 --ns fugue --db graph priv/surrealdb/schema.surql
 
 # JS dependencies (for Cosmograph, etc.)
 cd assets && npm install
+
+# After updating the petri submodule, re-copy WASM files to priv/static
+mix assets.setup
 ```
 
 `mix precommit` runs in the `:test` env (set by `preferred_envs` in mix.exs).
@@ -47,21 +50,21 @@ Fugue is the Phoenix/Elixir orchestration layer for [realcomplex.systems](http:/
 
 Currently only the Bloom (graph visualization) integration is active. The other services are at various stages in their own repos.
 
-### Ecto + SQLite
+### SurrealDB
 
-`Fugue.Repo` is a standard `Ecto.Repo` backed by `ecto_sqlite3`. The database lives at `priv/graph_data/fugue.db` (WAL mode, 64MB cache). Migrations are in `priv/repo/migrations/`.
+`Fugue.Db` is a GenServer wrapping a `surrealix` WebSocket connection. Config is in `config/config.exs` (dev defaults: `localhost:8000`, namespace `fugue`, database `graph`). Runtime config reads `SURREALDB_*` env vars.
 
-`Fugue.Graph.Loader` provides the domain API: `load_subgraph/2`, `search_articles/1`, `get_article/1`. FTS5 search and BFS subgraph expansion use raw SQL via `Repo.query/2` — Ecto has no built-in support for these SQLite-specific constructs.
+`Fugue.Graph.Loader` provides the domain API: `load_subgraph/2`, `search_articles/1`, `get_article/1`. Queries use SurrealQL — graph traversal via `->links_to->article` and full-text search via `@@`.
 
-Schemas: `Fugue.Graph.Article`, `Fugue.Graph.Link`, `Fugue.Graph.Category`, `Fugue.Graph.ArticleCategory`.
+Structs (not Ecto schemas): `Fugue.Graph.Article`, `Fugue.Graph.Link`, `Fugue.Graph.Category`. Each has a `from_map/1` for converting SurrealDB results. The schema definition lives in `priv/surrealdb/schema.surql`.
 
 ### Bloom — Graph Visualization
 
 Graph rendering uses **Cosmograph** (`@cosmograph/graph`), a WebGL-based graph visualization library. The JS dependency is in `assets/package.json`.
 
-The LiveView hook is at `assets/js/hooks/graph_viz.js`. Data flow: SQLite → `Graph.Loader` → LiveView pushes JSON over WebSocket → Cosmograph renders.
+The LiveView hook is at `assets/js/hooks/graph_viz.js`. Data flow: SurrealDB → `Graph.Loader` → LiveView pushes JSON over WebSocket → Cosmograph renders.
 
-The underlying graph data comes from **Dedalus** (separate Rust repo) which extracts Wikipedia XML into the SQLite database.
+The underlying graph data comes from **Dedalus** (separate Rust repo) which extracts Wikipedia XML. A one-time migration script (`priv/surrealdb/migrate_from_sqlite.exs`) can import legacy SQLite data.
 
 ### Supervision Tree
 
@@ -70,7 +73,7 @@ Fugue.Supervisor
 ├── FugueWeb.Telemetry
 ├── DNSCluster
 ├── Phoenix.PubSub
-├── Fugue.Repo          ← ecto_sqlite3, single fugue.db
+├── Fugue.Db            ← surrealix WebSocket to SurrealDB
 └── FugueWeb.Endpoint   ← Bandit adapter
 ```
 
@@ -86,7 +89,7 @@ Fugue.Supervisor
 
 Target is GCP Cloud Run (scale-to-zero, serverless). Docker Compose config exists for local multi-service development — currently wires up Fugue only, with commented stubs for sibling services.
 
-The `docker-entrypoint.sh` runs Ecto migrations before starting the release.
+The `docker-entrypoint.sh` starts the release (no migrations needed — SurrealDB schema is managed externally).
 
 ## Sibling Services
 
@@ -108,5 +111,5 @@ These are separate repos, not part of this codebase, but useful context:
 - Bandit over Cowboy — already configured, don't switch
 - Tailwind v4 + DaisyUI — use utility classes and DaisyUI components
 - `mix precommit` is the quality gate: warnings-as-errors, format check, full test suite
-- Raw SQL is acceptable for SQLite-specific features (FTS5, recursive CTEs, etc.)
+- SurrealQL for all database queries — graph traversal and full-text search are native
 - Config splits: `config.exs` (shared), `dev.exs`, `test.exs`, `prod.exs`, `runtime.exs` (env vars)

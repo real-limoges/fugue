@@ -7,17 +7,13 @@
 # General application configuration
 import Config
 
-config :fugue,
-  generators: [timestamp_type: :utc_datetime],
-  ecto_repos: [Fugue.Repo]
-
-config :fugue, Fugue.Repo,
-  database: Path.join([__DIR__, "..", "priv", "graph_data", "fugue.db"]),
-  journal_mode: :wal,
-  cache_size: -64_000,
-  foreign_keys: :on,
-  busy_timeout: 5_000,
-  pool_size: 1
+config :fugue, Fugue.Db,
+  hostname: "localhost",
+  port: 8000,
+  namespace: "fugue",
+  database: "graph",
+  username: "root",
+  password: "root"
 
 # Configure the endpoint
 config :fugue, FugueWeb.Endpoint,

@@ -39,9 +39,13 @@ if config_env() == :prod do
 
   config :fugue, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
-  if database = System.get_env("DATABASE_PATH") do
-    config :fugue, Fugue.Repo, database: database
-  end
+  config :fugue, Fugue.Db,
+    hostname: System.get_env("SURREALDB_HOST", "localhost"),
+    port: String.to_integer(System.get_env("SURREALDB_PORT", "8000")),
+    namespace: System.get_env("SURREALDB_NS", "fugue"),
+    database: System.get_env("SURREALDB_DB", "graph"),
+    username: System.get_env("SURREALDB_USER", "root"),
+    password: System.get_env("SURREALDB_PASS", "root")
 
   config :fugue, FugueWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],

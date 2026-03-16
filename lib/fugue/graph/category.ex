@@ -1,10 +1,14 @@
 defmodule Fugue.Graph.Category do
-  use Ecto.Schema
+  @derive Jason.Encoder
+  defstruct [:id, :name]
 
-  @primary_key {:id, :integer, autogenerate: false}
-  @timestamps_opts false
-
-  schema "categories" do
-    field(:name, :string)
+  def from_map(m) when is_map(m) do
+    %__MODULE__{
+      id: extract_id(m["id"]),
+      name: m["name"]
+    }
   end
+
+  defp extract_id("category:" <> id), do: id
+  defp extract_id(id), do: id
 end

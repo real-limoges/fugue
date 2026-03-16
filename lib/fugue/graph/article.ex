@@ -1,16 +1,29 @@
 defmodule Fugue.Graph.Article do
-  use Ecto.Schema
+  @derive Jason.Encoder
+  defstruct [
+    :id,
+    :title,
+    :abstract,
+    :is_disambiguation,
+    :timestamp,
+    :in_degree,
+    :out_degree,
+    :pagerank
+  ]
 
-  @primary_key {:id, :integer, autogenerate: false}
-  @timestamps_opts false
-
-  schema "articles" do
-    field(:title, :string)
-    field(:abstract, :string)
-    field(:is_disambiguation, :boolean, default: false)
-    field(:timestamp, :string)
-    field(:in_degree, :integer, default: 0)
-    field(:out_degree, :integer, default: 0)
-    field(:pagerank, :float, default: 0.0)
+  def from_map(m) when is_map(m) do
+    %__MODULE__{
+      id: extract_id(m["id"]),
+      title: m["title"],
+      abstract: m["abstract"],
+      is_disambiguation: m["is_disambiguation"] || false,
+      timestamp: m["timestamp"],
+      in_degree: m["in_degree"] || 0,
+      out_degree: m["out_degree"] || 0,
+      pagerank: m["pagerank"] || 0.0
+    }
   end
+
+  defp extract_id("article:" <> id), do: id
+  defp extract_id(id), do: id
 end

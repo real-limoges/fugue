@@ -7,15 +7,18 @@ defmodule Fugue.Application do
 
   @impl true
   def start(_type, _args) do
-    children = [
-      FugueWeb.Telemetry,
-      {DNSCluster, query: Application.get_env(:fugue, :dns_cluster_query) || :ignore},
-      {Phoenix.PubSub, name: Fugue.PubSub},
-      # SQLite database repository for graph data
-      Fugue.Repo,
-      # Start to serve requests, typically the last entry
-      FugueWeb.Endpoint
-    ]
+    children =
+      [
+        FugueWeb.Telemetry,
+        {DNSCluster, query: Application.get_env(:fugue, :dns_cluster_query) || :ignore},
+        {Phoenix.PubSub, name: Fugue.PubSub}
+      ] ++
+        if Application.get_env(:fugue, :start_db, true) do
+          [{Fugue.Db, Application.get_env(:fugue, Fugue.Db)}]
+        else
+          []
+        end ++
+        [FugueWeb.Endpoint]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

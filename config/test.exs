@@ -21,6 +21,5 @@ config :phoenix_live_view,
 config :phoenix,
   sort_verified_routes_query_params: true
 
-config :fugue, Fugue.Repo,
-  database: Path.join([__DIR__, "..", "priv", "test.db"]),
-  pool: Ecto.Adapters.SQL.Sandbox
+# Skip SurrealDB in test — no tests require it yet
+config :fugue, start_db: false
