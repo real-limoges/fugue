@@ -21,6 +21,10 @@ config :phoenix_live_view,
 config :phoenix,
   sort_verified_routes_query_params: true
 
-config :fugue, Fugue.Repo,
-  database: Path.join([__DIR__, "..", "priv", "test.db"]),
-  pool: Ecto.Adapters.SQL.Sandbox
+config :fugue, Fugue.Db,
+  hostname: "localhost",
+  port: 8000,
+  namespace: "fugue_test",
+  database: "graph_test",
+  username: "root",
+  password: "root"

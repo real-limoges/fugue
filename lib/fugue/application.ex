@@ -11,8 +11,8 @@ defmodule Fugue.Application do
       FugueWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:fugue, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Fugue.PubSub},
-      # SQLite database repository for graph data
-      Fugue.Repo,
+      # SurrealDB connection
+      {Fugue.Db, Application.get_env(:fugue, Fugue.Db)},
       # Start to serve requests, typically the last entry
       FugueWeb.Endpoint
     ]

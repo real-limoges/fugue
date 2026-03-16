@@ -60,9 +60,8 @@ defmodule Fugue.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
-      {:ecto_sql, "~> 3.12"},
-      {:ecto_sqlite3, "~> 0.17"},
-      {:earmark, "~> 1.4"}
+      {:earmark, "~> 1.4"},
+      {:surrealix, "~> 0.1.8"}
     ]
   end
 
@@ -74,9 +73,7 @@ defmodule Fugue.MixProject do
   # See the documentation for `Mix` for more info on aliases.
   defp aliases do
     [
-      setup: ["deps.get", "assets.setup", "assets.build", "ecto.migrate"],
-      "ecto.setup": ["ecto.create", "ecto.migrate"],
-      "ecto.reset": ["ecto.drop", "ecto.setup"],
+      setup: ["deps.get", "assets.setup", "assets.build"],
       "assets.setup": [
         "tailwind.install --if-missing",
         "esbuild.install --if-missing",

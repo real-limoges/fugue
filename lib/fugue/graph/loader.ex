@@ -1,10 +1,9 @@
 defmodule Fugue.Graph.Loader do
   @moduledoc """
-  Loads graph data from SQLite via Ecto.
+  Loads graph data from SurrealDB.
   """
 
-  import Ecto.Query
-  alias Fugue.Repo
+  alias Fugue.Db
   alias Fugue.Graph.{Article, Link}
 
   @default_max_nodes 10_000
@@ -20,53 +19,114 @@ defmodule Fugue.Graph.Loader do
   end
 
   def search_articles(query) do
-    case Repo.query("SELECT rowid FROM articles_fts WHERE articles_fts MATCH ? LIMIT 100", [query]) do
-      {:ok, %{rows: rows}} -> {:ok, Enum.map(rows, fn [id] -> id end)}
-      {:error, _} = err -> err
+    sql = "SELECT id FROM article WHERE title @@ $query LIMIT 100"
+
+    case Db.query(sql, %{"query" => query}) do
+      {:ok, [%{"status" => "OK", "result" => results}]} ->
+        {:ok, Enum.map(results, fn r -> extract_id(r["id"]) end)}
+
+      {:ok, _} ->
+        {:ok, []}
+
+      {:error, _} = err ->
+        err
     end
   end
 
   def get_article(id) do
-    case Repo.get(Article, id) do
-      nil -> {:error, :not_found}
-      article -> {:ok, article}
+    case Db.select("article:#{id}") do
+      {:ok, [result]} when is_map(result) ->
+        {:ok, Article.from_map(result)}
+
+      {:ok, result} when is_map(result) ->
+        {:ok, Article.from_map(result)}
+
+      {:ok, []} ->
+        {:error, :not_found}
+
+      {:ok, nil} ->
+        {:error, :not_found}
+
+      {:error, _} = err ->
+        err
     end
   end
 
   # Private
 
   defp fetch_articles(ids) do
-    articles = Repo.all(from(a in Article, where: a.id in ^ids))
-    {:ok, articles}
+    surreal_ids = Enum.map(ids, &to_surreal_id("article", &1))
+
+    sql = "SELECT * FROM article WHERE id INSIDE $ids"
+
+    case Db.query(sql, %{"ids" => surreal_ids}) do
+      {:ok, [%{"status" => "OK", "result" => results}]} ->
+        {:ok, Enum.map(results, &Article.from_map/1)}
+
+      {:ok, _} ->
+        {:ok, []}
+
+      {:error, _} = err ->
+        err
+    end
   end
 
   defp fetch_links(ids) do
-    links =
-      Repo.all(
-        from(l in Link,
-          where: l.source_id in ^ids and l.target_id in ^ids
-        )
-      )
+    surreal_ids = Enum.map(ids, &to_surreal_id("article", &1))
 
-    {:ok, links}
+    sql =
+      "SELECT *, in AS source_id, out AS target_id FROM links_to WHERE in INSIDE $ids AND out INSIDE $ids"
+
+    case Db.query(sql, %{"ids" => surreal_ids}) do
+      {:ok, [%{"status" => "OK", "result" => results}]} ->
+        {:ok, Enum.map(results, &Link.from_map/1)}
+
+      {:ok, _} ->
+        {:ok, []}
+
+      {:error, _} = err ->
+        err
+    end
   end
 
   defp bfs_expand(seed_id, max_nodes) do
-    sql = """
-    WITH RECURSIVE bfs(id, depth) AS (
-      SELECT ?, 0
-      UNION
-      SELECT l.target_id, bfs.depth + 1
-      FROM links l
-      JOIN bfs ON l.source_id = bfs.id
-      WHERE bfs.depth < 2
-    )
-    SELECT DISTINCT id FROM bfs LIMIT ?
+    bfs_sql = """
+    LET $seed = [article:#{seed_id}];
+    LET $hop1 = SELECT VALUE ->links_to->article FROM $seed;
+    LET $hop1_flat = array::flatten($hop1);
+    LET $hop2 = SELECT VALUE ->links_to->article FROM $hop1_flat;
+    LET $hop2_flat = array::flatten($hop2);
+    LET $all = array::distinct(array::concat(array::concat($seed, $hop1_flat), $hop2_flat));
+    RETURN array::slice($all, 0, $max_nodes);
     """
 
-    case Repo.query(sql, [seed_id, max_nodes]) do
-      {:ok, %{rows: rows}} -> {:ok, Enum.map(rows, fn [id] -> id end)}
-      {:error, _} = err -> err
+    case Db.query(bfs_sql, %{"max_nodes" => max_nodes}) do
+      {:ok, results} ->
+        # The RETURN statement result is the last element
+        ids =
+          results
+          |> List.last()
+          |> then(fn
+            %{"status" => "OK", "result" => result} when is_list(result) ->
+              Enum.map(result, &extract_id/1)
+
+            %{"result" => result} when is_list(result) ->
+              Enum.map(result, &extract_id/1)
+
+            _ ->
+              []
+          end)
+
+        {:ok, Enum.take(ids, max_nodes)}
+
+      {:error, _} = err ->
+        err
     end
   end
+
+  defp extract_id("article:" <> id), do: id
+  defp extract_id(id), do: id
+
+  defp to_surreal_id("article", id), do: "article:#{id}"
+  defp to_surreal_id(table, id), do: "#{table}:#{id}"
 end
