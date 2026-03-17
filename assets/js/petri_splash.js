@@ -85,8 +85,8 @@ export async function initSplash(canvasId, simName) {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return null;
 
-  const canvasW = Math.min(window.innerWidth, 2560);
-  const canvasH = Math.min(window.innerHeight, 1440);
+  const canvasW = window.innerWidth;
+  const canvasH = window.innerHeight;
   canvas.width = canvasW;
   canvas.height = canvasH;
 
