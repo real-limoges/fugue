@@ -64,7 +64,7 @@ Graph rendering uses **Cosmograph** (`@cosmograph/graph`), a WebGL-based graph v
 
 The LiveView hook is at `assets/js/hooks/graph_viz.js`. Data flow: SurrealDB → `Graph.Loader` → LiveView pushes JSON over WebSocket → Cosmograph renders.
 
-The underlying graph data comes from **Dedalus** (separate Rust repo) which extracts Wikipedia XML. A one-time migration script (`priv/surrealdb/migrate_from_sqlite.exs`) can import legacy SQLite data.
+The underlying graph data comes from **Dedalus** (separate Rust repo) which extracts Wikipedia XML.
 
 ### Supervision Tree
 
