@@ -1,11 +1,8 @@
 const sims = {
   boids: {
     module: () => import("../vendor/petri/js/boids.js"),
-    setup: async (m, w, h) => { await m.init(); m.start(2000, w, h); },
-    loop: (m) => {
-      m.step(1);
-      if (Math.random() < 1 / 30) m.swapOne();
-    },
+    setup: async (m, w, h) => { await m.init(); m.start(1500, w, h); },
+    loop: (m) => m.step(1),
   },
 langton: {
     module: () => import("../vendor/petri/js/langton.js"),
