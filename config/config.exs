@@ -8,12 +8,7 @@
 import Config
 
 config :fugue, Fugue.Db,
-  hostname: "localhost",
-  port: 8000,
-  namespace: "fugue",
-  database: "graph",
-  username: "root",
-  password: "root"
+  url: "http://localhost:3000"
 
 # Configure the endpoint
 config :fugue, FugueWeb.Endpoint,

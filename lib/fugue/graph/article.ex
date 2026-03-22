@@ -13,7 +13,7 @@ defmodule Fugue.Graph.Article do
 
   def from_map(m) when is_map(m) do
     %__MODULE__{
-      id: extract_id(m["id"]),
+      id: m["id"],
       title: m["title"],
       abstract: m["abstract"],
       is_disambiguation: m["is_disambiguation"] || false,
@@ -23,7 +23,4 @@ defmodule Fugue.Graph.Article do
       pagerank: m["pagerank"] || 0.0
     }
   end
-
-  defp extract_id("article:" <> id), do: id
-  defp extract_id(id), do: id
 end

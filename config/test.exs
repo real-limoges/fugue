@@ -21,5 +21,5 @@ config :phoenix_live_view,
 config :phoenix,
   sort_verified_routes_query_params: true
 
-# Skip SurrealDB in test — no tests require it yet
+# Skip CozoDB in test — no tests require it yet
 config :fugue, start_db: false

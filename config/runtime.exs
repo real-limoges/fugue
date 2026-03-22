@@ -40,12 +40,8 @@ if config_env() == :prod do
   config :fugue, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
 
   config :fugue, Fugue.Db,
-    hostname: System.get_env("SURREALDB_HOST", "localhost"),
-    port: String.to_integer(System.get_env("SURREALDB_PORT", "8000")),
-    namespace: System.get_env("SURREALDB_NS", "fugue"),
-    database: System.get_env("SURREALDB_DB", "graph"),
-    username: System.get_env("SURREALDB_USER", "root"),
-    password: System.get_env("SURREALDB_PASS", "root")
+    url: System.get_env("COZODB_URL", "http://localhost:3000"),
+    auth_token: System.get_env("COZODB_AUTH_TOKEN")
 
   config :fugue, FugueWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
