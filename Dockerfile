@@ -1,5 +1,5 @@
 # Build stage
-FROM hexpm/elixir:1.17.3-erlang-26.2.2-ubuntu-noble-20260210.1 AS builder
+FROM hexpm/elixir:1.19.5-erlang-27.3.4.9-ubuntu-noble-20260217 AS builder
 
 # Install system dependencies needed for compilation and assets (Node.js)
 RUN apt-get update -q && \
@@ -18,25 +18,13 @@ RUN mix local.hex --force && mix local.rebar --force
 
 ENV MIX_ENV=prod
 
-# Fetch Elixir dependencies (layer-cached until mix.exs/mix.lock change)
-COPY mix.exs mix.lock ./
-RUN mix deps.get --only prod
-
-# Compile dependencies
-RUN mix deps.compile
-
-# Install JS dependencies (layer-cached until assets/package.json changes)
-COPY assets/package.json assets/package.json
-RUN npm install --prefix assets
-
-# Copy the full source (including assets/vendor/bloom/pkg/ WASM output)
+# Copy the full source
 COPY . .
 
-# Build and digest frontend assets
-RUN mix assets.deploy
-
-# Compile Elixir source and build the release
+RUN mix deps.get --only prod
+RUN npm install --prefix assets
 RUN mix compile
+RUN mix assets.deploy
 RUN mix release
 
 # Runner stage — minimal runtime image
