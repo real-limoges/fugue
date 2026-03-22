@@ -1,7 +1,7 @@
 defmodule Fugue.Db do
   @moduledoc """
-  GenServer wrapper around a surrealix WebSocket connection.
-  Provides `query/2` and `select/1` as the public API.
+  GenServer wrapping an HTTP connection to a CozoDB server.
+  Provides `query/2` as the public API.
   """
 
   use GenServer
@@ -14,94 +14,69 @@ defmodule Fugue.Db do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
-  @doc "Execute a SurrealQL query with optional variable bindings."
-  def query(sql, vars \\ %{}) do
-    GenServer.call(__MODULE__, {:query, sql, vars})
-  end
-
-  @doc "Select a record by its SurrealDB ID (e.g. \"article:42\")."
-  def select(thing) do
-    GenServer.call(__MODULE__, {:select, thing})
+  @doc "Execute a CozoScript query with optional parameter bindings."
+  def query(script, params \\ %{}) do
+    GenServer.call(__MODULE__, {:query, script, params}, 30_000)
   end
 
   # Server callbacks
 
   @impl true
   def init(opts) do
-    hostname = Keyword.fetch!(opts, :hostname)
-    port = Keyword.fetch!(opts, :port)
-    namespace = Keyword.fetch!(opts, :namespace)
-    database = Keyword.fetch!(opts, :database)
-    username = Keyword.fetch!(opts, :username)
-    password = Keyword.fetch!(opts, :password)
+    url = Keyword.fetch!(opts, :url)
+    auth_token = Keyword.get(opts, :auth_token)
 
-    case connect(hostname, port, namespace, database, username, password) do
-      {:ok, pid} ->
-        Process.monitor(pid)
-        {:ok, %{pid: pid, config: opts}}
+    case ping(url, auth_token) do
+      :ok ->
+        {:ok, %{url: url, auth_token: auth_token}}
 
       {:error, reason} ->
+        Logger.error("CozoDB not reachable at #{url}: #{inspect(reason)}")
         {:stop, reason}
     end
   end
 
   @impl true
-  def handle_call({:query, sql, vars}, _from, %{pid: pid} = state) do
-    case Surrealix.query(pid, sql, vars) do
-      {:ok, %{"result" => results}} ->
+  def handle_call({:query, script, params}, _from, state) do
+    %{url: url, auth_token: auth_token} = state
+    body = %{"script" => script, "params" => params}
+
+    case Req.post("#{url}/text-query", json: body, headers: auth_headers(auth_token)) do
+      {:ok, %Req.Response{status: 200, body: %{"ok" => true} = resp}} ->
+        rows = resp["rows"] || []
+        headers = resp["headers"] || []
+        results = Enum.map(rows, fn row -> Map.new(Enum.zip(headers, row)) end)
         {:reply, {:ok, results}, state}
 
-      {:ok, result} ->
-        {:reply, {:ok, result}, state}
+      {:ok, %Req.Response{body: %{"ok" => false, "display" => msg}}} ->
+        {:reply, {:error, msg}, state}
 
-      {:error, _} = err ->
-        {:reply, err, state}
-    end
-  end
+      {:ok, %Req.Response{body: %{"ok" => false, "message" => msg}}} ->
+        {:reply, {:error, msg}, state}
 
-  def handle_call({:select, thing}, _from, %{pid: pid} = state) do
-    case Surrealix.select(pid, thing) do
-      {:ok, %{"result" => result}} ->
-        {:reply, {:ok, result}, state}
+      {:ok, %Req.Response{status: status, body: body}} ->
+        {:reply, {:error, "CozoDB HTTP #{status}: #{inspect(body)}"}, state}
 
-      {:ok, result} ->
-        {:reply, {:ok, result}, state}
-
-      {:error, _} = err ->
-        {:reply, err, state}
+      {:error, reason} ->
+        {:reply, {:error, reason}, state}
     end
   end
 
   @impl true
-  def handle_info({:DOWN, _ref, :process, _pid, reason}, %{config: opts} = state) do
-    Logger.warning("SurrealDB connection lost: #{inspect(reason)}, reconnecting...")
-
-    case connect(
-           Keyword.fetch!(opts, :hostname),
-           Keyword.fetch!(opts, :port),
-           Keyword.fetch!(opts, :namespace),
-           Keyword.fetch!(opts, :database),
-           Keyword.fetch!(opts, :username),
-           Keyword.fetch!(opts, :password)
-         ) do
-      {:ok, pid} ->
-        Process.monitor(pid)
-        {:noreply, %{state | pid: pid}}
-
-      {:error, reason} ->
-        {:stop, reason, state}
-    end
-  end
-
   def handle_info(_msg, state), do: {:noreply, state}
 
   # Helpers
 
-  defp connect(hostname, port, namespace, database, username, password) do
-    with {:ok, pid} <- Surrealix.start_link(hostname: hostname, port: port),
-         {:ok, _} <- Surrealix.signin(pid, %{"user" => username, "pass" => password}),
-         {:ok, _} <- Surrealix.use(pid, namespace, database) do
-      {:ok, pid}
+  defp ping(url, auth_token) do
+    body = %{"script" => "?[] <- [[1]]", "params" => %{}}
+
+    case Req.post("#{url}/text-query", json: body, headers: auth_headers(auth_token)) do
+      {:ok, %Req.Response{status: 200, body: %{"ok" => true}}} -> :ok
+      {:ok, %Req.Response{status: s}} -> {:error, "CozoDB returned #{s}"}
+      {:error, reason} -> {:error, reason}
     end
   end
+
+  defp auth_headers(nil), do: []
+  defp auth_headers(token), do: [{"x-cozo-auth", token}]
 end

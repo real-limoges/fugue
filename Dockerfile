@@ -1,7 +1,7 @@
 # Build stage
 FROM hexpm/elixir:1.17.3-erlang-26.2.2-ubuntu-noble-20260210.1 AS builder
 
-# Install system dependencies needed for exqlite (C compilation) and assets (Node.js)
+# Install system dependencies needed for compilation and assets (Node.js)
 RUN apt-get update -q && \
     apt-get install -y --no-install-recommends \
       build-essential \

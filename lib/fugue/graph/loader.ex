@@ -1,6 +1,6 @@
 defmodule Fugue.Graph.Loader do
   @moduledoc """
-  Loads graph data from SurrealDB.
+  Loads graph data from CozoDB.
   """
 
   alias Fugue.Db
@@ -19,14 +19,11 @@ defmodule Fugue.Graph.Loader do
   end
 
   def search_articles(query) do
-    sql = "SELECT id FROM article WHERE title @@ $query LIMIT 100"
+    script = "?[id] := ~article:title_fts{id | query: $query, k: 100}"
 
-    case Db.query(sql, %{"query" => query}) do
-      {:ok, [%{"status" => "OK", "result" => results}]} ->
-        {:ok, Enum.map(results, fn r -> extract_id(r["id"]) end)}
-
-      {:ok, _} ->
-        {:ok, []}
+    case Db.query(script, %{"query" => query}) do
+      {:ok, results} ->
+        {:ok, Enum.map(results, fn r -> r["id"] end)}
 
       {:error, _} = err ->
         err
@@ -34,17 +31,17 @@ defmodule Fugue.Graph.Loader do
   end
 
   def get_article(id) do
-    case Db.select("article:#{id}") do
-      {:ok, [result]} when is_map(result) ->
-        {:ok, Article.from_map(result)}
+    script = """
+    ?[id, title, abstract, is_disambiguation, timestamp, in_degree, out_degree, pagerank] :=
+      *article{id, title, abstract, is_disambiguation, timestamp, in_degree, out_degree, pagerank},
+      id == $id
+    """
 
-      {:ok, result} when is_map(result) ->
+    case Db.query(script, %{"id" => id}) do
+      {:ok, [result]} ->
         {:ok, Article.from_map(result)}
 
       {:ok, []} ->
-        {:error, :not_found}
-
-      {:ok, nil} ->
         {:error, :not_found}
 
       {:error, _} = err ->
@@ -55,16 +52,18 @@ defmodule Fugue.Graph.Loader do
   # Private
 
   defp fetch_articles(ids) do
-    surreal_ids = Enum.map(ids, &to_surreal_id("article", &1))
+    id_rows = Enum.map(ids, fn id -> [id] end)
 
-    sql = "SELECT * FROM article WHERE id INSIDE $ids"
+    script = """
+    ids[id] <- $ids
+    ?[id, title, abstract, is_disambiguation, timestamp, in_degree, out_degree, pagerank] :=
+      ids[id],
+      *article{id, title, abstract, is_disambiguation, timestamp, in_degree, out_degree, pagerank}
+    """
 
-    case Db.query(sql, %{"ids" => surreal_ids}) do
-      {:ok, [%{"status" => "OK", "result" => results}]} ->
+    case Db.query(script, %{"ids" => id_rows}) do
+      {:ok, results} ->
         {:ok, Enum.map(results, &Article.from_map/1)}
-
-      {:ok, _} ->
-        {:ok, []}
 
       {:error, _} = err ->
         err
@@ -72,17 +71,19 @@ defmodule Fugue.Graph.Loader do
   end
 
   defp fetch_links(ids) do
-    surreal_ids = Enum.map(ids, &to_surreal_id("article", &1))
+    id_rows = Enum.map(ids, fn id -> [id] end)
 
-    sql =
-      "SELECT *, in AS source_id, out AS target_id FROM links_to WHERE in INSIDE $ids AND out INSIDE $ids"
+    script = """
+    ids[id] <- $ids
+    ?[source, target, link_type] :=
+      *links_to{source, target, link_type},
+      ids[source],
+      ids[target]
+    """
 
-    case Db.query(sql, %{"ids" => surreal_ids}) do
-      {:ok, [%{"status" => "OK", "result" => results}]} ->
+    case Db.query(script, %{"ids" => id_rows}) do
+      {:ok, results} ->
         {:ok, Enum.map(results, &Link.from_map/1)}
-
-      {:ok, _} ->
-        {:ok, []}
 
       {:error, _} = err ->
         err
@@ -90,43 +91,20 @@ defmodule Fugue.Graph.Loader do
   end
 
   defp bfs_expand(seed_id, max_nodes) do
-    bfs_sql = """
-    LET $seed = [article:#{seed_id}];
-    LET $hop1 = SELECT VALUE ->links_to->article FROM $seed;
-    LET $hop1_flat = array::flatten($hop1);
-    LET $hop2 = SELECT VALUE ->links_to->article FROM $hop1_flat;
-    LET $hop2_flat = array::flatten($hop2);
-    LET $all = array::distinct(array::concat(array::concat($seed, $hop1_flat), $hop2_flat));
-    RETURN array::slice($all, 0, $max_nodes);
+    script = """
+    seed[x] <- [[$seed_id]]
+    ?[node] := seed[node]
+    ?[node] := seed[x], *links_to{source: x, target: node}
+    ?[node] := seed[x], *links_to{source: x, target: mid}, *links_to{source: mid, target: node}
+    :limit #{max_nodes}
     """
 
-    case Db.query(bfs_sql, %{"max_nodes" => max_nodes}) do
+    case Db.query(script, %{"seed_id" => seed_id}) do
       {:ok, results} ->
-        # The RETURN statement result is the last element
-        ids =
-          results
-          |> List.last()
-          |> then(fn
-            %{"status" => "OK", "result" => result} when is_list(result) ->
-              Enum.map(result, &extract_id/1)
-
-            %{"result" => result} when is_list(result) ->
-              Enum.map(result, &extract_id/1)
-
-            _ ->
-              []
-          end)
-
-        {:ok, Enum.take(ids, max_nodes)}
+        {:ok, Enum.map(results, fn r -> r["node"] end)}
 
       {:error, _} = err ->
         err
     end
   end
-
-  defp extract_id("article:" <> id), do: id
-  defp extract_id(id), do: id
-
-  defp to_surreal_id("article", id), do: "article:#{id}"
-  defp to_surreal_id(table, id), do: "#{table}:#{id}"
 end
