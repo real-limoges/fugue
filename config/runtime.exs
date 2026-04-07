@@ -43,6 +43,9 @@ if config_env() == :prod do
     url: System.get_env("COZODB_URL", "http://localhost:3000"),
     auth_token: System.get_env("COZODB_AUTH_TOKEN")
 
+  config :fugue, Fugue.Ish,
+    url: System.get_env("ISH_URL", "http://localhost:7333")
+
   config :fugue, FugueWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [
