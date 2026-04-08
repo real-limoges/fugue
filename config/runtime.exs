@@ -44,7 +44,8 @@ if config_env() == :prod do
     auth_token: System.get_env("COZODB_AUTH_TOKEN")
 
   config :fugue, Fugue.Ish,
-    url: System.get_env("ISH_URL", "http://localhost:7333")
+    url: System.get_env("ISH_URL", "http://localhost:7333"),
+    gcp_auth: true
 
   config :fugue, FugueWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
