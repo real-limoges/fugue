@@ -442,9 +442,15 @@ defmodule FugueWeb.MoodLive do
           <p class="text-gray-400 text-lg">Loading mood data...</p>
         </div>
       <% else %>
-        <.live_component module={ParamControls} id="params"
-          k={@k} m={@m} fpc={@analysis.fpc} iterations={@analysis.iterations}
-          cluster_count={length(@analysis.clusters)} />
+        <.live_component
+          module={ParamControls}
+          id="params"
+          k={@k}
+          m={@m}
+          fpc={@analysis.fpc}
+          iterations={@analysis.iterations}
+          cluster_count={length(@analysis.clusters)}
+        />
 
         <div class="flex flex-wrap items-center gap-2 mt-4">
           <span class="text-sm text-gray-400">Clusters:</span>
@@ -453,50 +459,73 @@ defmodule FugueWeb.MoodLive do
               phx-click="cluster_selected"
               phx-value-cluster={cluster["id"]}
               class={"px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer border #{if @selected_cluster == cluster["id"], do: "ring-2 ring-white ring-offset-1 ring-offset-black scale-110", else: "opacity-70 hover:opacity-100"}"}
-              style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}44; color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#aaa")}; border-color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}88"}>
+              style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}44; color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#aaa")}; border-color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}88"}
+            >
               {cluster["name"]}
             </button>
           <% end %>
           <%= if @selected_cluster do %>
-            <button phx-click="cluster_selected" phx-value-cluster={@selected_cluster}
-              class="text-xs text-gray-500 hover:text-gray-300 ml-1">
+            <button
+              phx-click="cluster_selected"
+              phx-value-cluster={@selected_cluster}
+              class="text-xs text-gray-500 hover:text-gray-300 ml-1"
+            >
               clear
             </button>
           <% end %>
         </div>
 
         <div class="mt-4">
-          <div id="temporal-brush"
+          <div
+            id="temporal-brush"
             phx-hook="TemporalBrush"
             phx-update="ignore"
-            style="min-height: 50px;">
+            style="min-height: 50px;"
+          >
           </div>
           <%= if @date_range do %>
             <div class="flex items-center gap-2 mt-1">
               <span class="text-xs text-gray-500">
                 {elem(@date_range, 0)} → {elem(@date_range, 1)}
               </span>
-              <button phx-click="brush_changed" phx-value-start="" phx-value-end=""
-                class="text-xs text-gray-500 hover:text-gray-300">clear</button>
+              <button
+                phx-click="brush_changed"
+                phx-value-start=""
+                phx-value-end=""
+                class="text-xs text-gray-500 hover:text-gray-300"
+              >
+                clear
+              </button>
             </div>
           <% end %>
         </div>
 
         <div class="mt-4">
-          <.live_component module={Calendar} id="calendar"
+          <.live_component
+            module={Calendar}
+            id="calendar"
             highlighted_dates={@highlighted_dates}
-            selected_gap={@selected_gap} />
+            selected_gap={@selected_gap}
+          />
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <.live_component module={ScatterPlot} id="scatter"
-            scatter_x={@scatter_x} scatter_y={@scatter_y}
-            clusters={@analysis.clusters} />
+          <.live_component
+            module={ScatterPlot}
+            id="scatter"
+            scatter_x={@scatter_x}
+            scatter_y={@scatter_y}
+            clusters={@analysis.clusters}
+          />
 
-          <.live_component module={GapAnalysis} id="gaps"
-            gaps={@gaps} cluster_colors={@analysis.cluster_colors}
+          <.live_component
+            module={GapAnalysis}
+            id="gaps"
+            gaps={@gaps}
+            cluster_colors={@analysis.cluster_colors}
             cluster_names={id_to_name(@analysis.clusters)}
-            selected_cluster={@selected_cluster} />
+            selected_cluster={@selected_cluster}
+          />
         </div>
       <% end %>
     </div>

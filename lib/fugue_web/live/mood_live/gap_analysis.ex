@@ -15,11 +15,13 @@ defmodule FugueWeb.MoodLive.GapAnalysis do
     <div class="gap-section bg-base-200 rounded-lg p-4">
       <h2 class="text-lg font-semibold mb-3">Gap Analysis</h2>
 
-      <div id="gap-histogram"
+      <div
+        id="gap-histogram"
         phx-hook="GapHistogram"
         phx-update="ignore"
         class="mb-4"
-        style="min-height: 150px;">
+        style="min-height: 150px;"
+      >
       </div>
 
       <h3 class="text-sm font-semibold mb-2">Cluster Transitions</h3>
@@ -29,20 +31,25 @@ defmodule FugueWeb.MoodLive.GapAnalysis do
             phx-click="gap_selected"
             phx-value-start={t["gap"]["start"]}
             phx-value-length={t["gap"]["length"]}
-            class={"flex items-center gap-2 px-2 py-1 rounded cursor-pointer text-sm hover:bg-base-300 #{if t["clusterChanged"], do: "border-l-2 border-warning", else: ""}"}>
+            class={"flex items-center gap-2 px-2 py-1 rounded cursor-pointer text-sm hover:bg-base-300 #{if t["clusterChanged"], do: "border-l-2 border-warning", else: ""}"}
+          >
             <span class="text-gray-400 w-24 shrink-0">{t["gap"]["start"]}</span>
             <span class="text-gray-500 w-12 shrink-0">{t["gap"]["length"]}d</span>
             <div class="flex items-center gap-1 flex-1 min-w-0">
               <%= for {cluster, _mem} <- top_cluster(t["before"]) do %>
-                <span class="px-1.5 py-0.5 rounded text-xs"
-                  style={"background: #{Map.get(@cluster_colors, cluster, "#666")}33; color: #{Map.get(@cluster_colors, cluster, "#aaa")}"}>
+                <span
+                  class="px-1.5 py-0.5 rounded text-xs"
+                  style={"background: #{Map.get(@cluster_colors, cluster, "#666")}33; color: #{Map.get(@cluster_colors, cluster, "#aaa")}"}
+                >
                   {Map.get(@cluster_names, cluster, cluster)}
                 </span>
               <% end %>
               <span class="text-gray-500">&rarr;</span>
               <%= for {cluster, _mem} <- top_cluster(t["after"]) do %>
-                <span class="px-1.5 py-0.5 rounded text-xs"
-                  style={"background: #{Map.get(@cluster_colors, cluster, "#666")}33; color: #{Map.get(@cluster_colors, cluster, "#aaa")}"}>
+                <span
+                  class="px-1.5 py-0.5 rounded text-xs"
+                  style={"background: #{Map.get(@cluster_colors, cluster, "#666")}33; color: #{Map.get(@cluster_colors, cluster, "#aaa")}"}
+                >
                   {Map.get(@cluster_names, cluster, cluster)}
                 </span>
               <% end %>
@@ -59,6 +66,7 @@ defmodule FugueWeb.MoodLive.GapAnalysis do
   defp get_transitions(_), do: []
 
   defp filter_by_cluster(transitions, nil), do: transitions
+
   defp filter_by_cluster(transitions, cluster) do
     Enum.filter(transitions, fn t ->
       before = t["before"] || %{}
