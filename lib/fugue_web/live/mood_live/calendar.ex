@@ -12,11 +12,13 @@ defmodule FugueWeb.MoodLive.Calendar do
           </button>
         <% end %>
       </div>
-      <div id="calendar-heatmap"
+      <div
+        id="calendar-heatmap"
         phx-hook="CalendarHeatmap"
         phx-update="ignore"
         class="overflow-x-auto"
-        style="min-height: 200px;">
+        style="min-height: 200px;"
+      >
       </div>
     </div>
     """

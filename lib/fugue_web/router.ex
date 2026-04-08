@@ -19,5 +19,4 @@ defmodule FugueWeb.Router do
     get "/blog/:slug", BlogController, :show
     live "/mood", MoodLive
   end
-
 end

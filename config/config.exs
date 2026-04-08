@@ -7,11 +7,9 @@
 # General application configuration
 import Config
 
-config :fugue, Fugue.Db,
-  url: "http://localhost:3000"
+config :fugue, Fugue.Db, url: "http://localhost:3000"
 
-config :fugue, Fugue.Ish,
-  url: "http://localhost:8080"
+config :fugue, Fugue.Ish, url: "http://localhost:8080"
 
 # Configure the endpoint
 config :fugue, FugueWeb.Endpoint,
