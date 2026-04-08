@@ -12,31 +12,18 @@ defmodule FugueWeb.MoodLive.ParamControls do
             <label class="block text-sm font-medium mb-1">
               Clusters (k): <span class="text-primary">{@k}</span>
             </label>
-            <input
-              type="range"
-              name="k"
-              value={@k}
-              min="2"
-              max="8"
-              step="1"
-              class="range range-primary range-sm w-full"
-            />
+            <input type="range" name="k" value={@k}
+              min="2" max="8" step="1"
+              class="range range-primary range-sm w-full" />
           </div>
 
           <div class="flex-1 min-w-48">
             <label class="block text-sm font-medium mb-1">
-              Fuzziness (m):
-              <span class="text-primary">{:erlang.float_to_binary(@m, decimals: 1)}</span>
+              Fuzziness (m): <span class="text-primary">{:erlang.float_to_binary(@m, decimals: 1)}</span>
             </label>
-            <input
-              type="range"
-              name="m"
-              value={@m}
-              min="1.1"
-              max="4.0"
-              step="0.1"
-              class="range range-secondary range-sm w-full"
-            />
+            <input type="range" name="m" value={@m}
+              min="1.1" max="4.0" step="0.1"
+              class="range range-secondary range-sm w-full" />
           </div>
 
           <div class="flex gap-4 text-sm text-gray-400">

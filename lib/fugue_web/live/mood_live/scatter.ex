@@ -18,10 +18,8 @@ defmodule FugueWeb.MoodLive.ScatterPlot do
               <option value={dim} selected={dim == @scatter_x}>{String.capitalize(dim)}</option>
             <% end %>
             <%= for cluster <- @clusters do %>
-              <option
-                value={"membership:" <> cluster["id"]}
-                selected={"membership:" <> cluster["id"] == @scatter_x}
-              >
+              <option value={"membership:" <> cluster["id"]}
+                selected={("membership:" <> cluster["id"]) == @scatter_x}>
                 {cluster["name"]} membership
               </option>
             <% end %>
@@ -34,10 +32,8 @@ defmodule FugueWeb.MoodLive.ScatterPlot do
               <option value={dim} selected={dim == @scatter_y}>{String.capitalize(dim)}</option>
             <% end %>
             <%= for cluster <- @clusters do %>
-              <option
-                value={"membership:" <> cluster["id"]}
-                selected={"membership:" <> cluster["id"] == @scatter_y}
-              >
+              <option value={"membership:" <> cluster["id"]}
+                selected={("membership:" <> cluster["id"]) == @scatter_y}>
                 {cluster["name"]} membership
               </option>
             <% end %>
@@ -45,12 +41,10 @@ defmodule FugueWeb.MoodLive.ScatterPlot do
         </form>
       </div>
 
-      <div
-        id="scatter-plot"
+      <div id="scatter-plot"
         phx-hook="ScatterPlot"
         phx-update="ignore"
-        style="min-height: 400px;"
-      >
+        style="min-height: 400px;">
       </div>
     </div>
     """
