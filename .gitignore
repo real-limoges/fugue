@@ -37,3 +37,6 @@ npm-debug.log
 /assets/node_modules/
 /.idea/
 /docs/
+
+docker-compose.yml
+Dockerfile.cozodb
