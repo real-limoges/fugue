@@ -17,3 +17,4 @@ jobs:
     uses: real-limoges/real-complex/.github/workflows/deploy-service.yml@main
     with:
       service_name: fugue
+      service_account: fugue-runner@realcomplex-prod.iam.gserviceaccount.com
