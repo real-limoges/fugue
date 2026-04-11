@@ -6,7 +6,7 @@ export const GraphViz = {
   },
 
   async initBloom() {
-    const bloom = await import("../vendor/bloom/pkg/bloom.js");
+    const bloom = await import("/vendor/bloom/bloom.js");
     await bloom.default("/vendor/bloom/bloom_bg.wasm");
 
     const canvas = this.el;
