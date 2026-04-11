@@ -76,13 +76,17 @@ defmodule Fugue.MixProject do
       "assets.setup": [
         "tailwind.install --if-missing",
         "esbuild.install --if-missing",
-        "cmd mkdir -p priv/static/vendor/petri/wasm && cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/",
-        "cmd mkdir -p priv/static/vendor/bloom && cp assets/vendor/bloom/pkg/bloom_bg.wasm priv/static/vendor/bloom/"
+        "cmd mkdir -p priv/static/vendor/petri/wasm",
+        "cmd cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/",
+        "cmd mkdir -p priv/static/vendor/bloom",
+        "cmd cp assets/vendor/bloom/pkg/bloom_bg.wasm priv/static/vendor/bloom/"
       ],
       "assets.build": ["compile", "tailwind fugue", "esbuild fugue"],
       "assets.deploy": [
-        "cmd mkdir -p priv/static/vendor/petri/wasm && cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/",
-        "cmd mkdir -p priv/static/vendor/bloom && cp assets/vendor/bloom/pkg/bloom_bg.wasm priv/static/vendor/bloom/",
+        "cmd mkdir -p priv/static/vendor/petri/wasm",
+        "cmd cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/",
+        "cmd mkdir -p priv/static/vendor/bloom",
+        "cmd cp assets/vendor/bloom/pkg/bloom_bg.wasm priv/static/vendor/bloom/",
         "tailwind fugue --minify",
         "esbuild fugue --minify",
         "phx.digest"
