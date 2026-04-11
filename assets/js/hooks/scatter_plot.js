@@ -1,5 +1,6 @@
 import * as d3 from "d3"
 
+/** Scatter plot with lasso selection, colored by dominant cluster membership. */
 const MARGIN = { top: 20, right: 20, bottom: 40, left: 50 }
 const WIDTH = 500
 const HEIGHT = 400
@@ -22,8 +23,14 @@ export const ScatterPlot = {
     })
 
     this.handleEvent("isolate-cluster", ({ cluster }) => {
-      this.isolateCluster(cluster)
+      this.isolate(cluster)
     })
+  },
+
+  topWeight(point) {
+    const entries = Object.entries(point.memberships || {})
+    if (entries.length === 0) return 0
+    return entries.reduce((a, b) => b[1] > a[1] ? b : a)[1]
   },
 
   getValue(point, axis) {
@@ -100,9 +107,9 @@ export const ScatterPlot = {
       .attr("data-date", d => d.date)
       .attr("cx", d => x(this.getValue(d, xAxis)))
       .attr("cy", d => y(this.getValue(d, yAxis)))
-      .attr("r", 4)
+      .attr("r", d => 3 + 4 * Math.pow(this.topWeight(d), 2))
       .attr("fill", d => this.dotColor(d, clusterColors))
-      .attr("opacity", 0.7)
+      .attr("opacity", d => 0.2 + 0.7 * this.topWeight(d))
 
     // Lasso overlay on top — handles both click and drag
     const lassoG = g.append("g").attr("class", "lasso-layer")
@@ -198,33 +205,34 @@ export const ScatterPlot = {
 
     this.svg.selectAll("circle.dot")
       .attr("opacity", d => {
-        if (dates.length === 0) return 0.7
-        return dateSet.has(d.date) ? 1 : 0.1
+        if (dates.length === 0) return 0.2 + 0.7 * this.topWeight(d)
+        return dateSet.has(d.date) ? 1 : 0.06
       })
       .attr("r", d => {
-        if (dates.length === 0) return 4
-        return dateSet.has(d.date) ? 6 : 3
+        const base = 3 + 4 * Math.pow(this.topWeight(d), 2)
+        if (dates.length === 0) return base
+        return dateSet.has(d.date) ? base + 2 : 2
       })
   },
 
-  isolateCluster(cluster) {
+  isolate(cluster) {
     if (!this.svg) return
 
     if (!cluster) {
       this.svg.selectAll("circle.dot")
-        .attr("opacity", 0.7)
-        .attr("r", 4)
+        .attr("opacity", d => 0.2 + 0.7 * this.topWeight(d))
+        .attr("r", d => 3 + 4 * Math.pow(this.topWeight(d), 2))
       return
     }
 
     this.svg.selectAll("circle.dot")
       .attr("opacity", d => {
         const mem = (d.memberships || {})[cluster] || 0
-        return mem >= 0.3 ? 0.9 : 0.05
+        return mem >= 0.3 ? 0.3 + 0.7 * mem : 0.04
       })
       .attr("r", d => {
         const mem = (d.memberships || {})[cluster] || 0
-        return mem >= 0.3 ? 5 : 2
+        return mem >= 0.3 ? 3 + 5 * mem : 2
       })
   },
 
@@ -254,7 +262,5 @@ export const ScatterPlot = {
       if (intersect) inside = !inside
     }
     return inside
-  },
-
-  destroyed() {}
+  }
 }

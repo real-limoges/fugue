@@ -1,14 +1,22 @@
 defmodule FugueWeb.MoodLive do
+  @moduledoc "Mood journal explorer — fuzzy-clustering visualization of daily mood entries."
+
   use FugueWeb, :live_view
 
-  alias FugueWeb.MoodLive.{Calendar, ScatterPlot, GapAnalysis, ParamControls}
-  alias FugueWeb.MoodLive.Structs.{AnalysisResult, CalendarDay, ScatterPoint, GapData}
+  alias FugueWeb.MoodLive.{
+    Calendar,
+    ClusterTransitions,
+    DataTransforms,
+    GapAnalysis,
+    MoodTransitions,
+    ParamControls
+  }
+
+  alias FugueWeb.MoodLive.Structs.{AnalysisResult, CalendarDay, GapData}
   alias Fugue.Ish
 
   @default_k 3
-  @default_m 2.0
-  # Synthwave palette — matches the app's oklch theme hues
-  @cluster_colors ~w(#e44dbc #42c8e6 #6ee64d #e6a542 #a86ee6 #e6e042 #e6425a #42e6b8)
+  @default_m 1.5
 
   def mount(_params, _session, socket) do
     socket =
@@ -20,12 +28,12 @@ defmodule FugueWeb.MoodLive do
         entries: [],
         analysis: %AnalysisResult{},
         gaps: nil,
-        scatter_x: "sleep",
-        scatter_y: "anxiety",
         highlighted_dates: [],
         selected_gap: nil,
         selected_cluster: nil,
-        date_range: nil
+        selected_day: nil,
+        date_range: nil,
+        mood_transitions: []
       )
 
     if connected?(socket), do: send(self(), :load_data)
@@ -44,9 +52,10 @@ defmodule FugueWeb.MoodLive do
 
     case {results.data, results.analysis, results.gaps} do
       {{:ok, entries}, {:ok, raw_analysis}, {:ok, raw_gaps}} ->
-        analysis = parse_analysis(raw_analysis)
+        analysis = DataTransforms.parse_analysis(raw_analysis, entries)
 
-        gaps = raw_gaps |> GapData.from_api() |> remap_gap_keys(analysis.name_to_id)
+        gaps =
+          raw_gaps |> GapData.from_api() |> DataTransforms.remap_gap_keys(analysis.name_to_id)
 
         socket =
           socket
@@ -68,7 +77,7 @@ defmodule FugueWeb.MoodLive do
   def handle_info({:recluster, k, m}, socket) do
     case Ish.cluster(k, m) do
       {:ok, raw} ->
-        analysis = parse_analysis(raw)
+        analysis = DataTransforms.parse_analysis(raw, socket.assigns.entries)
 
         socket =
           socket
@@ -102,30 +111,14 @@ defmodule FugueWeb.MoodLive do
     {:noreply, socket}
   end
 
-  def handle_event("update_x_axis", %{"value" => value}, socket) do
-    socket =
-      socket
-      |> assign(:scatter_x, value)
-      |> push_scatter_data()
-
-    {:noreply, socket}
-  end
-
-  def handle_event("update_y_axis", %{"value" => value}, socket) do
-    socket =
-      socket
-      |> assign(:scatter_y, value)
-      |> push_scatter_data()
-
-    {:noreply, socket}
-  end
-
   def handle_event("day_selected", %{"date" => date}, socket) do
+    day_detail = DataTransforms.build_day_detail(date, socket.assigns)
+
     {:noreply,
      socket
-     |> assign(highlighted_dates: [date], selected_gap: nil)
+     |> assign(highlighted_dates: [date], selected_gap: nil, selected_day: day_detail)
      |> push_event("highlight-calendar", %{dates: [date]})
-     |> push_event("highlight-scatter", %{dates: [date]})}
+     |> push_event("day-focus", %{day: day_detail})}
   end
 
   def handle_event("lasso_selected", %{"dates" => dates}, socket) do
@@ -138,22 +131,20 @@ defmodule FugueWeb.MoodLive do
   def handle_event("gap_selected", %{"start" => start, "length" => length}, socket) do
     gap = %{"start" => start, "length" => length}
     len = if is_binary(length), do: String.to_integer(length), else: length
-    surrounding = gap_surrounding_dates(start, len)
 
     {:noreply,
      socket
      |> assign(selected_gap: gap, highlighted_dates: [])
-     |> push_event("highlight-calendar-gap", %{start: start, length: len})
-     |> push_event("highlight-scatter", %{dates: surrounding})}
+     |> push_event("highlight-calendar-gap", %{start: start, length: len})}
   end
 
   def handle_event("clear_highlights", _params, socket) do
     {:noreply,
      socket
-     |> assign(highlighted_dates: [], selected_gap: nil, selected_cluster: nil)
+     |> assign(highlighted_dates: [], selected_gap: nil, selected_cluster: nil, selected_day: nil)
      |> push_event("highlight-calendar", %{dates: []})
-     |> push_event("highlight-scatter", %{dates: []})
-     |> push_event("isolate-cluster", %{cluster: nil})}
+     |> push_event("isolate-cluster", %{cluster: nil})
+     |> push_event("day-focus", %{day: nil})}
   end
 
   def handle_event("cluster_selected", %{"cluster" => cluster}, socket) do
@@ -162,7 +153,10 @@ defmodule FugueWeb.MoodLive do
     socket =
       socket
       |> assign(selected_cluster: selected, highlighted_dates: [], selected_gap: nil)
-      |> push_event("isolate-cluster", %{cluster: selected})
+      |> push_event("isolate-cluster", %{
+        cluster: selected,
+        clusterColors: socket.assigns.analysis.cluster_colors
+      })
       |> push_gap_data_for_cluster(selected)
 
     {:noreply, socket}
@@ -175,7 +169,6 @@ defmodule FugueWeb.MoodLive do
     socket =
       socket
       |> assign(date_range: range, highlighted_dates: [], selected_gap: nil)
-      |> push_scatter_data()
       |> push_event("highlight-calendar", %{dates: dates_in_range(socket.assigns.entries, range)})
 
     {:noreply, socket}
@@ -185,72 +178,10 @@ defmodule FugueWeb.MoodLive do
     socket =
       socket
       |> assign(date_range: nil, highlighted_dates: [])
-      |> push_scatter_data()
       |> push_event("highlight-calendar", %{dates: []})
       |> push_event("clear-brush", %{})
 
     {:noreply, socket}
-  end
-
-  # --- Data transforms ---
-
-  defp parse_analysis(raw) do
-    clusters =
-      (raw["clusters"] || [])
-      |> Enum.with_index()
-      |> Enum.map(fn {c, i} -> Map.put(c, "id", "cluster_#{i}") end)
-
-    name_to_id =
-      Enum.into(clusters, %{}, fn c -> {c["name"], c["id"]} end)
-
-    %AnalysisResult{
-      clusters: clusters,
-      membership: raw["membership"] || [],
-      cluster_colors: build_cluster_colors(clusters),
-      name_to_id: name_to_id,
-      fpc: raw["fpc"],
-      iterations: raw["iterations"]
-    }
-  end
-
-  defp build_memberships(row, clusters) when is_list(row) do
-    clusters
-    |> Enum.with_index()
-    |> Enum.into(%{}, fn {c, i} -> {c["id"], Enum.at(row, i, 0)} end)
-  end
-
-  defp build_memberships(_, _), do: %{}
-
-  defp remap_gap_keys(nil, _mapping), do: nil
-
-  defp remap_gap_keys(%GapData{} = gaps, mapping) do
-    %GapData{
-      transitions:
-        Enum.map(gaps.transitions, fn t ->
-          t
-          |> Map.update("before", %{}, &remap_keys(&1, mapping))
-          |> Map.update("after", %{}, &remap_keys(&1, mapping))
-        end),
-      length_distribution: gaps.length_distribution,
-      imputed_memberships:
-        Map.new(gaps.imputed_memberships, fn {date, mems} ->
-          {date, remap_keys(mems, mapping)}
-        end)
-    }
-  end
-
-  defp remap_keys(map, mapping) when is_map(map) do
-    Map.new(map, fn {k, v} -> {Map.get(mapping, k, k), v} end)
-  end
-
-  defp remap_keys(other, _mapping), do: other
-
-  defp build_cluster_colors(clusters) do
-    clusters
-    |> Enum.with_index()
-    |> Enum.into(%{}, fn {c, i} ->
-      {c["id"], Enum.at(@cluster_colors, rem(i, length(@cluster_colors)))}
-    end)
   end
 
   # --- Push helpers ---
@@ -258,42 +189,26 @@ defmodule FugueWeb.MoodLive do
   defp push_viz_data(socket) do
     socket
     |> push_calendar_data()
-    |> push_scatter_data()
     |> push_gap_data()
     |> push_brush_data()
+    |> push_radar_data()
+    |> push_stream_data()
+    |> push_sparkline_data()
+    |> push_correlation_data()
+    |> push_distribution_data()
+    |> push_mood_transitions()
     |> push_event("highlight-calendar", %{dates: []})
-    |> push_event("highlight-scatter", %{dates: []})
     |> push_event("isolate-cluster", %{cluster: nil})
   end
 
   defp push_calendar_data(socket) do
     %{entries: entries, analysis: analysis, gaps: gaps} = socket.assigns
-    days = build_calendar_days(entries, analysis, gaps)
+    days = DataTransforms.build_calendar_days(entries, analysis, gaps)
 
     push_event(socket, "update-calendar", %{
       days: Enum.map(days, &CalendarDay.to_event/1),
-      clusterColors: analysis.cluster_colors
-    })
-  end
-
-  defp push_scatter_data(socket) do
-    %{entries: entries, analysis: analysis} = socket.assigns
-    points = build_scatter_points(entries, analysis)
-
-    filtered =
-      case socket.assigns.date_range do
-        {start, end_date} ->
-          Enum.filter(points, fn p -> p.date >= start and p.date <= end_date end)
-
-        _ ->
-          points
-      end
-
-    push_event(socket, "update-scatter", %{
-      points: Enum.map(filtered, &ScatterPoint.to_event/1),
-      xAxis: socket.assigns.scatter_x,
-      yAxis: socket.assigns.scatter_y,
-      clusterColors: analysis.cluster_colors
+      clusterColors: analysis.cluster_colors,
+      clusterNames: Enum.into(analysis.clusters, %{}, fn c -> {c["id"], c["name"]} end)
     })
   end
 
@@ -343,76 +258,146 @@ defmodule FugueWeb.MoodLive do
     push_event(socket, "update-brush-timeline", %{dates: dates})
   end
 
-  # --- Builders ---
+  defp push_radar_data(socket) do
+    %{entries: entries, analysis: analysis} = socket.assigns
+    centroids = DataTransforms.build_centroids(entries, analysis)
 
-  defp build_calendar_days(entries, %AnalysisResult{} = analysis, gaps) do
-    imputed = if gaps, do: gaps.imputed_memberships, else: %{}
-
-    entry_map =
-      entries
-      |> Enum.with_index()
-      |> Enum.into(%{}, fn {entry, idx} ->
-        mems = build_memberships(Enum.at(analysis.membership, idx), analysis.clusters)
-        {entry["date"], %{dimensions: entry["dimensions"], memberships: mems}}
-      end)
-
-    dates = Map.keys(entry_map) ++ Map.keys(imputed)
-
-    case dates do
-      [] ->
-        []
-
-      _ ->
-        min_date = Enum.min(dates)
-        max_date = Enum.max(dates)
-
-        Date.range(Date.from_iso8601!(min_date), Date.from_iso8601!(max_date))
-        |> Enum.map(fn date ->
-          ds = Date.to_iso8601(date)
-
-          case Map.get(entry_map, ds) do
-            nil ->
-              %CalendarDay{
-                date: ds,
-                dimensions: nil,
-                memberships: Map.get(imputed, ds, %{}),
-                is_gap: true
-              }
-
-            %{dimensions: dims, memberships: mems} ->
-              %CalendarDay{
-                date: ds,
-                dimensions: dims,
-                memberships: mems,
-                is_gap: false
-              }
-          end
-        end)
-    end
+    push_event(socket, "update-radar", %{
+      centroids: centroids,
+      clusterColors: analysis.cluster_colors,
+      dimensions: DataTransforms.dimensions()
+    })
   end
 
-  defp build_scatter_points(entries, %AnalysisResult{} = analysis) do
-    entries
-    |> Enum.with_index()
-    |> Enum.map(fn {entry, idx} ->
-      mems = build_memberships(Enum.at(analysis.membership, idx), analysis.clusters)
+  defp push_stream_data(socket) do
+    %{entries: entries, analysis: analysis} = socket.assigns
 
-      %ScatterPoint{
-        date: entry["date"],
-        values: entry["dimensions"],
-        memberships: mems
-      }
-    end)
+    series =
+      entries
+      |> Enum.with_index()
+      |> Enum.map(fn {entry, idx} ->
+        mems =
+          DataTransforms.build_memberships(Enum.at(analysis.membership, idx), analysis.clusters)
+
+        %{date: entry["date"], memberships: mems}
+      end)
+
+    cluster_ids = Enum.map(analysis.clusters, & &1["id"])
+
+    cluster_names =
+      Enum.into(analysis.clusters, %{}, fn c -> {c["id"], c["name"]} end)
+
+    push_event(socket, "update-stream", %{
+      series: series,
+      clusterColors: analysis.cluster_colors,
+      clusterIds: cluster_ids,
+      clusterNames: cluster_names
+    })
+  end
+
+  defp push_sparkline_data(socket) do
+    entries = socket.assigns.entries
+
+    push_event(socket, "update-sparklines", %{
+      entries: Enum.map(entries, fn e -> %{date: e["date"], dimensions: e["dimensions"]} end),
+      dimensions: DataTransforms.dimensions()
+    })
+  end
+
+  defp push_correlation_data(socket) do
+    entries = socket.assigns.entries
+    matrix = DataTransforms.build_correlation_matrix(entries, DataTransforms.dimensions())
+
+    push_event(socket, "update-correlations", %{
+      matrix: matrix,
+      dimensions: DataTransforms.dimensions()
+    })
+  end
+
+  defp push_distribution_data(socket) do
+    entries = socket.assigns.entries
+
+    push_event(socket, "update-distributions", %{
+      entries: Enum.map(entries, fn e -> %{dimensions: e["dimensions"]} end),
+      dimensions: DataTransforms.dimensions()
+    })
+  end
+
+  defp push_mood_transitions(socket) do
+    %{entries: entries, analysis: analysis} = socket.assigns
+    clusters = analysis.clusters
+    cluster_ids = Enum.map(clusters, & &1["id"])
+    id_names = Enum.into(clusters, %{}, fn c -> {c["id"], c["name"]} end)
+
+    # Build day-by-day dominant cluster sequence
+    daily =
+      entries
+      |> Enum.with_index()
+      |> Enum.map(fn {entry, idx} ->
+        row = Enum.at(analysis.membership, idx, [])
+
+        dominant =
+          clusters
+          |> Enum.with_index()
+          |> Enum.max_by(fn {_c, i} -> Enum.at(row, i, 0) end, fn -> {nil, 0} end)
+          |> elem(0)
+
+        %{date: entry["date"], cluster: dominant && dominant["id"]}
+      end)
+      |> Enum.filter(& &1.cluster)
+
+    # Find transition points (where dominant cluster changes)
+    transitions =
+      daily
+      |> Enum.chunk_every(2, 1, :discard)
+      |> Enum.filter(fn [a, b] -> a.cluster != b.cluster end)
+      |> Enum.map(fn [a, b] -> %{date: b.date, from: a.cluster, to: b.cluster} end)
+
+    # Build segments (runs of the same cluster)
+    segments = DataTransforms.build_segments(daily)
+
+    # Chord data: transition counts between all pairs
+    chord_matrix =
+      Enum.reduce(transitions, %{}, fn t, acc ->
+        Map.update(acc, {t.from, t.to}, 1, &(&1 + 1))
+      end)
+
+    chord_rows =
+      Enum.map(cluster_ids, fn from ->
+        Enum.map(cluster_ids, fn to ->
+          Map.get(chord_matrix, {from, to}, 0)
+        end)
+      end)
+
+    # Sankey data: monthly transition flows
+    monthly_flows =
+      transitions
+      |> Enum.group_by(fn t -> String.slice(t.date, 0, 7) end)
+      |> Enum.sort_by(fn {month, _} -> month end)
+      |> Enum.map(fn {month, ts} ->
+        flows =
+          Enum.reduce(ts, %{}, fn t, acc ->
+            key = "#{t.from}->#{t.to}"
+            Map.update(acc, key, 1, &(&1 + 1))
+          end)
+
+        %{month: month, flows: flows}
+      end)
+
+    socket
+    |> assign(mood_transitions: transitions)
+    |> push_event("update-mood-transitions", %{
+      transitions: transitions,
+      segments: segments,
+      chordMatrix: chord_rows,
+      monthlyFlows: monthly_flows,
+      clusterIds: cluster_ids,
+      clusterNames: id_names,
+      clusterColors: analysis.cluster_colors
+    })
   end
 
   # --- Helpers ---
-
-  defp gap_surrounding_dates(start, length) do
-    start_date = Date.from_iso8601!(start)
-    before = Date.add(start_date, -1) |> Date.to_iso8601()
-    after_date = Date.add(start_date, length) |> Date.to_iso8601()
-    [before, after_date]
-  end
 
   defp id_to_name(clusters) do
     Enum.into(clusters, %{}, fn c -> {c["id"], c["name"]} end)
@@ -427,10 +412,15 @@ defmodule FugueWeb.MoodLive do
   # --- Render ---
 
   def render(assigns) do
-    ~H"""
-    <div class="mood-explorer p-4">
-      <h1 class="text-2xl font-bold mb-4">Mood Explorer</h1>
+    assigns =
+      if not assigns.loading do
+        Phoenix.Component.assign(assigns, :stats, DataTransforms.narrative_stats(assigns))
+      else
+        assigns
+      end
 
+    ~H"""
+    <div id="mood-experience" phx-hook="MoodExperience" class="mood-explorer p-4 max-w-6xl mx-auto">
       <%= if @error do %>
         <div class="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-4">
           {@error}
@@ -442,91 +432,299 @@ defmodule FugueWeb.MoodLive do
           <p class="text-gray-400 text-lg">Loading mood data...</p>
         </div>
       <% else %>
-        <.live_component
-          module={ParamControls}
-          id="params"
-          k={@k}
-          m={@m}
-          fpc={@analysis.fpc}
-          iterations={@analysis.iterations}
-          cluster_count={length(@analysis.clusters)}
-        />
+        <%!-- ═══════════════════════════════════════ --%>
+        <%!-- CHAPTER 1: WHO AM I                     --%>
+        <%!-- ═══════════════════════════════════════ --%>
 
-        <div class="flex flex-wrap items-center gap-2 mt-4">
-          <span class="text-sm text-gray-400">Clusters:</span>
-          <%= for cluster <- @analysis.clusters do %>
-            <button
-              phx-click="cluster_selected"
-              phx-value-cluster={cluster["id"]}
-              class={"px-3 py-1 rounded-full text-xs font-medium transition-all cursor-pointer border #{if @selected_cluster == cluster["id"], do: "ring-2 ring-white ring-offset-1 ring-offset-black scale-110", else: "opacity-70 hover:opacity-100"}"}
-              style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}44; color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#aaa")}; border-color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}88"}
-            >
-              {cluster["name"]}
-            </button>
-          <% end %>
-          <%= if @selected_cluster do %>
-            <button
-              phx-click="cluster_selected"
-              phx-value-cluster={@selected_cluster}
-              class="text-xs text-gray-500 hover:text-gray-300 ml-1"
-            >
-              clear
-            </button>
-          <% end %>
-        </div>
+        <header class="mb-8">
+          <h1 class="text-3xl font-bold tracking-tight">My Mood Journal</h1>
+          <p class="text-gray-500 mt-1">
+            {@stats.entry_count} days tracked
+            <%= if @stats.date_range do %>
+              from {elem(@stats.date_range, 0)} to {elem(@stats.date_range, 1)}
+            <% end %>
+          </p>
+        </header>
 
-        <div class="mt-4">
-          <div
-            id="temporal-brush"
-            phx-hook="TemporalBrush"
-            phx-update="ignore"
-            style="min-height: 50px;"
-          >
-          </div>
-          <%= if @date_range do %>
-            <div class="flex items-center gap-2 mt-1">
-              <span class="text-xs text-gray-500">
-                {elem(@date_range, 0)} → {elem(@date_range, 1)}
+        <section class="mb-10">
+          <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-4">My mood states</h2>
+
+          <p class="text-sm text-gray-400 mb-3">
+            Across {@stats.entry_count} days, my moods settle into {@stats.cluster_count} distinct patterns.
+            <%= if @stats.most_common do %>
+              I spend the most time in
+              <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.most_common.id, "#aaa")}"}>
+                {@stats.most_common.name}
               </span>
+              ({@stats.most_common.days} days).
+            <% end %>
+            Click any state to isolate it across every visualization.
+          </p>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <%= for cluster <- @analysis.clusters do %>
               <button
-                phx-click="brush_changed"
-                phx-value-start=""
-                phx-value-end=""
-                class="text-xs text-gray-500 hover:text-gray-300"
+                phx-click="cluster_selected"
+                phx-value-cluster={cluster["id"]}
+                class={"inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer border #{if @selected_cluster == cluster["id"], do: "ring-2 ring-offset-1 ring-offset-base-300 scale-105", else: "hover:scale-105"}"}
+                style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}#{if @selected_cluster == cluster["id"], do: "55", else: "28"}; color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#aaa")}; border-color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}#{if @selected_cluster == cluster["id"], do: "aa", else: "55"}; #{if @selected_cluster && @selected_cluster != cluster["id"], do: "opacity:0.35", else: ""}"}
               >
-                clear
+                <span
+                  class="inline-block w-2 h-2 rounded-full"
+                  style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}"}
+                >
+                </span>
+                {cluster["name"]}
               </button>
+            <% end %>
+            <%= if @selected_cluster do %>
+              <button
+                phx-click="clear_highlights"
+                class="text-xs text-gray-600 hover:text-gray-400 ml-1"
+              >
+                &times; clear
+              </button>
+            <% end %>
+          </div>
+
+          <div class="bg-base-200 rounded-lg p-4 mt-4">
+            <div
+              id="cluster-radar"
+              phx-hook="ClusterRadar"
+              phx-update="ignore"
+              style="min-height: 180px;"
+            >
             </div>
-          <% end %>
-        </div>
+          </div>
+        </section>
 
-        <div class="mt-4">
-          <.live_component
-            module={Calendar}
-            id="calendar"
-            highlighted_dates={@highlighted_dates}
-            selected_gap={@selected_gap}
-          />
-        </div>
+        <%!-- ═══════════════════════════════════════ --%>
+        <%!-- CHAPTER 2: THE FULL PICTURE             --%>
+        <%!-- ═══════════════════════════════════════ --%>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <.live_component
-            module={ScatterPlot}
-            id="scatter"
-            scatter_x={@scatter_x}
-            scatter_y={@scatter_y}
-            clusters={@analysis.clusters}
-          />
+        <section class="mb-10">
+          <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-1">Day by day</h2>
+          <p class="text-sm text-gray-400 mb-3">
+            Every square is a day. Color shows the dominant mood state; brightness shows how strongly I belonged to it.
+            Brush the timeline to zoom in.
+          </p>
 
-          <.live_component
-            module={GapAnalysis}
-            id="gaps"
-            gaps={@gaps}
-            cluster_colors={@analysis.cluster_colors}
-            cluster_names={id_to_name(@analysis.clusters)}
-            selected_cluster={@selected_cluster}
-          />
-        </div>
+          <div>
+            <div
+              id="temporal-brush"
+              phx-hook="TemporalBrush"
+              phx-update="ignore"
+              style="min-height: 50px;"
+            >
+            </div>
+            <%= if @date_range do %>
+              <div class="flex items-center gap-2 mt-1">
+                <span class="text-xs text-gray-500">
+                  {elem(@date_range, 0)} → {elem(@date_range, 1)}
+                </span>
+                <button
+                  phx-click="brush_changed"
+                  phx-value-start=""
+                  phx-value-end=""
+                  class="text-xs text-gray-500 hover:text-gray-300"
+                >
+                  clear
+                </button>
+              </div>
+            <% end %>
+          </div>
+
+          <div class="mt-3">
+            <.live_component
+              module={Calendar}
+              id="calendar"
+              highlighted_dates={@highlighted_dates}
+              selected_gap={@selected_gap}
+            />
+          </div>
+
+          <div class="bg-base-200 rounded-lg p-4 mt-4">
+            <h3 class="text-sm font-semibold text-gray-400 mb-2">How my states ebb and flow</h3>
+            <div
+              id="cluster-stream"
+              phx-hook="ClusterStream"
+              phx-update="ignore"
+              style="min-height: 210px;"
+            >
+            </div>
+          </div>
+        </section>
+
+        <%!-- ═══════════════════════════════════════ --%>
+        <%!-- CHAPTER 3: HOW MY MOODS SHIFT           --%>
+        <%!-- ═══════════════════════════════════════ --%>
+
+        <section class="mb-10">
+          <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-1">How my moods shift</h2>
+          <p class="text-sm text-gray-400 mb-3">
+            My dominant mood state changed {@stats.transition_count} times.
+            The timeline below shows each reign of a mood state as a colored block, with white markers at every shift.
+          </p>
+
+          <div class="bg-base-200 rounded-lg p-4">
+            <div
+              id="transition-timeline"
+              phx-hook="TransitionTimeline"
+              phx-update="ignore"
+              style="min-height: 50px;"
+            >
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+            <div class="bg-base-200 rounded-lg p-4">
+              <h3 class="text-sm font-semibold text-gray-400 mb-2">Where do I go from here?</h3>
+              <p class="text-xs text-gray-500 mb-3">
+                The weight of each flow shows how often one state leads to another.
+              </p>
+              <div
+                id="transition-sankey"
+                phx-hook="TransitionSankey"
+                phx-update="ignore"
+                style="min-height: 280px;"
+              >
+              </div>
+            </div>
+
+            <div class="bg-base-200 rounded-lg p-4 flex flex-col items-center">
+              <h3 class="text-sm font-semibold text-gray-400 mb-2 self-start">
+                The full web of transitions
+              </h3>
+              <p class="text-xs text-gray-500 mb-3 self-start">
+                Thicker ribbons mean more frequent transitions between those two states.
+              </p>
+              <div
+                id="transition-chord"
+                phx-hook="TransitionChord"
+                phx-update="ignore"
+                style="min-height: 280px;"
+              >
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4">
+            <.live_component
+              module={MoodTransitions}
+              id="mood-transitions-list"
+              transitions={@mood_transitions}
+              cluster_colors={@analysis.cluster_colors}
+              cluster_names={id_to_name(@analysis.clusters)}
+              selected_cluster={@selected_cluster}
+            />
+          </div>
+        </section>
+
+        <%!-- ═══════════════════════════════════════ --%>
+        <%!-- CHAPTER 4: UNDER THE HOOD               --%>
+        <%!-- ═══════════════════════════════════════ --%>
+
+        <section class="mb-10">
+          <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-1">Under the hood</h2>
+          <p class="text-sm text-gray-400 mb-3">
+            Each day I track five dimensions: sleep, anxiety, sensitivity, outlook, and speed.
+            Here's how they move over time, how they relate to each other, and how they're distributed.
+          </p>
+
+          <div class="bg-base-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-400 mb-2">Dimension trends</h3>
+            <div
+              id="dimension-sparklines"
+              phx-hook="DimensionSparklines"
+              phx-update="ignore"
+              style="min-height: 310px;"
+            >
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+            <div class="bg-base-200 rounded-lg p-4 flex flex-col items-center">
+              <h3 class="text-sm font-semibold text-gray-400 mb-2 self-start">Correlations</h3>
+              <p class="text-xs text-gray-500 mb-2 self-start">
+                Which dimensions move together? Pink means they rise and fall in sync; cyan means they're inversely related.
+              </p>
+              <div
+                id="correlation-heatmap"
+                phx-hook="CorrelationHeatmap"
+                phx-update="ignore"
+                style="min-height: 250px;"
+              >
+              </div>
+            </div>
+
+            <div class="bg-base-200 rounded-lg p-4">
+              <h3 class="text-sm font-semibold text-gray-400 mb-2">Distributions</h3>
+              <p class="text-xs text-gray-500 mb-2">
+                How each dimension is spread across all tracked days. The line marks the median; the dot marks the mean.
+              </p>
+              <div
+                id="dimension-distributions"
+                phx-hook="DimensionDistributions"
+                phx-update="ignore"
+                style="min-height: 230px;"
+              >
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <%!-- ═══════════════════════════════════════ --%>
+        <%!-- CHAPTER 5: THE GAPS                     --%>
+        <%!-- ═══════════════════════════════════════ --%>
+
+        <section class="mb-6">
+          <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-1">The gaps</h2>
+          <p class="text-sm text-gray-400 mb-3">
+            <%= if @stats.gap_count > 0 do %>
+              I missed some days. {@stats.gap_count} gaps in the data — and sometimes my mood state was different on the other side.
+            <% else %>
+              No gaps in the data.
+            <% end %>
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <.live_component
+              module={GapAnalysis}
+              id="gaps"
+              gaps={@gaps}
+              cluster_colors={@analysis.cluster_colors}
+              cluster_names={id_to_name(@analysis.clusters)}
+              selected_cluster={@selected_cluster}
+            />
+
+            <.live_component
+              module={ClusterTransitions}
+              id="cluster-transitions"
+              gaps={@gaps}
+              cluster_colors={@analysis.cluster_colors}
+              cluster_names={id_to_name(@analysis.clusters)}
+              selected_cluster={@selected_cluster}
+            />
+          </div>
+        </section>
+
+        <%!-- Param controls at the very bottom — they're for tuning, not for the story --%>
+        <details class="mt-8 mb-4">
+          <summary class="text-xs uppercase tracking-widest text-gray-600 cursor-pointer hover:text-gray-400">
+            Clustering parameters
+          </summary>
+          <div class="mt-2">
+            <.live_component
+              module={ParamControls}
+              id="params"
+              k={@k}
+              m={@m}
+              fpc={@analysis.fpc}
+              iterations={@analysis.iterations}
+              cluster_count={length(@analysis.clusters)}
+            />
+          </div>
+        </details>
       <% end %>
     </div>
     """

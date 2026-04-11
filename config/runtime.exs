@@ -45,7 +45,7 @@ if config_env() == :prod do
 
   config :fugue, Fugue.Ish,
     url: System.get_env("ISH_URL", "http://localhost:7333"),
-    gcp_auth: true
+    gcp_auth: System.get_env("ISH_GCP_AUTH", "false") == "true"
 
   config :fugue, FugueWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
