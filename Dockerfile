@@ -25,13 +25,6 @@ RUN mix deps.get --only prod
 RUN npm install --prefix assets
 RUN mix compile
 
-# Copy wasm files from vendor submodules before asset pipeline runs.
-# Mix aliases silently swallow cp failures, so we do this explicitly.
-RUN mkdir -p priv/static/vendor/petri/wasm && \
-    cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/
-RUN mkdir -p priv/static/vendor/bloom && \
-    cp assets/vendor/bloom/pkg/bloom_bg.wasm priv/static/vendor/bloom/
-
 RUN mix assets.deploy
 RUN mix release
 
