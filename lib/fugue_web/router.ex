@@ -18,5 +18,6 @@ defmodule FugueWeb.Router do
     get "/blog/feed.xml", BlogController, :feed
     get "/blog/:slug", BlogController, :show
     live "/mood", MoodLive
+    live "/graph", GraphLive
   end
 end

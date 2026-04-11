@@ -1,79 +1,74 @@
-import { Graph } from '@cosmos.gl/graph';
-
 export const GraphViz = {
   mounted() {
-    // Initialize Cosmograph
-    this.graph = new Graph(this.el, {
-      backgroundColor: '#0a0a1a',
-      nodeColor: node => `rgb(${node.color[0]}, ${node.color[1]}, ${node.color[2]})`,
-      nodeSize: node => node.size || 4,
-      linkColor: '#ffffff11',
-      linkWidth: 0.5,
-      linkArrows: false,
+    this.engine = null;
+    this.raf = null;
+    this.initBloom();
+  },
 
-      // Beautiful defaults
-      simulation: {
-        repulsion: 0.5,
-        gravity: 0.2,
-        linkSpring: 1.0,
-        linkDistance: 2,
-        friction: 0.85
-      },
+  async initBloom() {
+    const bloom = await import("../vendor/bloom/pkg/bloom.js");
+    await bloom.default("/vendor/bloom/bloom_bg.wasm");
 
-      // Rendering quality
-      spaceSize: 8192,
-      renderLinks: true,
-      curvedLinks: false,
+    const canvas = this.el;
+    canvas.width = canvas.clientWidth * (window.devicePixelRatio || 1);
+    canvas.height = canvas.clientHeight * (window.devicePixelRatio || 1);
 
-      // Interactions
-      onClick: (node) => {
-        if (node) {
-          this.pushEvent("node_clicked", { id: node.id });
-        }
-      },
+    this.engine = new bloom.BloomEngine(canvas);
+    await this.engine.init_renderer(canvas);
 
-      // Hover effect
-      onNodeMouseOver: (node) => {
-        if (node) {
-          this.graph.selectNode(node.id);
-        }
-      },
+    let last = performance.now();
+    const loop = (now) => {
+      this.engine.tick((now - last) / 1000);
+      last = now;
+      this.raf = requestAnimationFrame(loop);
+    };
+    this.raf = requestAnimationFrame(loop);
 
-      // Performance
-      pixelRatio: 2,
-      scaleNodesOnZoom: true,
-
-      // Initial view
-      fitViewOnInit: true,
-      fitViewDelay: 1000
+    this.handleEvent("render-graph", ({ data }) => {
+      const binary = Uint8Array.from(atob(data), c => c.charCodeAt(0));
+      this.engine.load_graph(binary);
     });
 
-    // Listen for graph data from LiveView
-    this.handleEvent("render-graph", ({ nodes, links }) => {
-      console.log(`Rendering ${nodes.length} nodes, ${links.length} links`);
-      this.graph.setData(nodes, links);
-    });
-
-    // Highlight nodes from search
     this.handleEvent("highlight-nodes", ({ node_ids }) => {
-      this.graph.selectNodes(node_ids);
-
-      // Auto-zoom to highlighted nodes
+      // TODO: bloom doesn't expose batch highlight yet —
+      // for now focus on the first match
       if (node_ids.length > 0) {
-        this.graph.fitView(node_ids, 1000);
+        this.engine.focus_node(node_ids[0]);
       }
     });
 
-    // Focus on specific node
     this.handleEvent("focus-node", ({ id }) => {
-      this.graph.selectNode(id);
-      this.graph.focusNode(id, 1000);
+      this.engine.focus_node(id);
     });
+
+    // Forward hover/click to LiveView
+    canvas.addEventListener("mousemove", (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      const x = (e.clientX - rect.left) * dpr;
+      const y = (e.clientY - rect.top) * dpr;
+      this.hoveredNode = this.engine.hover(x, y);
+    });
+
+    canvas.addEventListener("click", () => {
+      if (this.hoveredNode != null) {
+        this.pushEvent("node_clicked", { id: this.hoveredNode });
+      }
+    });
+
+    // Handle resize
+    this.resizeObserver = new ResizeObserver(() => {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = canvas.clientWidth * dpr;
+      canvas.height = canvas.clientHeight * dpr;
+      this.engine.resize(canvas.width, canvas.height);
+    });
+    this.resizeObserver.observe(canvas);
   },
 
   destroyed() {
-    if (this.graph) {
-      this.graph.destroy();
-    }
+    if (this.raf) cancelAnimationFrame(this.raf);
+    if (this.resizeObserver) this.resizeObserver.disconnect();
+    if (this.engine) this.engine.free();
   }
 };

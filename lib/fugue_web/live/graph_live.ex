@@ -1,6 +1,6 @@
 defmodule FugueWeb.GraphLive do
   use FugueWeb, :live_view
-  alias Fugue.Graph.Loader
+  alias Fugue.Graph.{BlomEncoder, Loader}
 
   @topics ~w(rust_programming functional_programming)
 
@@ -10,7 +10,8 @@ defmodule FugueWeb.GraphLive do
      |> assign(:topics, @topics)
      |> assign(:current_topic, nil)
      |> assign(:search_query, "")
-     |> assign(:node_count, 0)}
+     |> assign(:node_count, 0)
+     |> assign(:selected_node, nil)}
   end
 
   def handle_event("load_topic", %{"topic" => topic}, socket) do
@@ -26,11 +27,14 @@ defmodule FugueWeb.GraphLive do
           %{nodes: [], links: []}
       end
 
+    blom_binary = BlomEncoder.encode(graph_data)
+    blom_b64 = Base.encode64(blom_binary)
+
     {:noreply,
      socket
      |> assign(:current_topic, topic)
      |> assign(:node_count, length(graph_data.nodes))
-     |> push_event("render_graph", graph_data)}
+     |> push_event("render-graph", %{data: blom_b64})}
   end
 
   def handle_event("search", %{"query" => query}, socket) do
@@ -43,6 +47,16 @@ defmodule FugueWeb.GraphLive do
        |> push_event("highlight-nodes", %{node_ids: matching_ids})}
     else
       {:noreply, socket}
+    end
+  end
+
+  def handle_event("node_clicked", %{"id" => id}, socket) do
+    case Loader.get_article(id) do
+      {:ok, article} ->
+        {:noreply, assign(socket, :selected_node, article)}
+
+      _ ->
+        {:noreply, socket}
     end
   end
 
@@ -84,18 +98,12 @@ defmodule FugueWeb.GraphLive do
         <%= if @selected_node do %>
           <div class="node-details">
             <h3>{@selected_node.title}</h3>
-            <p><strong>Categories:</strong></p>
-            <ul>
-              <%= for cat <- @selected_node.categories do %>
-                <li>{cat}</li>
-              <% end %>
-            </ul>
-            <p class="summary">{@selected_node.summary}</p>
+            <p class="summary">{@selected_node.abstract}</p>
           </div>
         <% end %>
       </div>
 
-      <div
+      <canvas
         id="graph-canvas"
         phx-hook="GraphViz"
         class="graph-canvas"

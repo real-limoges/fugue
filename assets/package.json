@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "@cosmos.gl/graph": "^2.6.4",
     "d3": "^7"
   }
 }
