@@ -1,6 +1,7 @@
 import * as d3 from "d3"
 
-const CELL_SIZE = 11
+/** Calendar grid colored by dominant cluster, with gap and selection highlighting. */
+const CELL_SIZE = 13
 const CELL_GAP = 2
 const CELL_STEP = CELL_SIZE + CELL_GAP
 const YEAR_PADDING = 24
@@ -11,7 +12,7 @@ export const CalendarHeatmap = {
   mounted() {
     this.svg = null
     this.tooltip = null
-    this.data = { days: [], clusterColors: {} }
+    this.data = { days: [], clusterColors: {}, clusterNames: {} }
 
     this.handleEvent("update-calendar", (data) => {
       this.data = data
@@ -27,7 +28,7 @@ export const CalendarHeatmap = {
     })
 
     this.handleEvent("isolate-cluster", ({ cluster }) => {
-      this.isolateCluster(cluster)
+      this.isolate(cluster)
     })
   },
 
@@ -45,10 +46,12 @@ export const CalendarHeatmap = {
       .style("position", "absolute")
       .style("right", "0px")
       .style("pointer-events", "none")
-      .style("background", "rgba(0,0,0,0.85)")
+      .style("background", "rgba(10,10,26,0.92)")
       .style("color", "#eee")
-      .style("padding", "8px 12px")
-      .style("border-radius", "6px")
+      .style("padding", "10px 14px")
+      .style("border-radius", "8px")
+      .style("border", "1px solid rgba(255,255,255,0.06)")
+      .style("box-shadow", "0 4px 16px rgba(0,0,0,0.4)")
       .style("font-size", "12px")
       .style("line-height", "1.5")
       .style("white-space", "nowrap")
@@ -133,8 +136,8 @@ export const CalendarHeatmap = {
           return date.getDay() * CELL_STEP
         })
         .attr("fill", d => this.cellColor(d, clusterColors))
-        .attr("stroke", d => d.isGap ? "#555" : "none")
-        .attr("stroke-width", d => d.isGap ? 0.5 : 0)
+        .attr("stroke", d => this.cellStroke(d, clusterColors))
+        .attr("stroke-width", d => this.cellStrokeWidth(d))
         .attr("stroke-dasharray", d => d.isGap ? "2,1" : "none")
         .style("cursor", d => d.isGap ? "default" : "pointer")
         .on("mouseenter", (event, d) => this.showTooltip(event, d, clusterColors))
@@ -161,39 +164,74 @@ export const CalendarHeatmap = {
     return this.dominantColor(mems, clusterColors, 1.0)
   },
 
+  topMembership(memberships) {
+    const entries = Object.entries(memberships || {})
+    if (entries.length === 0) return [null, 0]
+    return entries.reduce((a, b) => b[1] > a[1] ? b : a)
+  },
+
   dominantColor(memberships, clusterColors, baseOpacity) {
     const entries = Object.entries(memberships)
     if (entries.length === 0) return "#2a2a2a"
 
-    // Use the dominant cluster's color, scaled by its membership strength
     const [topCluster, topWeight] = entries.reduce((a, b) => b[1] > a[1] ? b : a)
     const color = d3.color(clusterColors[topCluster] || "#666")
     if (!color) return "#2a2a2a"
 
-    return `rgba(${color.r}, ${color.g}, ${color.b}, ${baseOpacity * Math.max(topWeight, 0.5)})`
+    // Real curve: weak membership → faint, strong → vivid. No floor.
+    const alpha = baseOpacity * (0.12 + 0.88 * Math.pow(topWeight, 1.5))
+    return `rgba(${color.r}, ${color.g}, ${color.b}, ${alpha})`
+  },
+
+  cellStroke(day, clusterColors) {
+    if (day.isGap) return "#555"
+    const [topCluster, weight] = this.topMembership(day.memberships)
+    if (!topCluster || weight < 0.5) return "none"
+    return clusterColors[topCluster] || "none"
+  },
+
+  cellStrokeWidth(day) {
+    if (day.isGap) return 0.5
+    const [, weight] = this.topMembership(day.memberships)
+    if (weight >= 0.65) return 1.5
+    if (weight >= 0.5) return 0.75
+    return 0
   },
 
   showTooltip(event, day, clusterColors) {
-    let html = `<strong>${day.date}</strong>`
+    let html = `<strong style="font-size:13px">${day.date}</strong>`
 
     if (day.isGap) {
-      html += `<br><em style="color:#888">Gap day</em>`
+      html += `<br><span style="color:#666;font-style:italic">gap day</span>`
     }
 
     if (day.dimensions) {
-      html += "<br>"
+      html += `<div style="margin-top:6px; display:grid; grid-template-columns:auto auto; gap:1px 10px">`
       for (const [key, val] of Object.entries(day.dimensions)) {
-        html += `<br>${key}: <strong>${val}</strong>`
+        html += `<span style="color:#888">${key}</span><strong>${val}</strong>`
       }
+      html += `</div>`
     }
 
     const mems = day.memberships || {}
-    if (Object.keys(mems).length > 0) {
-      html += `<br><br><em>Memberships:</em>`
-      for (const [cluster, val] of Object.entries(mems)) {
+    const sorted = Object.entries(mems).sort((a, b) => b[1] - a[1])
+    if (sorted.length > 0) {
+      html += `<div style="margin-top:6px; border-top:1px solid rgba(255,255,255,0.08); padding-top:5px">`
+      const clusterNames = this.data.clusterNames || {}
+      for (const [cluster, val] of sorted) {
         const color = clusterColors[cluster] || "#888"
-        html += `<br><span style="color:${color}">${cluster}</span>: ${(val * 100).toFixed(1)}%`
+        const name = clusterNames[cluster] || cluster
+        const pct = (val * 100).toFixed(0)
+        const barW = Math.round(val * 50)
+        html += `<div style="display:flex; align-items:center; gap:5px; margin:2px 0">
+          <span style="color:${color}; font-size:11px; white-space:nowrap">${name}</span>
+          <div style="flex:0 0 50px; height:3px; background:rgba(255,255,255,0.06); border-radius:2px">
+            <div style="width:${barW}px; height:3px; background:${color}; border-radius:2px"></div>
+          </div>
+          <span style="color:#888; font-size:10px; white-space:nowrap">${pct}%</span>
+        </div>`
       }
+      html += `</div>`
     }
 
     const rect = this.el.getBoundingClientRect()
@@ -237,7 +275,7 @@ export const CalendarHeatmap = {
       .attr("stroke-width", d => gapDates.has(d.date) ? 2 : (d.isGap ? 0.5 : 0))
   },
 
-  isolateCluster(cluster) {
+  isolate(cluster) {
     if (!this.svg) return
 
     if (!cluster) {
