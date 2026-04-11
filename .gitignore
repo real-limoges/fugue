@@ -40,3 +40,7 @@ npm-debug.log
 
 docker-compose.yml
 Dockerfile.cozodb
+
+# Local env files (but NOT .env.example — that's the template)
+.env
+.env.local
