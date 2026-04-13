@@ -450,15 +450,20 @@ defmodule FugueWeb.MoodLive do
           <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-4">My mood states</h2>
 
           <p class="text-sm text-gray-400 mb-3">
-            Across {@stats.entry_count} days, my moods settle into {@stats.cluster_count} distinct patterns.
+            Run {@stats.entry_count} days through fuzzy c-means clustering and my moods fall into {@stats.cluster_count} rough shapes — not boxes, more like gravity wells a day can lean toward.
             <%= if @stats.most_common do %>
-              I spend the most time in
+              The one I live in most is
               <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.most_common.id, "#aaa")}"}>
                 {@stats.most_common.name}
               </span>
-              ({@stats.most_common.days} days).
+              — {@stats.most_common.days} days, about {div(@stats.most_common.days * 100, max(@stats.entry_count, 1))}% of everything tracked.
             <% end %>
-            Click any state to isolate it across every visualization.
+            <%= if @stats.longest_run do %>
+              My longest uninterrupted stretch was {@stats.longest_run.days} days of
+              <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.longest_run.id, "#aaa")}"}>
+                {@stats.longest_run.name}</span>.
+            <% end %>
+            Click any state to dim everything else across the page — click it again to let everything back in.
           </p>
 
           <div class="flex flex-wrap items-center gap-2">
@@ -505,8 +510,16 @@ defmodule FugueWeb.MoodLive do
         <section class="mb-10">
           <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-1">Day by day</h2>
           <p class="text-sm text-gray-400 mb-3">
-            Every square is a day. Color shows the dominant mood state; brightness shows how strongly I belonged to it.
-            Brush the timeline to zoom in.
+            Every square is a day. Color is the dominant mood state; brightness is how hard it pulled.
+            <%= if @stats.first_state && @stats.last_state do %>
+              I started in
+              <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.first_state.id, "#aaa")}"}>
+                {@stats.first_state.name}</span>
+              and — for now — I'm in
+              <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.last_state.id, "#aaa")}"}>
+                {@stats.last_state.name}</span>.
+            <% end %>
+            Drag across the strip below to zoom into a window, or click any square to see the days around it.
           </p>
 
           <div>
@@ -562,8 +575,17 @@ defmodule FugueWeb.MoodLive do
         <section class="mb-10">
           <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-1">How my moods shift</h2>
           <p class="text-sm text-gray-400 mb-3">
-            My dominant mood state changed {@stats.transition_count} times.
-            The timeline below shows each reign of a mood state as a colored block, with white markers at every shift.
+            The dominant state flipped {@stats.transition_count} times across {@stats.entry_count} days — roughly once every {div(@stats.entry_count, max(@stats.transition_count, 1))} days on average.
+            <%= if @stats.biggest_flow && @stats.biggest_flow.from && @stats.biggest_flow.to do %>
+              The most-worn path was
+              <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.biggest_flow.from.id, "#aaa")}"}>
+                {@stats.biggest_flow.from.name}</span>
+              →
+              <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.biggest_flow.to.id, "#aaa")}"}>
+                {@stats.biggest_flow.to.name}</span>
+              ({@stats.biggest_flow.count}×).
+            <% end %>
+            The timeline below turns every reign of a mood state into a colored block, with white markers at every handoff.
           </p>
 
           <div class="bg-base-200 rounded-lg p-4">
@@ -576,27 +598,27 @@ defmodule FugueWeb.MoodLive do
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-            <div class="bg-base-200 rounded-lg p-4">
-              <h3 class="text-sm font-semibold text-gray-400 mb-2">Where do I go from here?</h3>
-              <p class="text-xs text-gray-500 mb-3">
-                The weight of each flow shows how often one state leads to another.
-              </p>
-              <div
-                id="transition-sankey"
-                phx-hook="TransitionSankey"
-                phx-update="ignore"
-                style="min-height: 280px;"
-              >
-              </div>
+          <div class="bg-base-200 rounded-lg p-4 mt-4">
+            <h3 class="text-sm font-semibold text-gray-400 mb-2">Where do I go from here?</h3>
+            <p class="text-xs text-gray-500 mb-3">
+              Once I'm in a state, where does it tend to drop me next? Thicker bands mean a well-trodden path.
+            </p>
+            <div
+              id="transition-sankey"
+              phx-hook="TransitionSankey"
+              phx-update="ignore"
+              style="min-height: 320px;"
+            >
             </div>
+          </div>
 
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             <div class="bg-base-200 rounded-lg p-4 flex flex-col items-center">
               <h3 class="text-sm font-semibold text-gray-400 mb-2 self-start">
                 The full web of transitions
               </h3>
               <p class="text-xs text-gray-500 mb-3 self-start">
-                Thicker ribbons mean more frequent transitions between those two states.
+                Same data, arranged as a loop — every pair of states and how often one becomes the other. Thicker ribbons, more traffic.
               </p>
               <div
                 id="transition-chord"
@@ -606,9 +628,7 @@ defmodule FugueWeb.MoodLive do
               >
               </div>
             </div>
-          </div>
 
-          <div class="mt-4">
             <.live_component
               module={MoodTransitions}
               id="mood-transitions-list"
@@ -627,17 +647,19 @@ defmodule FugueWeb.MoodLive do
         <section class="mb-10">
           <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-1">Under the hood</h2>
           <p class="text-sm text-gray-400 mb-3">
-            Each day I track five dimensions: sleep, anxiety, sensitivity, outlook, and speed.
-            Here's how they move over time, how they relate to each other, and how they're distributed.
+            The clusters up there are built out of five raw numbers I rate every morning: sleep, anxiety, sensitivity, outlook, and speed, each on 0–10. Here's what those numbers actually do — how they drift over time, which ones move together, and how they're spread across all {@stats.entry_count} days.
           </p>
 
           <div class="bg-base-200 rounded-lg p-4">
-            <h3 class="text-sm font-semibold text-gray-400 mb-2">Dimension trends</h3>
+            <h3 class="text-sm font-semibold text-gray-400 mb-2">Deviations from baseline</h3>
+            <p class="text-xs text-gray-500 mb-3">
+              Each row is centered on its own average (μ) and scaled to its own standard deviation, so the shape answers "when was I unusually X?" instead of "what was my raw X?" — above the dashed line is a higher-than-usual day, below is lower-than-usual.
+            </p>
             <div
               id="dimension-sparklines"
               phx-hook="DimensionSparklines"
               phx-update="ignore"
-              style="min-height: 310px;"
+              style="min-height: 340px;"
             >
             </div>
           </div>
@@ -646,7 +668,7 @@ defmodule FugueWeb.MoodLive do
             <div class="bg-base-200 rounded-lg p-4 flex flex-col items-center">
               <h3 class="text-sm font-semibold text-gray-400 mb-2 self-start">Correlations</h3>
               <p class="text-xs text-gray-500 mb-2 self-start">
-                Which dimensions move together? Pink means they rise and fall in sync; cyan means they're inversely related.
+                Which of the five tend to travel together? Pink cells rise and fall in sync; cyan cells pull against each other.
               </p>
               <div
                 id="correlation-heatmap"
@@ -660,7 +682,7 @@ defmodule FugueWeb.MoodLive do
             <div class="bg-base-200 rounded-lg p-4">
               <h3 class="text-sm font-semibold text-gray-400 mb-2">Distributions</h3>
               <p class="text-xs text-gray-500 mb-2">
-                How each dimension is spread across all tracked days. The line marks the median; the dot marks the mean.
+                Where each dimension usually lands. The line is the median, the dot is the mean — the gap between them tells you which way the tail leans.
               </p>
               <div
                 id="dimension-distributions"
@@ -681,9 +703,9 @@ defmodule FugueWeb.MoodLive do
           <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-1">The gaps</h2>
           <p class="text-sm text-gray-400 mb-3">
             <%= if @stats.gap_count > 0 do %>
-              I missed some days. {@stats.gap_count} gaps in the data — and sometimes my mood state was different on the other side.
+              I'm not perfect at this — I missed some days. There are {@stats.gap_count} stretches where I went quiet, and a lot of the time the state I came back in wasn't the state I left in. That's its own kind of signal. Click a mood state above to see which gaps touched it.
             <% else %>
-              No gaps in the data.
+              No gaps — every day in the window is accounted for.
             <% end %>
           </p>
 
@@ -711,7 +733,7 @@ defmodule FugueWeb.MoodLive do
         <%!-- Param controls at the very bottom — they're for tuning, not for the story --%>
         <details class="mt-8 mb-4">
           <summary class="text-xs uppercase tracking-widest text-gray-600 cursor-pointer hover:text-gray-400">
-            Clustering parameters
+            Play with the math &rsaquo; clustering parameters
           </summary>
           <div class="mt-2">
             <.live_component
