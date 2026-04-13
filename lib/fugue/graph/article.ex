@@ -1,26 +1,14 @@
 defmodule Fugue.Graph.Article do
   @derive Jason.Encoder
-  defstruct [
-    :id,
-    :title,
-    :abstract,
-    :is_disambiguation,
-    :timestamp,
-    :in_degree,
-    :out_degree,
-    :pagerank
-  ]
+  defstruct [:id, :title, :pagerank, :community, :degree]
 
   def from_map(m) when is_map(m) do
     %__MODULE__{
       id: m["id"],
       title: m["title"],
-      abstract: m["abstract"],
-      is_disambiguation: m["is_disambiguation"] || false,
-      timestamp: m["timestamp"],
-      in_degree: m["in_degree"] || 0,
-      out_degree: m["out_degree"] || 0,
-      pagerank: m["pagerank"] || 0.0
+      pagerank: m["pagerank"] || 0.0,
+      community: m["community"],
+      degree: m["degree"] || 0
     }
   end
 end
