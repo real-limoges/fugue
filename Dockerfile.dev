@@ -1,0 +1,23 @@
+# Dev image — source comes in via bind mount, deps/build/node_modules live
+# in named volumes so host artifacts (wrong arch) can't pollute them.
+FROM hexpm/elixir:1.19.5-erlang-27.3.4.9-ubuntu-noble-20260217
+
+RUN apt-get update -q && \
+    apt-get install -y --no-install-recommends \
+      build-essential \
+      nodejs \
+      npm \
+      git \
+      inotify-tools \
+      ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+RUN mix local.hex --force && mix local.rebar --force
+
+ENV MIX_ENV=dev
+
+EXPOSE 4000
+
+CMD ["sh", "-c", "mix deps.get && npm install --prefix assets && mix setup && mix phx.server"]

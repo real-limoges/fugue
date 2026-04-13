@@ -15,6 +15,19 @@ defmodule FugueWeb.Endpoint do
     websocket: [connect_info: [session: @session_options]],
     longpoll: [connect_info: [session: @session_options]]
 
+  # In dev, serve bloom's wasm pkg directly from the source tree so
+  # `wasm-pack build` output is visible on page refresh without re-running
+  # `mix assets.setup`. Registered before the main Plug.Static so it takes
+  # precedence for `/vendor/bloom/*`. Prod serves the copied version from
+  # priv/static (via `mix assets.deploy`).
+  if code_reloading? do
+    plug Plug.Static,
+      at: "/vendor/bloom",
+      from: Path.expand("../../assets/vendor/bloom/pkg", __DIR__),
+      gzip: false,
+      only: ~w(bloom.js bloom_bg.wasm bloom.d.ts)
+  end
+
   # Serve at "/" the static files from "priv/static" directory.
   #
   # When code reloading is disabled (e.g., in production),
