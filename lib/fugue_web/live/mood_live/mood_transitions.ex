@@ -25,7 +25,7 @@ defmodule FugueWeb.MoodLive.MoodTransitions do
     assigns = assign(assigns, :filtered, transitions)
 
     ~H"""
-    <div class="bg-base-200 rounded-lg p-4">
+    <div class="bg-base-200 rounded-lg p-4 h-full flex flex-col overflow-hidden">
       <button
         phx-click="toggle_list"
         phx-target={@myself}
@@ -39,7 +39,7 @@ defmodule FugueWeb.MoodLive.MoodTransitions do
       </button>
 
       <%= if @expanded do %>
-        <div class="overflow-y-auto max-h-52 space-y-1 mt-3">
+        <div class="flex-1 overflow-y-auto min-h-0 space-y-1 mt-3">
           <%= for t <- @filtered do %>
             <div
               phx-click="day_selected"

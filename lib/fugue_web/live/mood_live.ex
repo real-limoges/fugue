@@ -471,10 +471,10 @@ defmodule FugueWeb.MoodLive do
                 </div>
                 <div class="text-gray-500 mb-3">
                   {@stats.date_range && elem(@stats.date_range, 0)} – {@stats.date_range &&
-                    elem(@stats.date_range, 1)} &middot; PCA projection on daily self-ratings &middot; the artist
+                    elem(@stats.date_range, 1)} &middot; PCA projection on daily self-ratings &middot; real limoges
                 </div>
                 <p class="mb-2">
-                  Every morning for four years I wrote down five numbers about how I was doing. This is all of them, squashed onto a flat plane by a little math that tries to preserve the shape of the whole thing while throwing the rest away.
+                  Every evening before bed for the past four years I wrote down five numbers about how I was doing. This is all of them, squashed onto a flat plane by a little math that tries to preserve the shape of the whole thing while throwing the rest away.
                 </p>
                 <p>
                   One dot per day. The line is the order I lived them in. The colors are the mood states the clustering found later, painted back onto the path after the fact. I didn't pick where any of it went.
@@ -779,7 +779,7 @@ defmodule FugueWeb.MoodLive do
         <section class="mb-24">
           <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">Under the hood</h2>
           <p class="text-sm text-gray-400 mb-4 leading-relaxed">
-            Up to here it's been the <em>output</em> of the model — the named states, how they ebb, how they hand off. This section is the <em>input</em>: the five raw numbers I rate every morning, before anything fancy happens to them. Sleep, anxiety, sensitivity, outlook, and speed, each on 0–10.
+            Up to here it's been the <em>output</em> of the model — the named states, how they ebb, how they hand off. This section is the <em>input</em>: the five raw numbers I rate every evening, before anything fancy happens to them. Sleep, anxiety, sensitivity, outlook, and speed, each on 0–10.
           </p>
           <p class="text-sm text-gray-400 mb-6 leading-relaxed">
             They're the only thing the clustering knows about me — every shape further up the page is downstream of them. Here's what the five actually do on their own: how they drift over time, which ones move together, and how they're spread across all {@stats.entry_count} days.
