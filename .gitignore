@@ -44,3 +44,5 @@ Dockerfile.cozodb
 # Local env files (but NOT .env.example — that's the template)
 .env
 .env.local
+
+node-compile-cache/

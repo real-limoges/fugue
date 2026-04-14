@@ -21,10 +21,11 @@ Generative jazz composition with Launchpad Mini hardware integration.
 - **Status:** ~50% complete
 
 ### Ish — Mood Tracking
-The gravitational center of the system. A mood tracking microservice that uses fuzzy logic to model emotional states as gradients rather than categories.
+The gravitational center of the system. A mood tracking microservice that uses fuzzy logic to model emotional states as gradients rather than categories. Fugue consumes it via the `/mood` LiveView, which turns four years of the author's own daily self-ratings into a multi-chapter visual essay.
 
 - **Stack:** Haskell (Servant API), Hazy (fuzzy logic library)
-- **Status:** Scaffolded
+- **Frontend:** `/mood` explorer — PCA trajectory hero (one scribble for the whole run), interactive fuzzy-clustering sandbox, calendar heatmap with transition borders, hysteresis-smoothed transition timeline/sankey/chord, per-month "mood flower" radars, and gap analysis
+- **Status:** Live. Ish backend exposes `/data`, `/cluster`, `/gaps`; Fugue handles all visualization client-side via D3
 
 ### Garçon — NLP + Fuzzy Logic API
 A Haskell Servant wrapper that exposes Chompsky (NLP parser) and Hazy (fuzzy logic) as HTTP endpoints.

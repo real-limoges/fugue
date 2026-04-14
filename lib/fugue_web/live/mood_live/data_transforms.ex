@@ -6,6 +6,11 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   @dimensions ~w(sleep anxiety sensitivity outlook speed)
   @cluster_colors ~w(#e44dbc #42c8e6 #6ee64d #e6a542 #a86ee6 #e6e042 #e6425a #42e6b8)
 
+  # Minimum consecutive days a new dominant cluster must persist to count as a
+  # real state transition. Shorter runs are absorbed into the surrounding state
+  # so the timeline reflects lived shifts, not argmax noise on near-tied days.
+  @min_run_length 5
+
   @dim_labels %{
     "sleep" => {"rested", "restless"},
     "anxiety" => {"anxious", "calm"},
@@ -155,6 +160,243 @@ defmodule FugueWeb.MoodLive.DataTransforms do
     end)
   end
 
+  @doc "Returns chronological list of %{date, cluster} for each entry's dominant cluster."
+  def daily_dominants(entries, %AnalysisResult{} = analysis) do
+    entries
+    |> Enum.with_index()
+    |> Enum.map(fn {entry, idx} ->
+      row = Enum.at(analysis.membership, idx, [])
+
+      dominant =
+        analysis.clusters
+        |> Enum.with_index()
+        |> Enum.max_by(fn {_c, i} -> Enum.at(row, i, 0) end, fn -> {nil, 0} end)
+        |> elem(0)
+
+      %{date: entry["date"], cluster: dominant && dominant["id"]}
+    end)
+    |> Enum.filter(& &1.cluster)
+  end
+
+  @doc """
+  Smooths a daily dominant-cluster sequence by holding the current state until
+  a new cluster persists for at least `min_length` consecutive days.
+  """
+  def smooth_runs(daily, min_length \\ @min_run_length)
+  def smooth_runs([], _min_length), do: []
+  def smooth_runs(daily, min_length) when min_length <= 1, do: daily
+
+  def smooth_runs([first | _] = daily, min_length) do
+    do_smooth_runs(daily, first.cluster, min_length, [])
+  end
+
+  defp do_smooth_runs([], _state, _min, acc), do: Enum.reverse(acc)
+
+  defp do_smooth_runs([day | rest] = all, state, min_length, acc) do
+    cond do
+      day.cluster == state ->
+        do_smooth_runs(rest, state, min_length, [%{day | cluster: state} | acc])
+
+      forward_streak(all, day.cluster) >= min_length ->
+        do_smooth_runs(rest, day.cluster, min_length, [day | acc])
+
+      true ->
+        do_smooth_runs(rest, state, min_length, [%{day | cluster: state} | acc])
+    end
+  end
+
+  defp forward_streak(days, cluster) do
+    Enum.reduce_while(days, 0, fn day, count ->
+      if day.cluster == cluster, do: {:cont, count + 1}, else: {:halt, count}
+    end)
+  end
+
+  @doc "The minimum run length used by `smooth_runs/1`."
+  def min_run_length, do: @min_run_length
+
+  @doc """
+  Projects the entries' five raw dimensions to 2D via PCA and returns
+  chronologically-ordered points with their smoothed dominant cluster. The
+  hero trajectory chart at the top of the page draws a line through these
+  in order — four years of mood as a single scribble in a 2D space the data
+  discovered for itself.
+  """
+  def build_trajectory(entries, smoothed_daily) do
+    matrix =
+      Enum.map(entries, fn e ->
+        dims = e["dimensions"] || %{}
+        Enum.map(@dimensions, fn dim -> (dims[dim] || 0) * 1.0 end)
+      end)
+
+    dim_count = length(@dimensions)
+    n = length(matrix)
+
+    if n < 2 do
+      []
+    else
+      means =
+        Enum.map(0..(dim_count - 1), fn i ->
+          Enum.sum(Enum.map(matrix, fn row -> Enum.at(row, i) end)) / n
+        end)
+
+      centered =
+        Enum.map(matrix, fn row ->
+          row |> Enum.zip(means) |> Enum.map(fn {v, m} -> v - m end)
+        end)
+
+      cov = covariance_matrix(centered, dim_count)
+      {pc1, lam1} = power_iteration(cov, dim_count)
+      cov2 = deflate_matrix(cov, pc1, lam1, dim_count)
+      {pc2, _} = power_iteration(cov2, dim_count)
+
+      raw =
+        Enum.map(centered, fn row ->
+          {dot(row, pc1), dot(row, pc2)}
+        end)
+
+      {first_x, _} = List.first(raw)
+      {last_x, _} = List.last(raw)
+      flip_x = if first_x > last_x, do: -1.0, else: 1.0
+
+      cluster_by_date = Map.new(smoothed_daily, fn d -> {d.date, d.cluster} end)
+
+      raw
+      |> Enum.zip(entries)
+      |> Enum.map(fn {{x, y}, entry} ->
+        %{
+          x: x * flip_x,
+          y: y,
+          date: entry["date"],
+          cluster: Map.get(cluster_by_date, entry["date"])
+        }
+      end)
+    end
+  end
+
+  defp covariance_matrix(centered, d) do
+    n = length(centered)
+    divisor = max(n - 1, 1)
+
+    for i <- 0..(d - 1) do
+      for j <- 0..(d - 1) do
+        sum =
+          Enum.reduce(centered, 0.0, fn row, acc ->
+            acc + Enum.at(row, i) * Enum.at(row, j)
+          end)
+
+        sum / divisor
+      end
+    end
+  end
+
+  defp power_iteration(mat, d, iters \\ 200) do
+    init = List.duplicate(0.0, d) |> List.replace_at(0, 1.0)
+
+    Enum.reduce(1..iters, {init, 0.0}, fn _, {v, _} ->
+      mv = mat_vec(mat, v)
+      norm = vec_norm(mv)
+
+      if norm < 1.0e-12 do
+        {v, 0.0}
+      else
+        {Enum.map(mv, fn x -> x / norm end), norm}
+      end
+    end)
+  end
+
+  defp deflate_matrix(mat, v, lambda, d) do
+    for i <- 0..(d - 1) do
+      row = Enum.at(mat, i)
+      vi = Enum.at(v, i)
+
+      for j <- 0..(d - 1) do
+        Enum.at(row, j) - lambda * vi * Enum.at(v, j)
+      end
+    end
+  end
+
+  defp mat_vec(mat, v) do
+    Enum.map(mat, fn row ->
+      row |> Enum.zip(v) |> Enum.reduce(0.0, fn {a, b}, acc -> acc + a * b end)
+    end)
+  end
+
+  defp vec_norm(v) do
+    :math.sqrt(Enum.reduce(v, 0.0, fn x, acc -> acc + x * x end))
+  end
+
+  defp dot(v1, v2) do
+    v1 |> Enum.zip(v2) |> Enum.reduce(0.0, fn {a, b}, acc -> acc + a * b end)
+  end
+
+  @doc """
+  Builds monthly mood flowers: averaged dimensions per month plus the modal
+  smoothed cluster for that month. Values are normalized 0.2–1.0 against the
+  per-dimension range across all months so each flower's spoke length reflects
+  that month's value relative to the user's full history.
+  """
+  def build_mood_flowers(entries, smoothed_daily) do
+    cluster_mode_by_month =
+      smoothed_daily
+      |> Enum.group_by(fn d -> String.slice(d.date, 0, 7) end)
+      |> Map.new(fn {month, days} ->
+        modal =
+          days
+          |> Enum.frequencies_by(& &1.cluster)
+          |> Enum.max_by(fn {_k, v} -> v end, fn -> {nil, 0} end)
+          |> elem(0)
+
+        {month, modal}
+      end)
+
+    monthly =
+      entries
+      |> Enum.group_by(fn e -> String.slice(e["date"], 0, 7) end)
+      |> Enum.map(fn {month, month_entries} ->
+        raw =
+          Map.new(@dimensions, fn dim ->
+            vals =
+              month_entries
+              |> Enum.map(fn e -> (e["dimensions"] || %{})[dim] end)
+              |> Enum.reject(&is_nil/1)
+
+            mean = if vals == [], do: 0.0, else: Enum.sum(vals) / length(vals)
+            {dim, mean}
+          end)
+
+        %{
+          month: month,
+          raw: raw,
+          count: length(month_entries),
+          cluster: Map.get(cluster_mode_by_month, month)
+        }
+      end)
+      |> Enum.sort_by(& &1.month)
+
+    ranges =
+      Map.new(@dimensions, fn dim ->
+        vals = Enum.map(monthly, & &1.raw[dim])
+        {dim, {Enum.min(vals, fn -> 0.0 end), Enum.max(vals, fn -> 1.0 end)}}
+      end)
+
+    Enum.map(monthly, fn m ->
+      values =
+        Map.new(@dimensions, fn dim ->
+          {mn, mx} = ranges[dim]
+          range = mx - mn
+
+          v =
+            if range > 0,
+              do: 0.2 + 0.8 * ((m.raw[dim] - mn) / range),
+              else: 0.5
+
+          {dim, v}
+        end)
+
+      Map.put(m, :values, values)
+    end)
+  end
+
   @doc "Builds contiguous time segments where the dominant cluster stays the same."
   def build_segments([]), do: []
 
@@ -237,40 +479,24 @@ defmodule FugueWeb.MoodLive.DataTransforms do
           {Enum.min(dates), Enum.max(dates)}
       end
 
+    daily = assigns.smoothed_daily
+
     initial = %{counts: %{}, prev: nil, run: 0, longest: {nil, 0}, first: nil, last: nil}
 
     summary =
-      entries
-      |> Enum.with_index()
-      |> Enum.reduce(initial, fn {_entry, idx}, acc ->
-        row = Enum.at(analysis.membership, idx, [])
+      Enum.reduce(daily, initial, fn %{cluster: id}, acc ->
+        counts = Map.update(acc.counts, id, 1, &(&1 + 1))
+        run = if acc.prev == id, do: acc.run + 1, else: 1
+        longest = if run > elem(acc.longest, 1), do: {id, run}, else: acc.longest
 
-        dominant =
-          analysis.clusters
-          |> Enum.with_index()
-          |> Enum.max_by(fn {_c, i} -> Enum.at(row, i, 0) end, fn -> {nil, 0} end)
-          |> elem(0)
-
-        case dominant do
-          nil ->
-            acc
-
-          %{"id" => id} ->
-            counts = Map.update(acc.counts, id, 1, &(&1 + 1))
-            run = if acc.prev == id, do: acc.run + 1, else: 1
-
-            longest =
-              if run > elem(acc.longest, 1), do: {id, run}, else: acc.longest
-
-            %{
-              counts: counts,
-              prev: id,
-              run: run,
-              longest: longest,
-              first: acc.first || id,
-              last: id
-            }
-        end
+        %{
+          counts: counts,
+          prev: id,
+          run: run,
+          longest: longest,
+          first: acc.first || id,
+          last: id
+        }
       end)
 
     most_common =

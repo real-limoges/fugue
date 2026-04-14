@@ -12,7 +12,8 @@ export const CalendarHeatmap = {
   mounted() {
     this.svg = null
     this.tooltip = null
-    this.data = { days: [], clusterColors: {}, clusterNames: {} }
+    this.data = { days: [], clusterColors: {}, clusterNames: {}, transitionDates: [] }
+    this.transitionSet = new Set()
 
     this.handleEvent("update-calendar", (data) => {
       this.data = data
@@ -35,6 +36,8 @@ export const CalendarHeatmap = {
   render() {
     const { days, clusterColors } = this.data
     if (!days || days.length === 0) return
+
+    this.transitionSet = new Set(this.data.transitionDates || [])
 
     this.el.innerHTML = ""
     this.el.style.position = "relative"
@@ -184,6 +187,7 @@ export const CalendarHeatmap = {
   },
 
   cellStroke(day, clusterColors) {
+    if (this.transitionSet.has(day.date)) return "#fff"
     if (day.isGap) return "#555"
     const [topCluster, weight] = this.topMembership(day.memberships)
     if (!topCluster || weight < 0.5) return "none"
@@ -191,6 +195,7 @@ export const CalendarHeatmap = {
   },
 
   cellStrokeWidth(day) {
+    if (this.transitionSet.has(day.date)) return 2
     if (day.isGap) return 0.5
     const [, weight] = this.topMembership(day.memberships)
     if (weight >= 0.65) return 1.5
@@ -270,9 +275,12 @@ export const CalendarHeatmap = {
       .attr("opacity", d => gapDates.has(d.date) ? 1 : 0.15)
       .attr("stroke", d => {
         if (gapDates.has(d.date)) return "#f39c12"
-        return d.isGap ? "#555" : "none"
+        return this.cellStroke(d, this.data.clusterColors)
       })
-      .attr("stroke-width", d => gapDates.has(d.date) ? 2 : (d.isGap ? 0.5 : 0))
+      .attr("stroke-width", d => {
+        if (gapDates.has(d.date)) return 2
+        return this.cellStrokeWidth(d)
+      })
   },
 
   isolate(cluster) {
