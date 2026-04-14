@@ -31,6 +31,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   def build_histograms(entries, bounds_by_dim, bin_count \\ 20) do
     Map.new(@dimensions, fn dim ->
       {lo, hi} = Map.get(bounds_by_dim, dim, {0.0, 10.0})
+
       values =
         entries
         |> Enum.map(fn e -> (e["dimensions"] || %{})[dim] end)

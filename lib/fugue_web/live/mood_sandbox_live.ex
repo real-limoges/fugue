@@ -23,7 +23,12 @@ defmodule FugueWeb.MoodSandboxLive do
         loading: true,
         error: nil,
         entries: [],
-        analysis: %AnalysisResult{},
+        analysis: %AnalysisResult{
+          clusters: [],
+          membership: [],
+          cluster_colors: %{},
+          name_to_id: %{}
+        },
         gaps: nil,
         smoothed_daily: [],
         membership_defs: nil,

@@ -7,9 +7,15 @@ defmodule Fugue.Ish do
   defp base_url, do: config()[:url]
 
   defp req_opts do
+    base =
+      case config()[:plug] do
+        nil -> []
+        plug -> [plug: plug, retry: false]
+      end
+
     case config()[:gcp_auth] do
-      true -> [headers: [{"authorization", "Bearer #{fetch_id_token()}"}]]
-      _ -> []
+      true -> Keyword.put(base, :headers, [{"authorization", "Bearer #{fetch_id_token()}"}])
+      _ -> base
     end
   end
 
