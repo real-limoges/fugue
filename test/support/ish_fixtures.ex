@@ -71,7 +71,8 @@ defmodule Fugue.IshFixtures do
       "clusters" => clusters,
       "centers" => for(i <- 0..(k - 1), do: for(_ <- 0..4, do: 5.0 + i)),
       "membership" => membership,
-      "iterations" => 12
+      "iterations" => 12,
+      "fpc" => 0.842
     }
   end
 

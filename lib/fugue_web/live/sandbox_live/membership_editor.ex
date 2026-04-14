@@ -1,4 +1,4 @@
-defmodule FugueWeb.MoodSandboxLive.MembershipEditor do
+defmodule FugueWeb.SandboxLive.MembershipEditor do
   @moduledoc "Renders the five per-dimension triangular membership editors and the control buttons."
 
   use FugueWeb, :live_component

@@ -90,17 +90,8 @@ export const MoodTrajectory = {
     merge.append("feMergeNode").attr("in", "blur")
     merge.append("feMergeNode").attr("in", "SourceGraphic")
 
-    const clipId = `traj-reveal-${Math.random().toString(36).slice(2, 8)}`
-    const clipRect = defs.append("clipPath")
-      .attr("id", clipId)
-      .append("rect")
-      .attr("x", 0).attr("y", -4)
-      .attr("width", 0)
-      .attr("height", innerH + 8)
-
     const g = svg.append("g")
       .attr("transform", `translate(${margin.left}, ${margin.top})`)
-      .attr("clip-path", `url(#${clipId})`)
 
     const segments = []
     for (let i = 1; i < points.length; i++) {
@@ -119,12 +110,6 @@ export const MoodTrajectory = {
       .attr("stroke-opacity", 0.55)
       .attr("stroke-width", 1.25)
       .attr("stroke-linecap", "round")
-
-    clipRect
-      .transition()
-      .duration(2800)
-      .ease(d3.easeCubicOut)
-      .attr("width", innerW)
 
     this.tooltip = d3.select(this.el)
       .append("div")
