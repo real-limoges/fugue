@@ -1,4 +1,4 @@
-defmodule FugueWeb.MoodSandboxLiveTest do
+defmodule FugueWeb.SandboxLiveTest do
   use FugueWeb.ConnCase, async: false
 
   alias Fugue.{IshCache, IshFixtures, MembershipDefaults}
@@ -21,10 +21,10 @@ defmodule FugueWeb.MoodSandboxLiveTest do
     test "renders past the loading state with populated assigns", %{conn: conn} do
       stub_all_endpoints()
 
-      {:ok, view, _html} = live(conn, "/mood-sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox")
       html = render(view)
 
-      assert html =~ "Mood Sandbox"
+      assert html =~ "Fuzzy Sandbox"
       refute html =~ "Loading sandbox"
 
       assigns = :sys.get_state(view.pid).socket.assigns
@@ -38,7 +38,7 @@ defmodule FugueWeb.MoodSandboxLiveTest do
     test "renders the descriptive cluster name chips after load", %{conn: conn} do
       stub_all_endpoints()
 
-      {:ok, view, _html} = live(conn, "/mood-sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox")
       html = render(view)
 
       assigns = :sys.get_state(view.pid).socket.assigns
@@ -57,7 +57,7 @@ defmodule FugueWeb.MoodSandboxLiveTest do
     test "shows an error banner when Ish is unreachable", %{conn: conn} do
       Req.Test.stub(Fugue.Ish, fn conn -> Plug.Conn.send_resp(conn, 500, "boom") end)
 
-      {:ok, view, _html} = live(conn, "/mood-sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox")
 
       html = render(view)
       assert html =~ "Could not connect to Ish API"
@@ -68,11 +68,49 @@ defmodule FugueWeb.MoodSandboxLiveTest do
     end
   end
 
+  describe "downstream effects section" do
+    test "renders the FPC gauge with the formatted value and bar", %{conn: conn} do
+      stub_all_endpoints()
+
+      {:ok, view, _html} = live(conn, "/sandbox")
+      html = render(view)
+
+      assert html =~ "Cluster crispness (FPC)"
+      # Fixture sets fpc: 0.842
+      assert html =~ "0.842"
+      # Floor label for k=3
+      assert html =~ "floor 1/k = 0.333"
+      # Bar element is present
+      assert html =~ ~s(class="h-full bg-amber-400)
+    end
+
+    test "renders a ClusterStream hook instead of the calendar", %{conn: conn} do
+      stub_all_endpoints()
+
+      {:ok, view, _html} = live(conn, "/sandbox")
+      html = render(view)
+
+      assert html =~ ~s(id="sandbox-cluster-stream")
+      assert html =~ ~s(phx-hook="ClusterStream")
+      refute html =~ ~s(id="sandbox-calendar")
+    end
+
+    test "renders a back-link to /mood", %{conn: conn} do
+      stub_all_endpoints()
+
+      {:ok, view, _html} = live(conn, "/sandbox")
+      html = render(view)
+
+      assert html =~ ~s(href="/mood")
+      assert html =~ "Back to /mood"
+    end
+  end
+
   describe "slider bounds" do
     test "renders max k=5 and max m=3.0", %{conn: conn} do
       stub_all_endpoints()
 
-      {:ok, view, _html} = live(conn, "/mood-sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox")
       html = render(view)
 
       assert html =~ ~s(name="k")
@@ -97,7 +135,10 @@ defmodule FugueWeb.MoodSandboxLiveTest do
         end
       end)
 
-      {:ok, view, _html} = live(conn, "/mood-sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox")
+
+      # Force the LV to drain its mailbox so :load_all runs before we check.
+      _ = :sys.get_state(view.pid)
 
       # First call during load_all.
       assert :counters.get(call_count, 1) == 1
@@ -129,7 +170,7 @@ defmodule FugueWeb.MoodSandboxLiveTest do
         end
       end)
 
-      {:ok, view, _html} = live(conn, "/mood-sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox")
 
       render_hook(view, "mf_commit", %{"inputs" => IshFixtures.membership_defs()["inputs"]})
 
@@ -151,7 +192,7 @@ defmodule FugueWeb.MoodSandboxLiveTest do
         end
       end)
 
-      {:ok, view, _html} = live(conn, "/mood-sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox")
 
       render_hook(view, "mf_suggest", %{})
 
@@ -164,7 +205,7 @@ defmodule FugueWeb.MoodSandboxLiveTest do
     test "is a no-op when no suggestion is set", %{conn: conn} do
       stub_all_endpoints()
 
-      {:ok, view, _html} = live(conn, "/mood-sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox")
 
       before = :sys.get_state(view.pid).socket.assigns.membership_defs
       render_hook(view, "mf_apply_suggestion", %{})
@@ -188,7 +229,7 @@ defmodule FugueWeb.MoodSandboxLiveTest do
         end
       end)
 
-      {:ok, view, _html} = live(conn, "/mood-sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox")
 
       render_hook(view, "mf_suggest", %{})
       assert :sys.get_state(view.pid).socket.assigns.suggestion != nil
@@ -219,7 +260,7 @@ defmodule FugueWeb.MoodSandboxLiveTest do
         end
       end)
 
-      {:ok, view, _html} = live(conn, "/mood-sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox")
 
       render_hook(view, "mf_reset", %{})
 
@@ -227,6 +268,123 @@ defmodule FugueWeb.MoodSandboxLiveTest do
       assigns = :sys.get_state(view.pid).socket.assigns
       assert assigns.membership_defs == IshFixtures.membership_defs()
       assert assigns.suggestion == nil
+    end
+  end
+
+  describe "apply_preset event" do
+    test "conservative sets k=2, m=1.2 and pushes new MF to Ish", %{conn: conn} do
+      post_count = :counters.new(1, [])
+
+      Req.Test.stub(Fugue.Ish, fn conn ->
+        case {conn.method, conn.request_path} do
+          {"POST", "/membership-functions"} ->
+            :counters.add(post_count, 1, 1)
+            Req.Test.json(conn, IshFixtures.membership_defs())
+
+          _ ->
+            route_non_cluster(conn) || route_cluster(conn)
+        end
+      end)
+
+      {:ok, view, _html} = live(conn, "/sandbox")
+      render_hook(view, "apply_preset", %{"name" => "conservative"})
+
+      assert :counters.get(post_count, 1) == 1
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.k == 2
+      assert assigns.m == 1.2
+      assert length(assigns.history) == 1
+    end
+
+    test "aggressive sets k=5, m=1.8", %{conn: conn} do
+      stub_all_endpoints()
+      {:ok, view, _html} = live(conn, "/sandbox")
+      render_hook(view, "apply_preset", %{"name" => "aggressive"})
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.k == 5
+      assert assigns.m == 1.8
+    end
+
+    test "chaos sets k=5, m=2.8", %{conn: conn} do
+      stub_all_endpoints()
+      {:ok, view, _html} = live(conn, "/sandbox")
+      render_hook(view, "apply_preset", %{"name" => "chaos"})
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.k == 5
+      assert assigns.m == 2.8
+    end
+
+    test "randomize produces valid k in 2..5", %{conn: conn} do
+      stub_all_endpoints()
+      {:ok, view, _html} = live(conn, "/sandbox")
+      render_hook(view, "apply_preset", %{"name" => "randomize"})
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.k in 2..5
+      assert assigns.m >= 1.2
+      assert assigns.m <= 2.6
+    end
+  end
+
+  describe "undo event" do
+    test "is a no-op with empty history and does not POST to Ish", %{conn: conn} do
+      post_count = :counters.new(1, [])
+
+      Req.Test.stub(Fugue.Ish, fn conn ->
+        case {conn.method, conn.request_path} do
+          {"POST", "/membership-functions"} ->
+            :counters.add(post_count, 1, 1)
+            Req.Test.json(conn, IshFixtures.membership_defs())
+
+          _ ->
+            route_non_cluster(conn) || route_cluster(conn)
+        end
+      end)
+
+      {:ok, view, _html} = live(conn, "/sandbox")
+      render_hook(view, "undo", %{})
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.history == []
+      assert :counters.get(post_count, 1) == 0
+    end
+
+    test "restores previous k and m after update_params", %{conn: conn} do
+      stub_all_endpoints()
+      {:ok, view, _html} = live(conn, "/sandbox")
+
+      view
+      |> element("form[phx-change=update_params]")
+      |> render_change(%{"k" => "4", "m" => "2.1"})
+
+      mid = :sys.get_state(view.pid).socket.assigns
+      assert mid.k == 4
+      assert mid.m == 2.1
+      assert length(mid.history) == 1
+
+      render_hook(view, "undo", %{})
+
+      restored = :sys.get_state(view.pid).socket.assigns
+      assert restored.k == 3
+      assert restored.m == 1.5
+      assert restored.history == []
+    end
+
+    test "restores state after apply_preset", %{conn: conn} do
+      stub_all_endpoints()
+      {:ok, view, _html} = live(conn, "/sandbox")
+
+      render_hook(view, "apply_preset", %{"name" => "chaos"})
+      mid = :sys.get_state(view.pid).socket.assigns
+      assert mid.k == 5
+      assert mid.m == 2.8
+
+      render_hook(view, "undo", %{})
+      restored = :sys.get_state(view.pid).socket.assigns
+      assert restored.k == 3
+      assert restored.m == 1.5
     end
   end
 

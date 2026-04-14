@@ -18,7 +18,7 @@ defmodule FugueWeb.Router do
     get "/blog/feed.xml", BlogController, :feed
     get "/blog/:slug", BlogController, :show
     live "/mood", MoodLive
-    live "/mood-sandbox", MoodSandboxLive
+    live "/sandbox", SandboxLive
     live "/graph", GraphLive
   end
 end

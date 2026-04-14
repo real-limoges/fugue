@@ -25,6 +25,44 @@ defmodule FugueWeb.MoodLiveTest do
       assert assigns.analysis.clusters != []
     end
 
+    test "renders a cross-link to /sandbox in chapter 1", %{conn: conn} do
+      stub_ish()
+
+      {:ok, view, _html} = live(conn, "/mood")
+      html = render(view)
+
+      assert html =~ ~s(href="/sandbox")
+      assert html =~ "Play with the knobs yourself"
+    end
+
+    test "renders the isolation hint above the cluster chips", %{conn: conn} do
+      stub_ish()
+
+      {:ok, view, _html} = live(conn, "/mood")
+      html = render(view)
+
+      assert html =~ "click a state to isolate it"
+    end
+
+    test "shows an isolation banner after a cluster is selected", %{conn: conn} do
+      stub_ish()
+
+      {:ok, view, _html} = live(conn, "/mood")
+
+      # Pick the first cluster id from the loaded analysis.
+      cluster_id =
+        :sys.get_state(view.pid).socket.assigns.analysis.clusters
+        |> List.first()
+        |> Map.fetch!("id")
+
+      html =
+        view
+        |> element(~s(button[phx-click="cluster_selected"][phx-value-cluster="#{cluster_id}"]))
+        |> render_click()
+
+      assert html =~ "Isolating"
+    end
+
     test "renders an error banner when Ish is unreachable", %{conn: conn} do
       Req.Test.stub(Fugue.Ish, fn conn -> Plug.Conn.send_resp(conn, 500, "boom") end)
 

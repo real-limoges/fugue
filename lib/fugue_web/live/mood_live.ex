@@ -5,11 +5,9 @@ defmodule FugueWeb.MoodLive do
 
   alias FugueWeb.MoodLive.{
     Calendar,
-    ClusterTransitions,
     DataTransforms,
     GapAnalysis,
-    MoodTransitions,
-    ParamControls
+    MoodTransitions
   }
 
   alias FugueWeb.MoodLive.Structs.{AnalysisResult, CalendarDay, GapData}
@@ -21,8 +19,6 @@ defmodule FugueWeb.MoodLive do
   def mount(_params, _session, socket) do
     socket =
       assign(socket,
-        k: @default_k,
-        m: @default_m,
         loading: true,
         error: nil,
         entries: [],
@@ -78,43 +74,6 @@ defmodule FugueWeb.MoodLive do
       _ ->
         {:noreply, assign(socket, loading: false, error: "Could not connect to Ish API")}
     end
-  end
-
-  def handle_info({:recluster, k, m}, socket) do
-    case Ish.cluster(k, m) do
-      {:ok, raw} ->
-        analysis = DataTransforms.parse_analysis(raw, socket.assigns.entries)
-
-        socket =
-          socket
-          |> assign(
-            analysis: analysis,
-            highlighted_dates: [],
-            selected_gap: nil,
-            selected_cluster: nil,
-            date_range: nil
-          )
-          |> push_viz_data()
-
-        {:noreply, socket}
-
-      {:error, _} ->
-        {:noreply, assign(socket, error: "Clustering failed")}
-    end
-  end
-
-  def handle_event("update_params", %{"k" => k_str, "m" => m_str}, socket) do
-    k = String.to_integer(k_str)
-
-    m =
-      case Float.parse(m_str) do
-        {val, _} -> val
-        :error -> socket.assigns.m
-      end
-
-    socket = assign(socket, k: k, m: m)
-    send(self(), {:recluster, k, m})
-    {:noreply, socket}
   end
 
   def handle_event("day_selected", %{"date" => date}, socket) do
@@ -235,7 +194,7 @@ defmodule FugueWeb.MoodLive do
   end
 
   defp push_gap_data(socket) do
-    %{analysis: analysis, gaps: gaps} = socket.assigns
+    %{analysis: analysis, gaps: gaps, entries: entries} = socket.assigns
 
     case gaps do
       nil ->
@@ -245,7 +204,10 @@ defmodule FugueWeb.MoodLive do
         push_event(socket, "update-gaps", %{
           transitions: g.transitions,
           lengthDistribution: g.length_distribution,
-          clusterColors: analysis.cluster_colors
+          imputedMemberships: g.imputed_memberships,
+          dateRange: full_date_range(entries),
+          clusterColors: analysis.cluster_colors,
+          clusterNames: id_to_name(analysis.clusters)
         })
     end
   end
@@ -253,7 +215,7 @@ defmodule FugueWeb.MoodLive do
   defp push_gap_data_for_cluster(socket, nil), do: push_gap_data(socket)
 
   defp push_gap_data_for_cluster(socket, cluster) do
-    %{analysis: analysis, gaps: gaps} = socket.assigns
+    %{analysis: analysis, gaps: gaps, entries: entries} = socket.assigns
 
     case gaps do
       nil ->
@@ -270,9 +232,19 @@ defmodule FugueWeb.MoodLive do
         push_event(socket, "update-gaps", %{
           transitions: filtered,
           lengthDistribution: g.length_distribution,
-          clusterColors: analysis.cluster_colors
+          imputedMemberships: g.imputed_memberships,
+          dateRange: full_date_range(entries),
+          clusterColors: analysis.cluster_colors,
+          clusterNames: id_to_name(analysis.clusters)
         })
     end
+  end
+
+  defp full_date_range([]), do: nil
+
+  defp full_date_range(entries) do
+    dates = entries |> Enum.map(& &1["date"]) |> Enum.sort()
+    %{start: List.first(dates), end: List.last(dates)}
   end
 
   defp push_brush_data(socket) do
@@ -375,19 +347,6 @@ defmodule FugueWeb.MoodLive do
     # Build segments (runs of the same cluster)
     segments = DataTransforms.build_segments(daily)
 
-    # Chord data: transition counts between all pairs
-    chord_matrix =
-      Enum.reduce(transitions, %{}, fn t, acc ->
-        Map.update(acc, {t.from, t.to}, 1, &(&1 + 1))
-      end)
-
-    chord_rows =
-      Enum.map(cluster_ids, fn from ->
-        Enum.map(cluster_ids, fn to ->
-          Map.get(chord_matrix, {from, to}, 0)
-        end)
-      end)
-
     # Sankey data: monthly transition flows
     monthly_flows =
       transitions
@@ -408,7 +367,6 @@ defmodule FugueWeb.MoodLive do
     |> push_event("update-mood-transitions", %{
       transitions: transitions,
       segments: segments,
-      chordMatrix: chord_rows,
       monthlyFlows: monthly_flows,
       clusterIds: cluster_ids,
       clusterNames: id_names,
@@ -497,10 +455,7 @@ defmodule FugueWeb.MoodLive do
           <header class="mb-16 max-w-2xl">
             <h1 class="text-3xl font-bold tracking-tight">My Mood Journal</h1>
             <p class="text-gray-500 mt-2 mb-10">
-              {@stats.entry_count} days tracked
-              <%= if @stats.date_range do %>
-                from {elem(@stats.date_range, 0)} to {elem(@stats.date_range, 1)}
-              <% end %>
+              {@stats.entry_count} days, and counting.
             </p>
 
             <p class="text-sm text-gray-300 mb-5 leading-relaxed">
@@ -529,7 +484,11 @@ defmodule FugueWeb.MoodLive do
             <p class="text-sm text-gray-400 mb-6 max-w-2xl leading-relaxed">
               Three fake clusters on an axis with no units. Drag the dot. Drag the sliders. The bar shows how much the dot belongs to each cluster — at high fuzziness it belongs to
               <em>all</em>
-              of them, a little.
+              of them, a little. If you want more than a toy, there's a
+              <a href="/sandbox" class="underline decoration-dotted hover:text-gray-200">
+                bigger sandbox
+              </a>
+              where you can reshape the membership curves themselves.
             </p>
 
             <div
@@ -580,7 +539,13 @@ defmodule FugueWeb.MoodLive do
           </h2>
 
           <p class="text-sm text-gray-400 mb-4 leading-relaxed">
-            These aren't categories I picked off a list — they're shapes the data found on its own, and I named them after I could see what they looked like. The clustering doesn't care about diagnostic labels; it just notices when days look like other days, and groups them accordingly.
+            Same idea as the toy above, now with four years of real days behind it. These aren't categories I picked off a list — they're shapes the data found on its own, and I named them after I could see what they looked like. The clustering doesn't care about diagnostic labels; it just notices when days look like other days, and groups them accordingly.
+            <.link
+              navigate="/sandbox"
+              class="text-amber-300 hover:text-amber-200 underline decoration-dotted underline-offset-4"
+            >
+              Play with the knobs yourself &rsaquo;
+            </.link>
           </p>
 
           <p class="text-sm text-gray-400 mb-6 leading-relaxed">
@@ -602,13 +567,16 @@ defmodule FugueWeb.MoodLive do
             Click any state to dim everything else across the page — click it again to let everything back in.
           </p>
 
+          <div class="text-[10px] uppercase tracking-widest text-amber-300/80 mb-1.5">
+            ↓ click a state to isolate it
+          </div>
           <div class="flex flex-wrap items-center gap-2">
             <%= for cluster <- @analysis.clusters do %>
               <button
                 phx-click="cluster_selected"
                 phx-value-cluster={cluster["id"]}
-                class={"inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer border #{if @selected_cluster == cluster["id"], do: "ring-2 ring-offset-1 ring-offset-base-300 scale-105", else: "hover:scale-105"}"}
-                style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}#{if @selected_cluster == cluster["id"], do: "55", else: "28"}; color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#aaa")}; border-color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}#{if @selected_cluster == cluster["id"], do: "aa", else: "55"}; #{if @selected_cluster && @selected_cluster != cluster["id"], do: "opacity:0.35", else: ""}"}
+                class={"inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer border-2 transition-all #{if @selected_cluster == cluster["id"], do: "ring-2 ring-amber-300 ring-offset-2 ring-offset-base-300 scale-110 shadow-lg", else: "hover:scale-105 hover:brightness-125"}"}
+                style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}#{if @selected_cluster == cluster["id"], do: "aa", else: "38"}; color: #{if @selected_cluster == cluster["id"], do: "#fff", else: Map.get(@analysis.cluster_colors, cluster["id"], "#aaa")}; border-color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}#{if @selected_cluster == cluster["id"], do: "", else: "88"}; #{if @selected_cluster && @selected_cluster != cluster["id"], do: "opacity:0.25", else: ""}"}
               >
                 <span
                   class="inline-block w-2 h-2 rounded-full"
@@ -621,12 +589,26 @@ defmodule FugueWeb.MoodLive do
             <%= if @selected_cluster do %>
               <button
                 phx-click="clear_highlights"
-                class="text-xs text-gray-600 hover:text-gray-400 ml-1"
+                class="text-xs text-amber-300 hover:text-amber-200 ml-1 font-medium"
               >
                 &times; clear
               </button>
             <% end %>
           </div>
+          <%= if @selected_cluster do %>
+            <div class="text-xs text-gray-400 mt-2">
+              Isolating
+              <span
+                class="font-semibold"
+                style={"color: #{Map.get(@analysis.cluster_colors, @selected_cluster, "#aaa")}"}
+              >
+                {Enum.find_value(@analysis.clusters, fn c ->
+                  c["id"] == @selected_cluster && c["name"]
+                end)}
+              </span>
+              — everything else across the page is dimmed.
+            </div>
+          <% end %>
 
           <div class="bg-base-200 rounded-lg p-4 mt-4">
             <div
@@ -763,19 +745,18 @@ defmodule FugueWeb.MoodLive do
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-            <div class="bg-base-200 rounded-lg p-4 flex flex-col items-center">
-              <h3 class="text-sm font-semibold text-gray-400 mb-2 self-start">
-                The full web of transitions
-              </h3>
-              <p class="text-xs text-gray-500 mb-3 self-start">
-                Same data, arranged as a loop — every pair of states and how often one becomes the other. Thicker ribbons, more traffic.
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 items-stretch">
+            <div class="bg-base-200 rounded-lg p-4 flex flex-col h-full">
+              <h3 class="text-sm font-semibold text-gray-200 mb-1">Phase space, without the diary</h3>
+              <p class="text-xs text-gray-500 mb-3 leading-snug">
+                A Thomas strange attractor in the palette above. Three coupled equations looping a bounded region forever without repeating — states as gravity wells, living as a path that can't quite settle into any of them.
               </p>
               <div
-                id="transition-chord"
-                phx-hook="TransitionChord"
+                id="cluster-attractor"
+                phx-hook="ClusterAttractor"
                 phx-update="ignore"
-                style="min-height: 280px;"
+                class="flex-1 min-h-0"
+                data-colors={Jason.encode!(Map.values(@analysis.cluster_colors))}
               >
               </div>
             </div>
@@ -795,7 +776,7 @@ defmodule FugueWeb.MoodLive do
         <%!-- CHAPTER 4: UNDER THE HOOD               --%>
         <%!-- ═══════════════════════════════════════ --%>
 
-        <section class="mb-24">
+        <section id="mood-chapter-4" class="mb-24">
           <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">
             Under the hood
           </h2>
@@ -869,25 +850,14 @@ defmodule FugueWeb.MoodLive do
             <% end %>
           </p>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <.live_component
-              module={GapAnalysis}
-              id="gaps"
-              gaps={@gaps}
-              cluster_colors={@analysis.cluster_colors}
-              cluster_names={id_to_name(@analysis.clusters)}
-              selected_cluster={@selected_cluster}
-            />
-
-            <.live_component
-              module={ClusterTransitions}
-              id="cluster-transitions"
-              gaps={@gaps}
-              cluster_colors={@analysis.cluster_colors}
-              cluster_names={id_to_name(@analysis.clusters)}
-              selected_cluster={@selected_cluster}
-            />
-          </div>
+          <.live_component
+            module={GapAnalysis}
+            id="gaps"
+            gaps={@gaps}
+            cluster_colors={@analysis.cluster_colors}
+            cluster_names={id_to_name(@analysis.clusters)}
+            selected_cluster={@selected_cluster}
+          />
         </section>
 
         <%!-- ═══════════════════════════════════════ --%>
@@ -906,24 +876,6 @@ defmodule FugueWeb.MoodLive do
             If you read this far, thank you. If something in here landed for you — or if you've built something like it for your own data — I'd genuinely like to hear about it.
           </p>
         </section>
-
-        <%!-- Param controls at the very bottom — they're for tuning, not for the story --%>
-        <details id="mood-param-controls" class="mt-8 mb-4">
-          <summary class="text-xs uppercase tracking-widest text-gray-600 cursor-pointer hover:text-gray-400">
-            Play with the math &rsaquo; clustering parameters
-          </summary>
-          <div class="mt-2">
-            <.live_component
-              module={ParamControls}
-              id="params"
-              k={@k}
-              m={@m}
-              fpc={@analysis.fpc}
-              iterations={@analysis.iterations}
-              cluster_count={length(@analysis.clusters)}
-            />
-          </div>
-        </details>
       <% end %>
     </div>
     """
