@@ -33,7 +33,8 @@ defmodule FugueWeb.MoodLive do
         selected_cluster: nil,
         selected_day: nil,
         date_range: nil,
-        mood_transitions: []
+        mood_transitions: [],
+        smoothed_daily: []
       )
 
     if connected?(socket), do: send(self(), :load_data)
@@ -187,13 +188,22 @@ defmodule FugueWeb.MoodLive do
   # --- Push helpers ---
 
   defp push_viz_data(socket) do
+    %{entries: entries, analysis: analysis} = socket.assigns
+
+    smoothed_daily =
+      entries
+      |> DataTransforms.daily_dominants(analysis)
+      |> DataTransforms.smooth_runs()
+
     socket
+    |> assign(smoothed_daily: smoothed_daily)
+    |> push_mood_trajectory()
     |> push_calendar_data()
     |> push_gap_data()
     |> push_brush_data()
     |> push_radar_data()
     |> push_stream_data()
-    |> push_sparkline_data()
+    |> push_mood_flowers()
     |> push_correlation_data()
     |> push_distribution_data()
     |> push_mood_transitions()
@@ -202,13 +212,20 @@ defmodule FugueWeb.MoodLive do
   end
 
   defp push_calendar_data(socket) do
-    %{entries: entries, analysis: analysis, gaps: gaps} = socket.assigns
+    %{entries: entries, analysis: analysis, gaps: gaps, smoothed_daily: daily} = socket.assigns
     days = DataTransforms.build_calendar_days(entries, analysis, gaps)
+
+    transition_dates =
+      daily
+      |> Enum.chunk_every(2, 1, :discard)
+      |> Enum.filter(fn [a, b] -> a.cluster != b.cluster end)
+      |> Enum.map(fn [_a, b] -> b.date end)
 
     push_event(socket, "update-calendar", %{
       days: Enum.map(days, &CalendarDay.to_event/1),
       clusterColors: analysis.cluster_colors,
-      clusterNames: Enum.into(analysis.clusters, %{}, fn c -> {c["id"], c["name"]} end)
+      clusterNames: Enum.into(analysis.clusters, %{}, fn c -> {c["id"], c["name"]} end),
+      transitionDates: transition_dates
     })
   end
 
@@ -295,12 +312,26 @@ defmodule FugueWeb.MoodLive do
     })
   end
 
-  defp push_sparkline_data(socket) do
-    entries = socket.assigns.entries
+  defp push_mood_flowers(socket) do
+    %{entries: entries, analysis: analysis, smoothed_daily: daily} = socket.assigns
+    flowers = DataTransforms.build_mood_flowers(entries, daily)
 
-    push_event(socket, "update-sparklines", %{
-      entries: Enum.map(entries, fn e -> %{date: e["date"], dimensions: e["dimensions"]} end),
-      dimensions: DataTransforms.dimensions()
+    push_event(socket, "update-flowers", %{
+      flowers: flowers,
+      dimensions: DataTransforms.dimensions(),
+      clusterColors: analysis.cluster_colors,
+      clusterNames: Enum.into(analysis.clusters, %{}, fn c -> {c["id"], c["name"]} end)
+    })
+  end
+
+  defp push_mood_trajectory(socket) do
+    %{entries: entries, analysis: analysis, smoothed_daily: daily} = socket.assigns
+    points = DataTransforms.build_trajectory(entries, daily)
+
+    push_event(socket, "update-trajectory", %{
+      points: points,
+      clusterColors: analysis.cluster_colors,
+      clusterNames: Enum.into(analysis.clusters, %{}, fn c -> {c["id"], c["name"]} end)
     })
   end
 
@@ -324,27 +355,10 @@ defmodule FugueWeb.MoodLive do
   end
 
   defp push_mood_transitions(socket) do
-    %{entries: entries, analysis: analysis} = socket.assigns
+    %{analysis: analysis, smoothed_daily: daily} = socket.assigns
     clusters = analysis.clusters
     cluster_ids = Enum.map(clusters, & &1["id"])
     id_names = Enum.into(clusters, %{}, fn c -> {c["id"], c["name"]} end)
-
-    # Build day-by-day dominant cluster sequence
-    daily =
-      entries
-      |> Enum.with_index()
-      |> Enum.map(fn {entry, idx} ->
-        row = Enum.at(analysis.membership, idx, [])
-
-        dominant =
-          clusters
-          |> Enum.with_index()
-          |> Enum.max_by(fn {_c, i} -> Enum.at(row, i, 0) end, fn -> {nil, 0} end)
-          |> elem(0)
-
-        %{date: entry["date"], cluster: dominant && dominant["id"]}
-      end)
-      |> Enum.filter(& &1.cluster)
 
     # Find transition points (where dominant cluster changes)
     transitions =
@@ -433,23 +447,128 @@ defmodule FugueWeb.MoodLive do
         </div>
       <% else %>
         <%!-- ═══════════════════════════════════════ --%>
-        <%!-- CHAPTER 1: WHO AM I                     --%>
+        <%!-- HERO: FOUR YEARS AS ONE LINE             --%>
         <%!-- ═══════════════════════════════════════ --%>
 
-        <header class="mb-8">
+        <section class="mb-20 -mx-4 md:-mx-8">
+          <div class="bg-black/40 border-y border-white/5 py-10 px-4 md:px-8">
+            <div class="max-w-5xl mx-auto">
+              <div
+                id="mood-trajectory"
+                phx-hook="MoodTrajectory"
+                phx-update="ignore"
+                class="w-full"
+                style="min-height: 520px;"
+              >
+              </div>
+
+              <div class="mt-8 max-w-xl ml-auto border-t border-white/10 pt-5 text-[11px] leading-relaxed text-gray-400 font-serif">
+                <div class="uppercase tracking-[0.2em] text-[10px] text-gray-500 mb-1">
+                  Wall text
+                </div>
+                <div class="text-gray-200 text-sm mb-1 italic">
+                  Four Years, One Line
+                </div>
+                <div class="text-gray-500 mb-3">
+                  {@stats.date_range && elem(@stats.date_range, 0)} – {@stats.date_range &&
+                    elem(@stats.date_range, 1)} &middot; PCA projection on daily self-ratings &middot; the artist
+                </div>
+                <p class="mb-2">
+                  Every morning for four years I wrote down five numbers about how I was doing. This is all of them, squashed onto a flat plane by a little math that tries to preserve the shape of the whole thing while throwing the rest away.
+                </p>
+                <p>
+                  One dot per day. The line is the order I lived them in. The colors are the mood states the clustering found later, painted back onto the path after the fact. I didn't pick where any of it went.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <div id="mood-intro" phx-hook="MoodIntroGate">
+        <%!-- ═══════════════════════════════════════ --%>
+        <%!-- PREAMBLE                                 --%>
+        <%!-- ═══════════════════════════════════════ --%>
+
+        <header class="mb-16 max-w-2xl">
           <h1 class="text-3xl font-bold tracking-tight">My Mood Journal</h1>
-          <p class="text-gray-500 mt-1">
+          <p class="text-gray-500 mt-2 mb-10">
             {@stats.entry_count} days tracked
             <%= if @stats.date_range do %>
               from {elem(@stats.date_range, 0)} to {elem(@stats.date_range, 1)}
             <% end %>
           </p>
+
+          <p class="text-sm text-gray-300 mb-5 leading-relaxed">
+            I have bipolar disorder. The cartoon version is two poles — manic, depressed — but the inside of it is finer-grained than that. Most days aren't either. Most days are <em>something</em>, and that something is hard to name with two words.
+          </p>
+          <p class="text-sm text-gray-300 mb-5 leading-relaxed">
+            So I tracked mine. Every day, a handful of numbers about how I was doing. After a few hundred days I had enough to ask the data what <em>it</em> thought my states were, instead of what a diagnostic manual said they should be. I ran it through an algorithm that lets a day belong <em>partly</em> to more than one state instead of forcing it into one.
+          </p>
+          <p class="text-sm text-gray-300 leading-relaxed">
+            If "fuzzy clustering" doesn't click yet, that's okay — drag the dot below and watch what happens.
+          </p>
         </header>
 
-        <section class="mb-10">
-          <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-4">My mood states</h2>
+        <%!-- ═══════════════════════════════════════ --%>
+        <%!-- SANDBOX: TRY IT                          --%>
+        <%!-- ═══════════════════════════════════════ --%>
 
-          <p class="text-sm text-gray-400 mb-3">
+        <section class="mb-20">
+          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">Try it first</h2>
+          <p class="text-sm text-gray-400 mb-6 max-w-2xl leading-relaxed">
+            Three fake clusters on an axis with no units. Drag the dot. Drag the sliders. The bar shows how much the dot belongs to each cluster — at high fuzziness it belongs to <em>all</em> of them, a little.
+          </p>
+
+          <div
+            id="mood-tour-sandbox"
+            phx-hook="MoodTourSandbox"
+            phx-update="ignore"
+            class="bg-base-200 rounded-lg p-6"
+          >
+          </div>
+
+          <div class="flex justify-between items-center mt-8">
+            <button
+              type="button"
+              data-skip-intro
+              class="text-xs uppercase tracking-widest text-gray-600 cursor-pointer hover:text-gray-400 transition-colors"
+            >
+              Skip intro
+            </button>
+            <button
+              type="button"
+              data-start-tour
+              class="text-xs uppercase tracking-widest text-gray-300 cursor-pointer hover:text-white transition-colors"
+            >
+              Show me around &rsaquo;
+            </button>
+          </div>
+        </section>
+        </div>
+
+        <div id="mood-tour" phx-hook="MoodTour" phx-update="ignore"></div>
+
+        <%!-- ═══════════════════════════════════════ --%>
+        <%!-- CHAPTER 1: WHO AM I                      --%>
+        <%!-- ═══════════════════════════════════════ --%>
+
+        <section id="mood-chapter-1" class="mb-24">
+          <button
+            type="button"
+            id="mood-show-intro"
+            data-show-intro
+            class="text-xs uppercase tracking-widest text-gray-600 cursor-pointer hover:text-gray-400 transition-colors mb-3 inline-block"
+            style="display:none"
+          >
+            &lsaquo; Show intro
+          </button>
+          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">My mood states</h2>
+
+          <p class="text-sm text-gray-400 mb-4 leading-relaxed">
+            These aren't categories I picked off a list — they're shapes the data found on its own, and I named them after I could see what they looked like. The clustering doesn't care about diagnostic labels; it just notices when days look like other days, and groups them accordingly.
+          </p>
+
+          <p class="text-sm text-gray-400 mb-6 leading-relaxed">
             Run {@stats.entry_count} days through fuzzy c-means clustering and my moods fall into {@stats.cluster_count} rough shapes — not boxes, more like gravity wells a day can lean toward.
             <%= if @stats.most_common do %>
               The one I live in most is
@@ -509,10 +628,13 @@ defmodule FugueWeb.MoodLive do
         <%!-- CHAPTER 2: THE FULL PICTURE             --%>
         <%!-- ═══════════════════════════════════════ --%>
 
-        <section class="mb-10">
-          <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-1">Day by day</h2>
-          <p class="text-sm text-gray-400 mb-3">
-            Every square is a day. Color is the dominant mood state; brightness is how hard it pulled.
+        <section id="mood-chapter-2" class="mb-24">
+          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">Day by day</h2>
+          <p class="text-sm text-gray-400 mb-4 leading-relaxed">
+            You can't really feel four years of mood from the inside — it's all just <em>now</em>. But pull back far enough and there's a texture to it: stripes, runs, pockets where one state pooled for weeks before something tipped it over.
+          </p>
+          <p class="text-sm text-gray-400 mb-6 leading-relaxed">
+            Every square is a day. Color is the dominant mood state; brightness is how hard it pulled. White-bordered squares are the days when the dominant state actually changed — the meaningful hand-offs, not the day-to-day jitter.
             <%= if @stats.first_state && @stats.last_state do %>
               I started in
               <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.first_state.id, "#aaa")}"}>
@@ -574,13 +696,16 @@ defmodule FugueWeb.MoodLive do
         <%!-- CHAPTER 3: HOW MY MOODS SHIFT           --%>
         <%!-- ═══════════════════════════════════════ --%>
 
-        <section class="mb-10">
-          <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-1">How my moods shift</h2>
-          <p class="text-sm text-gray-400 mb-3">
+        <section id="mood-chapter-3" class="mb-24">
+          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">How my moods shift</h2>
+          <p class="text-sm text-gray-400 mb-4 leading-relaxed">
+            The interesting question isn't which state I'm in — it's the verbs. The hand-offs. What does the data tend to <em>become</em>? Some pairs are well-worn paths and some almost never happen, and the shape of those preferences says something I couldn't have named on my own.
+          </p>
+          <p class="text-sm text-gray-400 mb-6 leading-relaxed">
             The dominant state flipped {@stats.transition_count} times across {@stats.entry_count} days — roughly once every {div(
               @stats.entry_count,
               max(@stats.transition_count, 1)
-            )} days on average.
+            )} days on average. I'm only counting a hand-off when the new state holds for at least five days; anything shorter is the model arguing with itself, not me actually moving.
             <%= if @stats.biggest_flow && @stats.biggest_flow.from && @stats.biggest_flow.to do %>
               The most-worn path was
               <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.biggest_flow.from.id, "#aaa")}"}>
@@ -651,22 +776,25 @@ defmodule FugueWeb.MoodLive do
         <%!-- CHAPTER 4: UNDER THE HOOD               --%>
         <%!-- ═══════════════════════════════════════ --%>
 
-        <section class="mb-10">
-          <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-1">Under the hood</h2>
-          <p class="text-sm text-gray-400 mb-3">
-            The clusters up there are built out of five raw numbers I rate every morning: sleep, anxiety, sensitivity, outlook, and speed, each on 0–10. Here's what those numbers actually do — how they drift over time, which ones move together, and how they're spread across all {@stats.entry_count} days.
+        <section class="mb-24">
+          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">Under the hood</h2>
+          <p class="text-sm text-gray-400 mb-4 leading-relaxed">
+            Up to here it's been the <em>output</em> of the model — the named states, how they ebb, how they hand off. This section is the <em>input</em>: the five raw numbers I rate every morning, before anything fancy happens to them. Sleep, anxiety, sensitivity, outlook, and speed, each on 0–10.
+          </p>
+          <p class="text-sm text-gray-400 mb-6 leading-relaxed">
+            They're the only thing the clustering knows about me — every shape further up the page is downstream of them. Here's what the five actually do on their own: how they drift over time, which ones move together, and how they're spread across all {@stats.entry_count} days.
           </p>
 
           <div class="bg-base-200 rounded-lg p-4">
-            <h3 class="text-sm font-semibold text-gray-400 mb-2">Deviations from baseline</h3>
+            <h3 class="text-sm font-semibold text-gray-400 mb-2">A flower for every month</h3>
             <p class="text-xs text-gray-500 mb-3">
-              Each row is centered on its own average (μ) and scaled to its own standard deviation, so the shape answers "when was I unusually X?" instead of "what was my raw X?" — above the dashed line is a higher-than-usual day, below is lower-than-usual.
+              Each flower is one month. The shape is the average of those five raw inputs over the month — long spokes are dimensions that ran high, short ones ran low. The fill color is whichever cluster came out on top once the same numbers went through the model. Same data, two readings: the inputs you'd recognize and the output they add up to.
             </p>
             <div
-              id="dimension-sparklines"
-              phx-hook="DimensionSparklines"
+              id="mood-flowers"
+              phx-hook="MoodFlowers"
               phx-update="ignore"
-              style="min-height: 340px;"
+              style="min-height: 460px;"
             >
             </div>
           </div>
@@ -706,9 +834,12 @@ defmodule FugueWeb.MoodLive do
         <%!-- CHAPTER 5: THE GAPS                     --%>
         <%!-- ═══════════════════════════════════════ --%>
 
-        <section class="mb-6">
-          <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-1">The gaps</h2>
-          <p class="text-sm text-gray-400 mb-3">
+        <section id="mood-chapter-5" class="mb-24">
+          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">The gaps</h2>
+          <p class="text-sm text-gray-400 mb-4 leading-relaxed">
+            The days I didn't track are also data. Tracking is the first thing to drop when a state gets loud enough to drown out the form — so when the page goes quiet, it's almost never because nothing was happening. The gaps aren't holes in the record so much as a different kind of entry: <em>whatever this was, it was too much to write down</em>.
+          </p>
+          <p class="text-sm text-gray-400 mb-6 leading-relaxed">
             <%= if @stats.gap_count > 0 do %>
               I'm not perfect at this — I missed some days. There are {@stats.gap_count} stretches where I went quiet, and a lot of the time the state I came back in wasn't the state I left in. That's its own kind of signal. Click a mood state above to see which gaps touched it.
             <% else %>
@@ -737,8 +868,25 @@ defmodule FugueWeb.MoodLive do
           </div>
         </section>
 
+        <%!-- ═══════════════════════════════════════ --%>
+        <%!-- CHAPTER 6: AFTER                          --%>
+        <%!-- ═══════════════════════════════════════ --%>
+
+        <section class="mb-16 max-w-2xl">
+          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">After</h2>
+          <p class="text-sm text-gray-300 mb-5 leading-relaxed">
+            That's the shape of it, for now. The model will keep updating as I keep logging — come back in a few months and the picture will look different in ways neither of us can predict yet.
+          </p>
+          <p class="text-sm text-gray-300 mb-5 leading-relaxed">
+            None of this is meant as a recommendation, or a method, or a diagnosis. It's just me trying to look at myself with a little more resolution than the language I was handed. The numbers don't replace the words for what's happening — they sit next to them, and sometimes they catch something the words miss.
+          </p>
+          <p class="text-sm text-gray-300 leading-relaxed">
+            If you read this far, thank you. If something in here landed for you — or if you've built something like it for your own data — I'd genuinely like to hear about it.
+          </p>
+        </section>
+
         <%!-- Param controls at the very bottom — they're for tuning, not for the story --%>
-        <details class="mt-8 mb-4">
+        <details id="mood-param-controls" class="mt-8 mb-4">
           <summary class="text-xs uppercase tracking-widest text-gray-600 cursor-pointer hover:text-gray-400">
             Play with the math &rsaquo; clustering parameters
           </summary>
