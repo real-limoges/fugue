@@ -1,13 +1,21 @@
 defmodule Fugue.Ish do
   @moduledoc "HTTP client for the Ish mood analysis API."
 
+  alias Fugue.IshCache
+
   defp config, do: Application.get_env(:fugue, __MODULE__)
   defp base_url, do: config()[:url]
 
   defp req_opts do
+    base =
+      case config()[:plug] do
+        nil -> []
+        plug -> [plug: plug, retry: false]
+      end
+
     case config()[:gcp_auth] do
-      true -> [headers: [{"authorization", "Bearer #{fetch_id_token()}"}]]
-      _ -> []
+      true -> Keyword.put(base, :headers, [{"authorization", "Bearer #{fetch_id_token()}"}])
+      _ -> base
     end
   end
 
@@ -17,8 +25,9 @@ defmodule Fugue.Ish do
   end
 
   def data do
-    Req.get("#{base_url()}/data", req_opts())
-    |> parse_response()
+    IshCache.fetch(:data, fn ->
+      Req.get("#{base_url()}/data", req_opts()) |> parse_response()
+    end)
   end
 
   def entries(from \\ nil, to \\ nil) do
@@ -41,13 +50,39 @@ defmodule Fugue.Ish do
   end
 
   def cluster(k, m) do
-    Req.post("#{base_url()}/cluster", Keyword.merge(req_opts(), json: %{k: k, m: m}))
-    |> parse_response()
+    IshCache.fetch({:cluster, k, m}, fn ->
+      Req.post("#{base_url()}/cluster", Keyword.merge(req_opts(), json: %{k: k, m: m}))
+      |> parse_response()
+    end)
   end
 
   def gaps do
-    Req.get("#{base_url()}/gaps", req_opts())
-    |> parse_response()
+    IshCache.fetch(:gaps, fn ->
+      Req.get("#{base_url()}/gaps", req_opts()) |> parse_response()
+    end)
+  end
+
+  def membership_functions do
+    Req.get("#{base_url()}/membership-functions", req_opts()) |> parse_response()
+  end
+
+  def update_membership_functions(defs) do
+    result =
+      Req.post("#{base_url()}/membership-functions", Keyword.merge(req_opts(), json: defs))
+      |> parse_response()
+
+    case result do
+      {:ok, _} = ok ->
+        IshCache.invalidate_all()
+        ok
+
+      err ->
+        err
+    end
+  end
+
+  def suggest_membership_functions do
+    Req.post("#{base_url()}/membership-functions/suggest", req_opts()) |> parse_response()
   end
 
   defp fetch_id_token do

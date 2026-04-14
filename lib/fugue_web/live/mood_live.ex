@@ -26,7 +26,12 @@ defmodule FugueWeb.MoodLive do
         loading: true,
         error: nil,
         entries: [],
-        analysis: %AnalysisResult{},
+        analysis: %AnalysisResult{
+          clusters: [],
+          membership: [],
+          cluster_colors: %{},
+          name_to_id: %{}
+        },
         gaps: nil,
         highlighted_dates: [],
         selected_gap: nil,
@@ -471,10 +476,10 @@ defmodule FugueWeb.MoodLive do
                 </div>
                 <div class="text-gray-500 mb-3">
                   {@stats.date_range && elem(@stats.date_range, 0)} – {@stats.date_range &&
-                    elem(@stats.date_range, 1)} &middot; PCA projection on daily self-ratings &middot; the artist
+                    elem(@stats.date_range, 1)} &middot; PCA projection on daily self-ratings &middot; real limoges
                 </div>
                 <p class="mb-2">
-                  Every morning for four years I wrote down five numbers about how I was doing. This is all of them, squashed onto a flat plane by a little math that tries to preserve the shape of the whole thing while throwing the rest away.
+                  Every evening before bed for the past four years I wrote down five numbers about how I was doing. This is all of them, squashed onto a flat plane by a little math that tries to preserve the shape of the whole thing while throwing the rest away.
                 </p>
                 <p>
                   One dot per day. The line is the order I lived them in. The colors are the mood states the clustering found later, painted back onto the path after the fact. I didn't pick where any of it went.
@@ -485,65 +490,73 @@ defmodule FugueWeb.MoodLive do
         </section>
 
         <div id="mood-intro" phx-hook="MoodIntroGate">
-        <%!-- ═══════════════════════════════════════ --%>
-        <%!-- PREAMBLE                                 --%>
-        <%!-- ═══════════════════════════════════════ --%>
+          <%!-- ═══════════════════════════════════════ --%>
+          <%!-- PREAMBLE                                 --%>
+          <%!-- ═══════════════════════════════════════ --%>
 
-        <header class="mb-16 max-w-2xl">
-          <h1 class="text-3xl font-bold tracking-tight">My Mood Journal</h1>
-          <p class="text-gray-500 mt-2 mb-10">
-            {@stats.entry_count} days tracked
-            <%= if @stats.date_range do %>
-              from {elem(@stats.date_range, 0)} to {elem(@stats.date_range, 1)}
-            <% end %>
-          </p>
+          <header class="mb-16 max-w-2xl">
+            <h1 class="text-3xl font-bold tracking-tight">My Mood Journal</h1>
+            <p class="text-gray-500 mt-2 mb-10">
+              {@stats.entry_count} days tracked
+              <%= if @stats.date_range do %>
+                from {elem(@stats.date_range, 0)} to {elem(@stats.date_range, 1)}
+              <% end %>
+            </p>
 
-          <p class="text-sm text-gray-300 mb-5 leading-relaxed">
-            I have bipolar disorder. The cartoon version is two poles — manic, depressed — but the inside of it is finer-grained than that. Most days aren't either. Most days are <em>something</em>, and that something is hard to name with two words.
-          </p>
-          <p class="text-sm text-gray-300 mb-5 leading-relaxed">
-            So I tracked mine. Every day, a handful of numbers about how I was doing. After a few hundred days I had enough to ask the data what <em>it</em> thought my states were, instead of what a diagnostic manual said they should be. I ran it through an algorithm that lets a day belong <em>partly</em> to more than one state instead of forcing it into one.
-          </p>
-          <p class="text-sm text-gray-300 leading-relaxed">
-            If "fuzzy clustering" doesn't click yet, that's okay — drag the dot below and watch what happens.
-          </p>
-        </header>
+            <p class="text-sm text-gray-300 mb-5 leading-relaxed">
+              I have bipolar disorder. The cartoon version is two poles — manic, depressed — but the inside of it is finer-grained than that. Most days aren't either. Most days are <em>something</em>, and that something is hard to name with two words.
+            </p>
+            <p class="text-sm text-gray-300 mb-5 leading-relaxed">
+              So I tracked mine. Every day, a handful of numbers about how I was doing. After a few hundred days I had enough to ask the data what
+              <em>it</em>
+              thought my states were, instead of what a diagnostic manual said they should be. I ran it through an algorithm that lets a day belong
+              <em>partly</em>
+              to more than one state instead of forcing it into one.
+            </p>
+            <p class="text-sm text-gray-300 leading-relaxed">
+              If "fuzzy clustering" doesn't click yet, that's okay — drag the dot below and watch what happens.
+            </p>
+          </header>
 
-        <%!-- ═══════════════════════════════════════ --%>
-        <%!-- SANDBOX: TRY IT                          --%>
-        <%!-- ═══════════════════════════════════════ --%>
+          <%!-- ═══════════════════════════════════════ --%>
+          <%!-- SANDBOX: TRY IT                          --%>
+          <%!-- ═══════════════════════════════════════ --%>
 
-        <section class="mb-20">
-          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">Try it first</h2>
-          <p class="text-sm text-gray-400 mb-6 max-w-2xl leading-relaxed">
-            Three fake clusters on an axis with no units. Drag the dot. Drag the sliders. The bar shows how much the dot belongs to each cluster — at high fuzziness it belongs to <em>all</em> of them, a little.
-          </p>
+          <section class="mb-20">
+            <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">
+              Try it first
+            </h2>
+            <p class="text-sm text-gray-400 mb-6 max-w-2xl leading-relaxed">
+              Three fake clusters on an axis with no units. Drag the dot. Drag the sliders. The bar shows how much the dot belongs to each cluster — at high fuzziness it belongs to
+              <em>all</em>
+              of them, a little.
+            </p>
 
-          <div
-            id="mood-tour-sandbox"
-            phx-hook="MoodTourSandbox"
-            phx-update="ignore"
-            class="bg-base-200 rounded-lg p-6"
-          >
-          </div>
-
-          <div class="flex justify-between items-center mt-8">
-            <button
-              type="button"
-              data-skip-intro
-              class="text-xs uppercase tracking-widest text-gray-600 cursor-pointer hover:text-gray-400 transition-colors"
+            <div
+              id="mood-tour-sandbox"
+              phx-hook="MoodTourSandbox"
+              phx-update="ignore"
+              class="bg-base-200 rounded-lg p-6"
             >
-              Skip intro
-            </button>
-            <button
-              type="button"
-              data-start-tour
-              class="text-xs uppercase tracking-widest text-gray-300 cursor-pointer hover:text-white transition-colors"
-            >
-              Show me around &rsaquo;
-            </button>
-          </div>
-        </section>
+            </div>
+
+            <div class="flex justify-between items-center mt-8">
+              <button
+                type="button"
+                data-skip-intro
+                class="text-xs uppercase tracking-widest text-gray-600 cursor-pointer hover:text-gray-400 transition-colors"
+              >
+                Skip intro
+              </button>
+              <button
+                type="button"
+                data-start-tour
+                class="text-xs uppercase tracking-widest text-gray-300 cursor-pointer hover:text-white transition-colors"
+              >
+                Show me around &rsaquo;
+              </button>
+            </div>
+          </section>
         </div>
 
         <div id="mood-tour" phx-hook="MoodTour" phx-update="ignore"></div>
@@ -562,7 +575,9 @@ defmodule FugueWeb.MoodLive do
           >
             &lsaquo; Show intro
           </button>
-          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">My mood states</h2>
+          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">
+            My mood states
+          </h2>
 
           <p class="text-sm text-gray-400 mb-4 leading-relaxed">
             These aren't categories I picked off a list — they're shapes the data found on its own, and I named them after I could see what they looked like. The clustering doesn't care about diagnostic labels; it just notices when days look like other days, and groups them accordingly.
@@ -629,7 +644,9 @@ defmodule FugueWeb.MoodLive do
         <%!-- ═══════════════════════════════════════ --%>
 
         <section id="mood-chapter-2" class="mb-24">
-          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">Day by day</h2>
+          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">
+            Day by day
+          </h2>
           <p class="text-sm text-gray-400 mb-4 leading-relaxed">
             You can't really feel four years of mood from the inside — it's all just <em>now</em>. But pull back far enough and there's a texture to it: stripes, runs, pockets where one state pooled for weeks before something tipped it over.
           </p>
@@ -697,7 +714,9 @@ defmodule FugueWeb.MoodLive do
         <%!-- ═══════════════════════════════════════ --%>
 
         <section id="mood-chapter-3" class="mb-24">
-          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">How my moods shift</h2>
+          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">
+            How my moods shift
+          </h2>
           <p class="text-sm text-gray-400 mb-4 leading-relaxed">
             The interesting question isn't which state I'm in — it's the verbs. The hand-offs. What does the data tend to <em>become</em>? Some pairs are well-worn paths and some almost never happen, and the shape of those preferences says something I couldn't have named on my own.
           </p>
@@ -777,9 +796,12 @@ defmodule FugueWeb.MoodLive do
         <%!-- ═══════════════════════════════════════ --%>
 
         <section class="mb-24">
-          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">Under the hood</h2>
+          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">
+            Under the hood
+          </h2>
           <p class="text-sm text-gray-400 mb-4 leading-relaxed">
-            Up to here it's been the <em>output</em> of the model — the named states, how they ebb, how they hand off. This section is the <em>input</em>: the five raw numbers I rate every morning, before anything fancy happens to them. Sleep, anxiety, sensitivity, outlook, and speed, each on 0–10.
+            Up to here it's been the <em>output</em>
+            of the model — the named states, how they ebb, how they hand off. This section is the <em>input</em>: the five raw numbers I rate every evening, before anything fancy happens to them. Sleep, anxiety, sensitivity, outlook, and speed, each on 0–10.
           </p>
           <p class="text-sm text-gray-400 mb-6 leading-relaxed">
             They're the only thing the clustering knows about me — every shape further up the page is downstream of them. Here's what the five actually do on their own: how they drift over time, which ones move together, and how they're spread across all {@stats.entry_count} days.

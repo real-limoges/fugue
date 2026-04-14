@@ -17,7 +17,7 @@ defmodule FugueWeb.MoodLive.ParamControls do
               name="k"
               value={@k}
               min="2"
-              max="8"
+              max="5"
               step="1"
               class="range range-primary range-sm w-full"
             />
@@ -33,7 +33,7 @@ defmodule FugueWeb.MoodLive.ParamControls do
               name="m"
               value={@m}
               min="1.1"
-              max="4.0"
+              max="3.0"
               step="0.1"
               class="range range-secondary range-sm w-full"
             />

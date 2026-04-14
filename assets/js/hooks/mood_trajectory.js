@@ -10,6 +10,28 @@ export const MoodTrajectory = {
       this.render()
     })
 
+    this.handleEvent("update-trajectory-colors", ({ clusterByDate, clusterColors, clusterNames }) => {
+      this.data.clusterColors = clusterColors
+      this.data.clusterNames = clusterNames
+      // Keep this.data.points current so resize re-renders with correct clusters
+      this.data.points = this.data.points.map(p => ({ ...p, cluster: clusterByDate[p.date] ?? null }))
+
+      const svg = d3.select(this.el).select("svg")
+      if (svg.empty()) return
+
+      // Use clusterByDate directly — bound datum still holds old cluster values
+      svg.selectAll("line")
+        .attr("stroke", d => {
+          const cluster = clusterByDate[d[1].date] ?? null
+          return (cluster && clusterColors[cluster]) || "#666"
+        })
+
+      // Mutate circle datum in-place so showTooltip sees the new cluster
+      svg.selectAll("circle")
+        .each(function(d) { d.cluster = clusterByDate[d.date] ?? null })
+        .attr("fill", d => (d.cluster && clusterColors[d.cluster]) || "#888")
+    })
+
     this._onResize = () => this.render()
     window.addEventListener("resize", this._onResize)
   },

@@ -16,10 +16,12 @@ import { MoodTourSandbox } from "./mood_tour_sandbox"
 import { MoodIntroGate } from "./mood_intro_gate"
 import { MoodTour } from "./mood_tour"
 import { MoodTrajectory } from "./mood_trajectory"
+import { MembershipEditor } from "./membership_editor"
 
 export default {
   GraphViz, CalendarHeatmap, ScatterPlot, GapHistogram, TemporalBrush,
   ClusterRadar, ClusterStream, MoodFlowers, CorrelationHeatmap,
   DimensionDistributions, TransitionTimeline, TransitionSankey, TransitionChord,
-  MoodExperience, MoodTourSandbox, MoodIntroGate, MoodTour, MoodTrajectory
+  MoodExperience, MoodTourSandbox, MoodIntroGate, MoodTour, MoodTrajectory,
+  MembershipEditor
 }

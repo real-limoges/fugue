@@ -22,6 +22,57 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   @doc "Returns the canonical list of mood dimensions."
   def dimensions, do: @dimensions
 
+  @doc """
+  Builds per-dimension histograms for the membership function editor.
+  `bounds_by_dim` maps each dimension name to `{lo, hi}`. Returns a map of
+  `dim => [%{x0, x1, n}]` with `bin_count` equal-width bins, counts
+  normalized to the densest bin so the visual peak is always 1.0.
+  """
+  def build_histograms(entries, bounds_by_dim, bin_count \\ 20) do
+    Map.new(@dimensions, fn dim ->
+      {lo, hi} = Map.get(bounds_by_dim, dim, {0.0, 10.0})
+
+      values =
+        entries
+        |> Enum.map(fn e -> (e["dimensions"] || %{})[dim] end)
+        |> Enum.reject(&is_nil/1)
+
+      {dim, bin_values(values, lo, hi, bin_count)}
+    end)
+  end
+
+  defp bin_values([], lo, hi, bin_count) do
+    width = (hi - lo) / bin_count
+
+    Enum.map(0..(bin_count - 1), fn i ->
+      %{x0: lo + i * width, x1: lo + (i + 1) * width, n: 0.0}
+    end)
+  end
+
+  defp bin_values(values, lo, hi, bin_count) do
+    width = (hi - lo) / bin_count
+
+    counts =
+      Enum.reduce(values, :array.new(bin_count, default: 0), fn v, acc ->
+        idx =
+          cond do
+            v <= lo -> 0
+            v >= hi -> bin_count - 1
+            true -> min(trunc((v - lo) / width), bin_count - 1)
+          end
+
+        :array.set(idx, :array.get(idx, acc) + 1, acc)
+      end)
+
+    raw = Enum.map(0..(bin_count - 1), fn i -> :array.get(i, counts) end)
+    peak = Enum.max(raw, fn -> 1 end)
+    peak = if peak == 0, do: 1, else: peak
+
+    Enum.map(0..(bin_count - 1), fn i ->
+      %{x0: lo + i * width, x1: lo + (i + 1) * width, n: Enum.at(raw, i) / peak}
+    end)
+  end
+
   @doc "Parses raw API response into an AnalysisResult with generated cluster names."
   def parse_analysis(raw, entries) do
     membership = raw["membership"] || []
