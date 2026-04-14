@@ -56,7 +56,7 @@ defmodule Fugue.Graph.BlomEncoder do
 
     pageranks =
       for %{pagerank: pr} <- nodes, into: <<>> do
-        <<(pr || 0.0)::little-float-32>>
+        <<pr || 0.0::little-float-32>>
       end
 
     degrees =

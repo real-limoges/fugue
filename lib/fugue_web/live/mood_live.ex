@@ -456,11 +456,13 @@ defmodule FugueWeb.MoodLive do
               <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.most_common.id, "#aaa")}"}>
                 {@stats.most_common.name}
               </span>
-              — {@stats.most_common.days} days, about {div(@stats.most_common.days * 100, max(@stats.entry_count, 1))}% of everything tracked.
+              — {@stats.most_common.days} days, about {div(
+                @stats.most_common.days * 100,
+                max(@stats.entry_count, 1)
+              )}% of everything tracked.
             <% end %>
             <%= if @stats.longest_run do %>
-              My longest uninterrupted stretch was {@stats.longest_run.days} days of
-              <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.longest_run.id, "#aaa")}"}>
+              My longest uninterrupted stretch was {@stats.longest_run.days} days of <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.longest_run.id, "#aaa")}"}>
                 {@stats.longest_run.name}</span>.
             <% end %>
             Click any state to dim everything else across the page — click it again to let everything back in.
@@ -514,9 +516,9 @@ defmodule FugueWeb.MoodLive do
             <%= if @stats.first_state && @stats.last_state do %>
               I started in
               <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.first_state.id, "#aaa")}"}>
-                {@stats.first_state.name}</span>
-              and — for now — I'm in
-              <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.last_state.id, "#aaa")}"}>
+                {@stats.first_state.name}
+              </span>
+              and — for now — I'm in <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.last_state.id, "#aaa")}"}>
                 {@stats.last_state.name}</span>.
             <% end %>
             Drag across the strip below to zoom into a window, or click any square to see the days around it.
@@ -575,14 +577,19 @@ defmodule FugueWeb.MoodLive do
         <section class="mb-10">
           <h2 class="text-xs uppercase tracking-widest text-gray-500 mb-1">How my moods shift</h2>
           <p class="text-sm text-gray-400 mb-3">
-            The dominant state flipped {@stats.transition_count} times across {@stats.entry_count} days — roughly once every {div(@stats.entry_count, max(@stats.transition_count, 1))} days on average.
+            The dominant state flipped {@stats.transition_count} times across {@stats.entry_count} days — roughly once every {div(
+              @stats.entry_count,
+              max(@stats.transition_count, 1)
+            )} days on average.
             <%= if @stats.biggest_flow && @stats.biggest_flow.from && @stats.biggest_flow.to do %>
               The most-worn path was
               <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.biggest_flow.from.id, "#aaa")}"}>
-                {@stats.biggest_flow.from.name}</span>
+                {@stats.biggest_flow.from.name}
+              </span>
               →
               <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.biggest_flow.to.id, "#aaa")}"}>
-                {@stats.biggest_flow.to.name}</span>
+                {@stats.biggest_flow.to.name}
+              </span>
               ({@stats.biggest_flow.count}×).
             <% end %>
             The timeline below turns every reign of a mood state into a colored block, with white markers at every handoff.
