@@ -7,9 +7,9 @@
 # General application configuration
 import Config
 
-config :fugue, Fugue.Db, url: "http://localhost:3000"
+config :fugue, Fugue.Db, url: System.get_env("COZODB_URL", "http://localhost:3000")
 
-config :fugue, Fugue.Ish, url: "http://localhost:8080"
+config :fugue, Fugue.Ish, url: System.get_env("ISH_URL", "http://localhost:7333")
 
 # Configure the endpoint
 config :fugue, FugueWeb.Endpoint,

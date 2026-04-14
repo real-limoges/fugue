@@ -22,6 +22,26 @@ end
 
 config :fugue, FugueWeb.Endpoint, http: [port: String.to_integer(System.get_env("PORT", "4000"))]
 
+# In docker dev, Phoenix needs to listen on all interfaces so the host
+# port-forward can reach it. config/dev.exs binds to 127.0.0.1 by default
+# which is invisible from outside the container.
+if config_env() == :dev and System.get_env("PHX_SERVER") do
+  config :fugue, FugueWeb.Endpoint, http: [ip: {0, 0, 0, 0}]
+end
+
+# Service URLs are honored in every environment so the dev docker-compose
+# stack can point at the sibling containers (cozodb, ish) instead of the
+# compile-time localhost defaults in config/config.exs.
+if url = System.get_env("COZODB_URL") do
+  config :fugue, Fugue.Db, url: url, auth_token: System.get_env("COZODB_AUTH_TOKEN")
+end
+
+if url = System.get_env("ISH_URL") do
+  config :fugue, Fugue.Ish,
+    url: url,
+    gcp_auth: System.get_env("ISH_GCP_AUTH", "false") == "true"
+end
+
 if config_env() == :prod do
   # The secret key base is used to sign/encrypt cookies and other secrets.
   # A default value is used in config/dev.exs and config/test.exs but you

@@ -237,10 +237,12 @@ defmodule FugueWeb.MoodLive.DataTransforms do
           {Enum.min(dates), Enum.max(dates)}
       end
 
-    dominant_counts =
+    initial = %{counts: %{}, prev: nil, run: 0, longest: {nil, 0}, first: nil, last: nil}
+
+    summary =
       entries
       |> Enum.with_index()
-      |> Enum.reduce(%{}, fn {_entry, idx}, acc ->
+      |> Enum.reduce(initial, fn {_entry, idx}, acc ->
         row = Enum.at(analysis.membership, idx, [])
 
         dominant =
@@ -249,17 +251,56 @@ defmodule FugueWeb.MoodLive.DataTransforms do
           |> Enum.max_by(fn {_c, i} -> Enum.at(row, i, 0) end, fn -> {nil, 0} end)
           |> elem(0)
 
-        if dominant, do: Map.update(acc, dominant["id"], 1, &(&1 + 1)), else: acc
+        case dominant do
+          nil ->
+            acc
+
+          %{"id" => id} ->
+            counts = Map.update(acc.counts, id, 1, &(&1 + 1))
+            run = if acc.prev == id, do: acc.run + 1, else: 1
+
+            longest =
+              if run > elem(acc.longest, 1), do: {id, run}, else: acc.longest
+
+            %{
+              counts: counts,
+              prev: id,
+              run: run,
+              longest: longest,
+              first: acc.first || id,
+              last: id
+            }
+        end
       end)
 
     most_common =
-      case Enum.max_by(dominant_counts, fn {_k, v} -> v end, fn -> nil end) do
-        {id, count} ->
-          name = Enum.find(analysis.clusters, fn c -> c["id"] == id end)
-          %{id: id, name: name && name["name"], days: count}
+      case Enum.max_by(summary.counts, fn {_k, v} -> v end, fn -> nil end) do
+        {id, count} -> lookup_cluster(id, analysis.clusters, days: count)
+        nil -> nil
+      end
 
-        nil ->
+    longest_run =
+      case summary.longest do
+        {nil, _} -> nil
+        {id, days} -> lookup_cluster(id, analysis.clusters, days: days)
+      end
+
+    biggest_flow =
+      case transitions do
+        [] ->
           nil
+
+        _ ->
+          {{from_id, to_id}, count} =
+            transitions
+            |> Enum.reduce(%{}, fn t, acc -> Map.update(acc, {t.from, t.to}, 1, &(&1 + 1)) end)
+            |> Enum.max_by(fn {_pair, c} -> c end)
+
+          %{
+            from: lookup_cluster(from_id, analysis.clusters),
+            to: lookup_cluster(to_id, analysis.clusters),
+            count: count
+          }
       end
 
     gap_count = if gaps, do: length(gaps.transitions), else: 0
@@ -270,8 +311,22 @@ defmodule FugueWeb.MoodLive.DataTransforms do
       cluster_count: length(analysis.clusters),
       transition_count: length(transitions),
       most_common: most_common,
-      gap_count: gap_count
+      gap_count: gap_count,
+      longest_run: longest_run,
+      first_state: lookup_cluster(summary.first, analysis.clusters),
+      last_state: lookup_cluster(summary.last, analysis.clusters),
+      biggest_flow: biggest_flow
     }
+  end
+
+  defp lookup_cluster(id, clusters, opts \\ [])
+  defp lookup_cluster(nil, _clusters, _opts), do: nil
+
+  defp lookup_cluster(id, clusters, opts) do
+    case Enum.find(clusters, fn c -> c["id"] == id end) do
+      nil -> nil
+      c -> Enum.into(opts, %{id: id, name: c["name"]})
+    end
   end
 
   # -- Private helpers --

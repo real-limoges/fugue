@@ -55,11 +55,13 @@ defmodule Fugue.Graph.BlomEncoder do
     ids = for %{id: id} <- nodes, into: <<>>, do: <<id::little-unsigned-32>>
 
     pageranks =
-      for %{pagerank: pr} <- nodes, into: <<>>, do: <<pr || 0.0::little-float-32>>
+      for %{pagerank: pr} <- nodes, into: <<>> do
+        <<pr || 0.0::little-float-32>>
+      end
 
     degrees =
-      for %{in_degree: ind, out_degree: outd} <- nodes, into: <<>> do
-        deg = min((ind || 0) + (outd || 0), 65535)
+      for %{degree: d} <- nodes, into: <<>> do
+        deg = min(d || 0, 65535)
         <<deg::little-unsigned-16>>
       end
 

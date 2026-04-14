@@ -23,8 +23,8 @@ defmodule Fugue.Graph.BlomEncoderTest do
 
   test "encodes nodes without edges" do
     nodes = [
-      %Article{id: 1, title: "Hello", pagerank: 0.5, in_degree: 3, out_degree: 2},
-      %Article{id: 2, title: "World", pagerank: 0.25, in_degree: 1, out_degree: 0}
+      %Article{id: 1, title: "Hello", pagerank: 0.5, degree: 5},
+      %Article{id: 2, title: "World", pagerank: 0.25, degree: 1}
     ]
 
     data = BlomEncoder.encode(%{nodes: nodes, links: []})
@@ -69,11 +69,11 @@ defmodule Fugue.Graph.BlomEncoderTest do
 
   test "encodes edges" do
     nodes = [
-      %Article{id: 10, title: "A", pagerank: 0.0, in_degree: 1, out_degree: 1},
-      %Article{id: 20, title: "B", pagerank: 0.0, in_degree: 1, out_degree: 1}
+      %Article{id: 10, title: "A", pagerank: 0.0, degree: 2},
+      %Article{id: 20, title: "B", pagerank: 0.0, degree: 2}
     ]
 
-    links = [%Link{source_id: 10, target_id: 20, link_type: "LINKS_TO"}]
+    links = [%Link{source_id: 10, target_id: 20}]
 
     data = BlomEncoder.encode(%{nodes: nodes, links: links})
 
@@ -90,7 +90,7 @@ defmodule Fugue.Graph.BlomEncoderTest do
   end
 
   test "degree caps at 65535" do
-    node = %Article{id: 1, title: "", pagerank: 0.0, in_degree: 40_000, out_degree: 40_000}
+    node = %Article{id: 1, title: "", pagerank: 0.0, degree: 80_000}
     data = BlomEncoder.encode(%{nodes: [node], links: []})
 
     # Skip header(16) + string_table(4 + 4 + 0) + id(4) + pagerank(4)
@@ -99,7 +99,7 @@ defmodule Fugue.Graph.BlomEncoderTest do
   end
 
   test "handles nil fields with defaults" do
-    node = %Article{id: 1, title: nil, pagerank: nil, in_degree: nil, out_degree: nil}
+    node = %Article{id: 1, title: nil, pagerank: nil, degree: nil}
     data = BlomEncoder.encode(%{nodes: [node], links: []})
 
     <<
