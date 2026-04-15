@@ -4,6 +4,8 @@ on:
   workflow_call:
   push:
     branches: [main]
+    paths-ignore:
+      - 'priv/static/sandbox/melbourne_weather.csv'
   pull_request:
 
 env:
