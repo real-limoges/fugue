@@ -57,6 +57,21 @@ defmodule Fugue.Sandbox.Fuzzy do
   def triangular(_, _, _, _), do: 0.0
 
   @doc """
+  Sample a single MF across `[lo, hi]` at `steps + 1` evenly-spaced x values.
+  Returns a list of `[x, y]` pairs suitable for d3 line/area generators on
+  the client — clients don't re-derive triangles, they just render.
+  """
+  def sample_shape(mf, lo, hi, steps \\ 80)
+      when is_number(lo) and is_number(hi) and is_integer(steps) and steps > 0 do
+    span = hi - lo
+
+    for i <- 0..steps do
+      x = lo + span * i / steps
+      [x, triangular(x, mf.a, mf.b, mf.c)]
+    end
+  end
+
+  @doc """
   Normalized memberships for one value across all MFs. Normalization makes
   the stacked area chart fill the full height even when raw memberships
   don't sum to 1 (e.g. when spread is narrow).

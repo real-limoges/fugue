@@ -93,17 +93,28 @@ defmodule FugueWeb.SandboxLive.Fuzzy do
     end
   end
 
+  @bands_lo 0.0
+  @bands_hi 48.0
+
   defp push_bands(socket) do
     %{mfs: mfs} = socket.assigns
     bands = Fuzzy.bands(MelbourneWeather.rows(), mfs)
 
+    shapes =
+      Enum.map(mfs, fn mf ->
+        %{
+          name: mf.name,
+          color: mf.color,
+          peak: mf.b,
+          samples: Fuzzy.sample_shape(mf, @bands_lo, @bands_hi)
+        }
+      end)
+
     push_event(socket, "update-bands", %{
       series: bands,
-      mfs:
-        Enum.map(mfs, fn mf ->
-          %{name: mf.name, color: mf.color, a: mf.a, b: mf.b, c: mf.c}
-        end),
-      bounds: [0.0, 48.0]
+      mfs: Enum.map(mfs, fn mf -> %{name: mf.name, color: mf.color} end),
+      shapes: shapes,
+      bounds: [@bands_lo, @bands_hi]
     })
   end
 

@@ -5,23 +5,6 @@ const SHAPES_H = 130
 const BANDS_H = 260
 const MARGIN = { top: 18, right: 14, bottom: 26, left: 44 }
 
-function triangular(x, a, b, c) {
-  if (x <= a || x >= c) return 0
-  if (x === b) return 1
-  if (x < b) return b === a ? 1 : (x - a) / (b - a)
-  return c === b ? 1 : (c - x) / (c - b)
-}
-
-function sampleTriangle(mf, bounds, steps = 80) {
-  const [lo, hi] = bounds
-  const out = []
-  for (let i = 0; i <= steps; i++) {
-    const x = lo + (i / steps) * (hi - lo)
-    out.push([x, triangular(x, mf.a, mf.b, mf.c)])
-  }
-  return out
-}
-
 export const TemperatureBands = {
   mounted() {
     this.data = null
@@ -37,7 +20,7 @@ export const TemperatureBands = {
 
   render() {
     if (!this.data || !this.data.series || this.data.series.length === 0) return
-    const { series, mfs, bounds } = this.data
+    const { series, mfs, shapes, bounds } = this.data
 
     this.el.innerHTML = ""
     this.el.style.position = "relative"
@@ -48,11 +31,11 @@ export const TemperatureBands = {
       .style("flex-direction", "column")
       .style("gap", "14px")
 
-    this.renderShapesPanel(container, mfs, bounds)
+    this.renderShapesPanel(container, shapes, bounds)
     this.renderBandsPanel(container, series, mfs)
   },
 
-  renderShapesPanel(container, mfs, bounds) {
+  renderShapesPanel(container, shapes, bounds) {
     const panel = container.append("div")
 
     panel.append("div")
@@ -84,27 +67,26 @@ export const TemperatureBands = {
       .y0(y(0))
       .y1(d => y(d[1]))
 
-    mfs.forEach(mf => {
-      const samples = sampleTriangle(mf, bounds)
+    shapes.forEach(shape => {
       g.append("path")
-        .attr("d", area(samples))
-        .attr("fill", mf.color)
+        .attr("d", area(shape.samples))
+        .attr("fill", shape.color)
         .attr("fill-opacity", 0.18)
 
       g.append("path")
-        .attr("d", line(samples))
+        .attr("d", line(shape.samples))
         .attr("fill", "none")
-        .attr("stroke", mf.color)
+        .attr("stroke", shape.color)
         .attr("stroke-width", 1.75)
 
       g.append("text")
-        .attr("x", x(mf.b))
+        .attr("x", x(shape.peak))
         .attr("y", y(1) - 5)
-        .attr("fill", mf.color)
+        .attr("fill", shape.color)
         .attr("font-size", 11)
         .attr("font-weight", "600")
         .attr("text-anchor", "middle")
-        .text(mf.name)
+        .text(shape.name)
     })
 
     g.append("g")

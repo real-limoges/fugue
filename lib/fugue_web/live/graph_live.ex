@@ -155,6 +155,18 @@ defmodule FugueWeb.GraphLive do
             <span class="stat-label">Nodes</span>
             <span class="stat-value">{@node_count}</span>
           </div>
+
+          <p class="section-label">PageRank emergence</p>
+          <div class="histogram-card">
+            <p class="histogram-caption">
+              bars: observed visit share · lines: ground-truth PageRank
+            </p>
+            <canvas
+              id="walker-histogram"
+              class="walker-histogram"
+              phx-update="ignore"
+            />
+          </div>
         <% end %>
 
         <%= if @selected_node do %>
@@ -178,6 +190,11 @@ defmodule FugueWeb.GraphLive do
           phx-hook="GraphViz"
           phx-update="ignore"
           class="graph-canvas"
+        />
+        <canvas
+          id="walker-overlay"
+          class="graph-walker-overlay"
+          phx-update="ignore"
         />
         <div class={"graph-overlay #{if @loading, do: "visible", else: ""}"}>
           <div class="spinner">Loading graph</div>
