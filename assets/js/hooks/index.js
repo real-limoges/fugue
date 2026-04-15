@@ -14,13 +14,14 @@ import { MoodTourSandbox } from "./mood_tour_sandbox"
 import { MoodIntroGate } from "./mood_intro_gate"
 import { MoodTour } from "./mood_tour"
 import { MoodTrajectory } from "./mood_trajectory"
-import { MembershipEditor } from "./membership_editor"
 import { ClusterAttractor } from "./cluster_attractor"
+import { TemperatureBands } from "./temperature_bands"
+import { MamdaniPlayground } from "./mamdani_playground"
 
 export default {
   GraphViz, CalendarHeatmap, ScatterPlot, GapBreathTimeline, TemporalBrush,
   ClusterRadar, ClusterStream, MoodFlowers,
   DimensionDistributions, TransitionTimeline, TransitionSankey,
   MoodExperience, MoodTourSandbox, MoodIntroGate, MoodTour, MoodTrajectory,
-  MembershipEditor, ClusterAttractor
+  ClusterAttractor, TemperatureBands, MamdaniPlayground
 }

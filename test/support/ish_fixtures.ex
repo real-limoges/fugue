@@ -148,4 +148,32 @@ defmodule Fugue.IshFixtures do
       ]
     }
   end
+
+  @doc """
+  A deterministic Mamdani inference response matching
+  `Ish.Types.MamdaniResponse` for the fan-controller fixture. Values are
+  representative, not the result of actually running the solver — tests
+  should assert on shape and on the crisp result being forwarded, not on
+  exact numbers.
+  """
+  def mamdani_response do
+    %{
+      "input_degrees" => %{
+        "temperature" => %{"cold" => 0.0, "warm" => 1.0, "hot" => 0.0},
+        "humidity" => %{"dry" => 0.0, "comfortable" => 1.0, "humid" => 0.0}
+      },
+      "rule_strengths" => [0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+      "output_curves" => %{
+        "fan_speed" => [
+          [0.0, 0.0],
+          [25.0, 0.0],
+          [35.0, 1.0],
+          [55.0, 1.0],
+          [75.0, 0.0],
+          [100.0, 0.0]
+        ]
+      },
+      "crisp" => %{"fan_speed" => 55.0}
+    }
+  end
 end

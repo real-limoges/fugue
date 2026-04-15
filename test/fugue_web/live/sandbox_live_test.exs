@@ -1,430 +1,259 @@
 defmodule FugueWeb.SandboxLiveTest do
-  use FugueWeb.ConnCase, async: false
+  use FugueWeb.ConnCase, async: true
 
-  alias Fugue.{IshCache, IshFixtures, MembershipDefaults}
+  import Phoenix.LiveViewTest
 
-  @defaults_key {MembershipDefaults, :snapshot}
+  alias Fugue.IshFixtures
 
-  setup %{conn: conn} do
-    Req.Test.set_req_test_to_shared()
-    IshCache.invalidate_all()
-    :persistent_term.erase(@defaults_key)
-
-    on_exit(fn ->
-      :persistent_term.erase(@defaults_key)
-    end)
-
-    %{conn: conn}
-  end
-
-  describe "mount and load_all" do
-    test "renders past the loading state with populated assigns", %{conn: conn} do
-      stub_all_endpoints()
-
-      {:ok, view, _html} = live(conn, "/sandbox")
-      html = render(view)
+  describe "mount" do
+    test "renders the temperature bands experiment", %{conn: conn} do
+      {:ok, _view, html} = live(conn, "/sandbox")
 
       assert html =~ ">Sandbox</h1>"
-      assert html =~ "Fuzzy clustering"
-      refute html =~ "Loading sandbox"
-
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.loading == false
-      assert assigns.error == nil
-      assert assigns.analysis.clusters != []
-      assert assigns.membership_defs != nil
-      assert map_size(assigns.histograms) == 5
+      assert html =~ "Fuzzy temperature bands"
+      assert html =~ "cold"
+      assert html =~ "cool"
+      assert html =~ "mild"
+      assert html =~ "warm"
+      assert html =~ "hot"
+      assert html =~ ~s(phx-hook="TemperatureBands")
+      refute html =~ "Fuzzy clustering"
     end
 
-    test "renders the descriptive cluster name chips after load", %{conn: conn} do
-      stub_all_endpoints()
+    test "renders the Mamdani fan controller experiment", %{conn: conn} do
+      {:ok, _view, html} = live(conn, "/sandbox")
+
+      assert html =~ "Mamdani fan controller"
+      assert html =~ "temperature"
+      assert html =~ "humidity"
+      assert html =~ ~s(phx-hook="MamdaniPlayground")
+      assert html =~ ~s(phx-change="update_mamdani_inputs")
+    end
+
+    test "defaults Mamdani inputs to the fixture's starting values", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/sandbox")
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.mamdani_temperature == 22.0
+      assert assigns.mamdani_humidity == 50.0
+      assert assigns.mamdani_response == nil
+      assert assigns.mamdani_error == nil
+    end
+
+    test "initializes params to defaults", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/sandbox")
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.center_offset == 0.0
+      assert assigns.spread == 1.0
+      assert length(assigns.mfs) == 5
+      assert Enum.map(assigns.mfs, & &1.name) == ~w(cold cool mild warm hot)
+    end
+
+    test "renders a Melbourne date range from the bundled CSV", %{conn: conn} do
+      {:ok, _view, html} = live(conn, "/sandbox")
+
+      assert html =~ "Melbourne Airport"
+      assert html =~ ~r/20\d\d-\d\d-\d\d/
+    end
+  end
+
+  describe "update_fuzzy_params event" do
+    test "center_offset shifts every MF peak", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/sandbox")
+
+      view
+      |> element("form[phx-change=update_fuzzy_params]")
+      |> render_change(%{"center_offset" => "2.5", "spread" => "1.0"})
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.center_offset == 2.5
+
+      peaks = Enum.map(assigns.mfs, & &1.b)
+      assert peaks == [12.5, 19.5, 26.5, 33.5, 40.5]
+    end
+
+    test "spread widens the triangle half-widths", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/sandbox")
+
+      view
+      |> element("form[phx-change=update_fuzzy_params]")
+      |> render_change(%{"center_offset" => "0.0", "spread" => "1.5"})
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.spread == 1.5
+
+      cold = List.first(assigns.mfs)
+      assert_in_delta(cold.a, -0.5, 0.001)
+      assert cold.b == 10.0
+      assert_in_delta(cold.c, 20.5, 0.001)
+    end
+
+    test "no-op when values are unchanged", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/sandbox")
+
+      before = :sys.get_state(view.pid).socket.assigns.mfs
+
+      view
+      |> element("form[phx-change=update_fuzzy_params]")
+      |> render_change(%{"center_offset" => "0.0", "spread" => "1.0"})
+
+      after_ = :sys.get_state(view.pid).socket.assigns.mfs
+      assert before == after_
+    end
+  end
+
+  describe "Mamdani playground" do
+    test "sandbox:mamdani_ready stores the inference response and clears error",
+         %{conn: conn} do
+      stub_mamdani()
 
       {:ok, view, _html} = live(conn, "/sandbox")
-      html = render(view)
+      render_hook(view, "sandbox:mamdani_ready", %{})
 
       assigns = :sys.get_state(view.pid).socket.assigns
-      names = Enum.map(assigns.analysis.clusters, & &1["name"])
-      assert names != []
-
-      # Generated names can include `&` which is HTML-escaped; assert each word.
-      Enum.each(names, fn name ->
-        name
-        |> String.split([" & ", " "])
-        |> Enum.reject(&(&1 == ""))
-        |> Enum.each(fn token -> assert html =~ token end)
-      end)
+      assert assigns.mamdani_response == IshFixtures.mamdani_response()
+      assert assigns.mamdani_error == nil
     end
 
-    test "shows an error banner when Ish is unreachable", %{conn: conn} do
+    test "update_mamdani_inputs reassigns inputs and refreshes the response",
+         %{conn: conn} do
+      stub_mamdani()
+
+      {:ok, view, _html} = live(conn, "/sandbox")
+      render_hook(view, "sandbox:mamdani_ready", %{})
+
+      view
+      |> element("form[phx-change=update_mamdani_inputs]")
+      |> render_change(%{"temperature" => "30.0", "humidity" => "75"})
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.mamdani_temperature == 30.0
+      assert assigns.mamdani_humidity == 75.0
+      assert assigns.mamdani_response == IshFixtures.mamdani_response()
+    end
+
+    test "no-op when the inputs haven't moved", %{conn: conn} do
+      stub_mamdani()
+
+      {:ok, view, _html} = live(conn, "/sandbox")
+      render_hook(view, "sandbox:mamdani_ready", %{})
+
+      before = :sys.get_state(view.pid).socket.assigns
+
+      view
+      |> element("form[phx-change=update_mamdani_inputs]")
+      |> render_change(%{"temperature" => "22.0", "humidity" => "50"})
+
+      after_ = :sys.get_state(view.pid).socket.assigns
+      assert before.mamdani_temperature == after_.mamdani_temperature
+      assert before.mamdani_humidity == after_.mamdani_humidity
+    end
+
+    test "surfaces an error banner when Ish is unreachable", %{conn: conn} do
       Req.Test.stub(Fugue.Ish, fn conn -> Plug.Conn.send_resp(conn, 500, "boom") end)
 
       {:ok, view, _html} = live(conn, "/sandbox")
+      render_hook(view, "sandbox:mamdani_ready", %{})
 
       html = render(view)
-      assert html =~ "Could not connect to Ish API"
+      assert html =~ "inference service unavailable"
 
       assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.loading == false
-      assert assigns.error =~ "Could not connect"
+      assert assigns.mamdani_error =~ "unavailable"
     end
   end
 
-  describe "downstream effects section" do
-    test "renders the FPC gauge with the formatted value and bar", %{conn: conn} do
-      stub_all_endpoints()
+  describe "Fugue.Sandbox.Mamdani" do
+    alias Fugue.Sandbox.Mamdani
 
-      {:ok, view, _html} = live(conn, "/sandbox")
-      html = render(view)
-
-      assert html =~ "Cluster crispness (FPC)"
-      # Fixture sets fpc: 0.842
-      assert html =~ "0.842"
-      # Floor label for k=3
-      assert html =~ "floor 1/k = 0.333"
-      # Bar element is present
-      assert html =~ ~s(class="h-full bg-amber-400)
+    test "request/2 wraps crisp values into the wire format" do
+      req = Mamdani.request(25, 40)
+      assert req["values"]["temperature"] == 25.0
+      assert req["values"]["humidity"] == 40.0
+      assert is_list(req["rules"])
+      assert length(req["rules"]) == length(Mamdani.rule_descriptions())
+      assert is_list(req["mfs"]["inputs"])
+      assert is_list(req["mfs"]["outputs"])
     end
 
-    test "renders a ClusterStream hook instead of the calendar", %{conn: conn} do
-      stub_all_endpoints()
-
-      {:ok, view, _html} = live(conn, "/sandbox")
-      html = render(view)
-
-      assert html =~ ~s(id="sandbox-cluster-stream")
-      assert html =~ ~s(phx-hook="ClusterStream")
-      refute html =~ ~s(id="sandbox-calendar")
+    test "mfs/0 exposes two inputs and one output" do
+      %{"inputs" => inputs, "outputs" => outputs} = Mamdani.mfs()
+      assert Enum.map(inputs, & &1["name"]) == ["temperature", "humidity"]
+      assert Enum.map(outputs, & &1["name"]) == ["fan_speed"]
     end
 
-    test "renders a back-link to /mood", %{conn: conn} do
-      stub_all_endpoints()
-
-      {:ok, view, _html} = live(conn, "/sandbox")
-      html = render(view)
-
-      assert html =~ ~s(href="/mood")
-      assert html =~ "Back to /mood"
+    test "rule_descriptions/0 matches the rule count" do
+      descs = Mamdani.rule_descriptions()
+      assert length(descs) == length(Mamdani.request(0, 0)["rules"])
+      assert Enum.all?(descs, &is_binary/1)
     end
   end
 
-  describe "slider bounds" do
-    test "renders max k=5 and max m=3.0", %{conn: conn} do
-      stub_all_endpoints()
+  describe "Fugue.Sandbox.Fuzzy" do
+    alias Fugue.Sandbox.Fuzzy
 
-      {:ok, view, _html} = live(conn, "/sandbox")
-      html = render(view)
+    test "triangular/4 peaks at 1 at the center" do
+      assert Fuzzy.triangular(10.0, 5.0, 10.0, 15.0) == 1.0
+    end
 
-      assert html =~ ~s(name="k")
-      assert html =~ ~s(max="5")
-      assert html =~ ~s(name="m")
-      assert html =~ ~s(max="3.0")
+    test "triangular/4 ramps linearly to 0.5 at the half-way points" do
+      assert Fuzzy.triangular(7.5, 5.0, 10.0, 15.0) == 0.5
+      assert Fuzzy.triangular(12.5, 5.0, 10.0, 15.0) == 0.5
+    end
+
+    test "triangular/4 is zero outside [a, c]" do
+      assert Fuzzy.triangular(4.0, 5.0, 10.0, 15.0) == 0.0
+      assert Fuzzy.triangular(16.0, 5.0, 10.0, 15.0) == 0.0
+    end
+
+    test "memberships/2 normalize to 1 when any set fires" do
+      mfs = Fuzzy.default_mfs()
+      sum = 20.0 |> Fuzzy.memberships(mfs) |> Map.values() |> Enum.sum()
+      assert_in_delta(sum, 1.0, 0.001)
+    end
+
+    test "memberships/2 return all zeros when x is outside every triangle" do
+      mfs = Fuzzy.default_mfs()
+      result = Fuzzy.memberships(-100.0, mfs)
+      assert Enum.all?(Map.values(result), &(&1 == 0.0))
+    end
+
+    test "build_mfs/2 with defaults matches default_mfs/0" do
+      assert Fuzzy.build_mfs(0.0, 1.0) == Fuzzy.default_mfs()
     end
   end
 
-  describe "update_params event" do
-    test "updates k and m and triggers reclustering", %{conn: conn} do
-      call_count = :counters.new(1, [])
-
-      Req.Test.stub(Fugue.Ish, fn conn ->
-        case {conn.method, conn.request_path} do
-          {"POST", "/cluster"} ->
-            :counters.add(call_count, 1, 1)
-            Req.Test.json(conn, IshFixtures.cluster_response(3))
-
-          _ ->
-            route_non_cluster(conn)
-        end
-      end)
-
-      {:ok, view, _html} = live(conn, "/sandbox")
-
-      # Force the LV to drain its mailbox so :load_all runs before we check.
-      _ = :sys.get_state(view.pid)
-
-      # First call during load_all.
-      assert :counters.get(call_count, 1) == 1
-
-      view
-      |> element("form[phx-change=update_params]")
-      |> render_change(%{"k" => "4", "m" => "2.0"})
-
-      assert :counters.get(call_count, 1) == 2
-
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.k == 4
-      assert assigns.m == 2.0
-    end
-  end
-
-  describe "mf_commit event" do
-    test "posts updated defs to Ish, invalidates cache, and re-clusters", %{conn: conn} do
-      updates = :counters.new(1, [])
-
-      Req.Test.stub(Fugue.Ish, fn conn ->
-        case {conn.method, conn.request_path} do
-          {"POST", "/membership-functions"} ->
-            :counters.add(updates, 1, 1)
-            Req.Test.json(conn, IshFixtures.membership_defs())
-
-          _ ->
-            route_non_cluster(conn) || route_cluster(conn)
-        end
-      end)
-
-      {:ok, view, _html} = live(conn, "/sandbox")
-
-      render_hook(view, "mf_commit", %{"inputs" => IshFixtures.membership_defs()["inputs"]})
-
-      assert :counters.get(updates, 1) == 1
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.suggestion == nil
-    end
-  end
-
-  describe "mf_suggest event" do
-    test "stores the suggestion in assigns", %{conn: conn} do
-      Req.Test.stub(Fugue.Ish, fn conn ->
-        case {conn.method, conn.request_path} do
-          {"POST", "/membership-functions/suggest"} ->
-            Req.Test.json(conn, IshFixtures.suggested_membership_defs())
-
-          _ ->
-            route_non_cluster(conn) || route_cluster(conn)
-        end
-      end)
-
-      {:ok, view, _html} = live(conn, "/sandbox")
-
-      render_hook(view, "mf_suggest", %{})
-
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.suggestion == IshFixtures.suggested_membership_defs()
-    end
-  end
-
-  describe "mf_apply_suggestion event" do
-    test "is a no-op when no suggestion is set", %{conn: conn} do
-      stub_all_endpoints()
-
-      {:ok, view, _html} = live(conn, "/sandbox")
-
-      before = :sys.get_state(view.pid).socket.assigns.membership_defs
-      render_hook(view, "mf_apply_suggestion", %{})
-
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.membership_defs == before
-      assert assigns.suggestion == nil
-    end
-
-    test "pushes the suggestion to Ish and clears it", %{conn: conn} do
-      Req.Test.stub(Fugue.Ish, fn conn ->
-        case {conn.method, conn.request_path} do
-          {"POST", "/membership-functions/suggest"} ->
-            Req.Test.json(conn, IshFixtures.suggested_membership_defs())
-
-          {"POST", "/membership-functions"} ->
-            Req.Test.json(conn, IshFixtures.suggested_membership_defs())
-
-          _ ->
-            route_non_cluster(conn) || route_cluster(conn)
-        end
-      end)
-
-      {:ok, view, _html} = live(conn, "/sandbox")
-
-      render_hook(view, "mf_suggest", %{})
-      assert :sys.get_state(view.pid).socket.assigns.suggestion != nil
-
-      render_hook(view, "mf_apply_suggestion", %{})
-
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.suggestion == nil
-      assert assigns.membership_defs == IshFixtures.suggested_membership_defs()
-    end
-  end
-
-  describe "mf_reset event" do
-    test "restores the MembershipDefaults snapshot and re-clusters", %{conn: conn} do
-      # Pre-populate the defaults snapshot with the original defs.
-      :persistent_term.put(@defaults_key, IshFixtures.membership_defs())
-
-      post_count = :counters.new(1, [])
-
-      Req.Test.stub(Fugue.Ish, fn conn ->
-        case {conn.method, conn.request_path} do
-          {"POST", "/membership-functions"} ->
-            :counters.add(post_count, 1, 1)
-            Req.Test.json(conn, IshFixtures.membership_defs())
-
-          _ ->
-            route_non_cluster(conn) || route_cluster(conn)
-        end
-      end)
-
-      {:ok, view, _html} = live(conn, "/sandbox")
-
-      render_hook(view, "mf_reset", %{})
-
-      assert :counters.get(post_count, 1) == 1
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.membership_defs == IshFixtures.membership_defs()
-      assert assigns.suggestion == nil
-    end
-  end
-
-  describe "apply_preset event" do
-    test "conservative sets k=2, m=1.2 and pushes new MF to Ish", %{conn: conn} do
-      post_count = :counters.new(1, [])
-
-      Req.Test.stub(Fugue.Ish, fn conn ->
-        case {conn.method, conn.request_path} do
-          {"POST", "/membership-functions"} ->
-            :counters.add(post_count, 1, 1)
-            Req.Test.json(conn, IshFixtures.membership_defs())
-
-          _ ->
-            route_non_cluster(conn) || route_cluster(conn)
-        end
-      end)
-
-      {:ok, view, _html} = live(conn, "/sandbox")
-      render_hook(view, "apply_preset", %{"name" => "conservative"})
-
-      assert :counters.get(post_count, 1) == 1
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.k == 2
-      assert assigns.m == 1.2
-      assert length(assigns.history) == 1
-    end
-
-    test "aggressive sets k=5, m=1.8", %{conn: conn} do
-      stub_all_endpoints()
-      {:ok, view, _html} = live(conn, "/sandbox")
-      render_hook(view, "apply_preset", %{"name" => "aggressive"})
-
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.k == 5
-      assert assigns.m == 1.8
-    end
-
-    test "chaos sets k=5, m=2.8", %{conn: conn} do
-      stub_all_endpoints()
-      {:ok, view, _html} = live(conn, "/sandbox")
-      render_hook(view, "apply_preset", %{"name" => "chaos"})
-
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.k == 5
-      assert assigns.m == 2.8
-    end
-
-    test "randomize produces valid k in 2..5", %{conn: conn} do
-      stub_all_endpoints()
-      {:ok, view, _html} = live(conn, "/sandbox")
-      render_hook(view, "apply_preset", %{"name" => "randomize"})
-
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.k in 2..5
-      assert assigns.m >= 1.2
-      assert assigns.m <= 2.6
-    end
-  end
-
-  describe "undo event" do
-    test "is a no-op with empty history and does not POST to Ish", %{conn: conn} do
-      post_count = :counters.new(1, [])
-
-      Req.Test.stub(Fugue.Ish, fn conn ->
-        case {conn.method, conn.request_path} do
-          {"POST", "/membership-functions"} ->
-            :counters.add(post_count, 1, 1)
-            Req.Test.json(conn, IshFixtures.membership_defs())
-
-          _ ->
-            route_non_cluster(conn) || route_cluster(conn)
-        end
-      end)
-
-      {:ok, view, _html} = live(conn, "/sandbox")
-      render_hook(view, "undo", %{})
-
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.history == []
-      assert :counters.get(post_count, 1) == 0
-    end
-
-    test "restores previous k and m after update_params", %{conn: conn} do
-      stub_all_endpoints()
-      {:ok, view, _html} = live(conn, "/sandbox")
-
-      view
-      |> element("form[phx-change=update_params]")
-      |> render_change(%{"k" => "4", "m" => "2.1"})
-
-      mid = :sys.get_state(view.pid).socket.assigns
-      assert mid.k == 4
-      assert mid.m == 2.1
-      assert length(mid.history) == 1
-
-      render_hook(view, "undo", %{})
-
-      restored = :sys.get_state(view.pid).socket.assigns
-      assert restored.k == 3
-      assert restored.m == 1.5
-      assert restored.history == []
-    end
-
-    test "restores state after apply_preset", %{conn: conn} do
-      stub_all_endpoints()
-      {:ok, view, _html} = live(conn, "/sandbox")
-
-      render_hook(view, "apply_preset", %{"name" => "chaos"})
-      mid = :sys.get_state(view.pid).socket.assigns
-      assert mid.k == 5
-      assert mid.m == 2.8
-
-      render_hook(view, "undo", %{})
-      restored = :sys.get_state(view.pid).socket.assigns
-      assert restored.k == 3
-      assert restored.m == 1.5
-    end
-  end
-
-  # -- helpers --
-
-  defp stub_all_endpoints do
+  defp stub_mamdani do
     Req.Test.stub(Fugue.Ish, fn conn ->
-      route_non_cluster(conn) || route_cluster(conn) || route_mf(conn) || not_found(conn)
+      case {conn.method, conn.request_path} do
+        {"POST", "/inference/mamdani"} ->
+          Req.Test.json(conn, IshFixtures.mamdani_response())
+
+        _ ->
+          Plug.Conn.send_resp(conn, 404, "not stubbed")
+      end
     end)
   end
 
-  defp route_non_cluster(conn) do
-    case {conn.method, conn.request_path} do
-      {"GET", "/data"} -> Req.Test.json(conn, IshFixtures.entries())
-      {"GET", "/gaps"} -> Req.Test.json(conn, IshFixtures.gaps_response())
-      {"GET", "/membership-functions"} -> Req.Test.json(conn, IshFixtures.membership_defs())
-      _ -> nil
+  describe "Fugue.Sandbox.MelbourneWeather" do
+    alias Fugue.Sandbox.MelbourneWeather
+
+    test "count/0 matches length of rows/0" do
+      assert MelbourneWeather.count() == length(MelbourneWeather.rows())
+      assert MelbourneWeather.count() > 1500
+    end
+
+    test "every row has a date string" do
+      Enum.each(MelbourneWeather.rows(), fn row ->
+        assert is_binary(row.date)
+        assert row.date =~ ~r/^\d{4}-\d{2}-\d{2}$/
+      end)
+    end
+
+    test "date_range/0 returns first and last dates" do
+      {first, last} = MelbourneWeather.date_range()
+      assert first < last
     end
   end
-
-  defp route_cluster(conn) do
-    case {conn.method, conn.request_path} do
-      {"POST", "/cluster"} -> Req.Test.json(conn, IshFixtures.cluster_response(3))
-      _ -> nil
-    end
-  end
-
-  defp route_mf(conn) do
-    case {conn.method, conn.request_path} do
-      {"POST", "/membership-functions"} ->
-        Req.Test.json(conn, IshFixtures.membership_defs())
-
-      {"POST", "/membership-functions/suggest"} ->
-        Req.Test.json(conn, IshFixtures.suggested_membership_defs())
-
-      _ ->
-        nil
-    end
-  end
-
-  defp not_found(conn), do: Plug.Conn.send_resp(conn, 404, "unmatched")
 end
