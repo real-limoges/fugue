@@ -5,11 +5,23 @@ defmodule FugueWeb.SandboxLiveTest do
 
   alias Fugue.IshFixtures
 
-  describe "mount" do
-    test "renders the temperature bands experiment", %{conn: conn} do
+  describe "index" do
+    test "lists the experiments and links to their pages", %{conn: conn} do
       {:ok, _view, html} = live(conn, "/sandbox")
 
       assert html =~ ">Sandbox</h1>"
+      assert html =~ "Fuzzy logic"
+      assert html =~ "Boids playground"
+      assert html =~ ~s(href="/sandbox/fuzzy")
+      assert html =~ ~s(href="/sandbox/boids")
+    end
+  end
+
+  describe "mount" do
+    test "renders the temperature bands experiment", %{conn: conn} do
+      {:ok, _view, html} = live(conn, "/sandbox/fuzzy")
+
+      assert html =~ ">Fuzzy logic</h1>"
       assert html =~ "Fuzzy temperature bands"
       assert html =~ "cold"
       assert html =~ "cool"
@@ -21,7 +33,7 @@ defmodule FugueWeb.SandboxLiveTest do
     end
 
     test "renders the Mamdani fan controller experiment", %{conn: conn} do
-      {:ok, _view, html} = live(conn, "/sandbox")
+      {:ok, _view, html} = live(conn, "/sandbox/fuzzy")
 
       assert html =~ "Mamdani fan controller"
       assert html =~ "temperature"
@@ -31,7 +43,7 @@ defmodule FugueWeb.SandboxLiveTest do
     end
 
     test "defaults Mamdani inputs to the fixture's starting values", %{conn: conn} do
-      {:ok, view, _html} = live(conn, "/sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
 
       assigns = :sys.get_state(view.pid).socket.assigns
       assert assigns.mamdani_temperature == 22.0
@@ -41,7 +53,7 @@ defmodule FugueWeb.SandboxLiveTest do
     end
 
     test "initializes params to defaults", %{conn: conn} do
-      {:ok, view, _html} = live(conn, "/sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
 
       assigns = :sys.get_state(view.pid).socket.assigns
       assert assigns.center_offset == 0.0
@@ -51,7 +63,7 @@ defmodule FugueWeb.SandboxLiveTest do
     end
 
     test "renders a Melbourne date range from the bundled CSV", %{conn: conn} do
-      {:ok, _view, html} = live(conn, "/sandbox")
+      {:ok, _view, html} = live(conn, "/sandbox/fuzzy")
 
       assert html =~ "Melbourne Airport"
       assert html =~ ~r/20\d\d-\d\d-\d\d/
@@ -60,7 +72,7 @@ defmodule FugueWeb.SandboxLiveTest do
 
   describe "update_fuzzy_params event" do
     test "center_offset shifts every MF peak", %{conn: conn} do
-      {:ok, view, _html} = live(conn, "/sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
 
       view
       |> element("form[phx-change=update_fuzzy_params]")
@@ -74,7 +86,7 @@ defmodule FugueWeb.SandboxLiveTest do
     end
 
     test "spread widens the triangle half-widths", %{conn: conn} do
-      {:ok, view, _html} = live(conn, "/sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
 
       view
       |> element("form[phx-change=update_fuzzy_params]")
@@ -90,7 +102,7 @@ defmodule FugueWeb.SandboxLiveTest do
     end
 
     test "no-op when values are unchanged", %{conn: conn} do
-      {:ok, view, _html} = live(conn, "/sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
 
       before = :sys.get_state(view.pid).socket.assigns.mfs
 
@@ -108,7 +120,7 @@ defmodule FugueWeb.SandboxLiveTest do
          %{conn: conn} do
       stub_mamdani()
 
-      {:ok, view, _html} = live(conn, "/sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
       render_hook(view, "sandbox:mamdani_ready", %{})
 
       assigns = :sys.get_state(view.pid).socket.assigns
@@ -120,7 +132,7 @@ defmodule FugueWeb.SandboxLiveTest do
          %{conn: conn} do
       stub_mamdani()
 
-      {:ok, view, _html} = live(conn, "/sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
       render_hook(view, "sandbox:mamdani_ready", %{})
 
       view
@@ -136,7 +148,7 @@ defmodule FugueWeb.SandboxLiveTest do
     test "no-op when the inputs haven't moved", %{conn: conn} do
       stub_mamdani()
 
-      {:ok, view, _html} = live(conn, "/sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
       render_hook(view, "sandbox:mamdani_ready", %{})
 
       before = :sys.get_state(view.pid).socket.assigns
@@ -153,7 +165,7 @@ defmodule FugueWeb.SandboxLiveTest do
     test "surfaces an error banner when Ish is unreachable", %{conn: conn} do
       Req.Test.stub(Fugue.Ish, fn conn -> Plug.Conn.send_resp(conn, 500, "boom") end)
 
-      {:ok, view, _html} = live(conn, "/sandbox")
+      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
       render_hook(view, "sandbox:mamdani_ready", %{})
 
       html = render(view)

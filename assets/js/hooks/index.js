@@ -17,11 +17,14 @@ import { MoodTrajectory } from "./mood_trajectory"
 import { ClusterAttractor } from "./cluster_attractor"
 import { TemperatureBands } from "./temperature_bands"
 import { MamdaniPlayground } from "./mamdani_playground"
+import { BoidsCanvas } from "./boids_canvas"
+import { LissajousDoodle, Rule30Doodle } from "./sandbox_doodles"
 
 export default {
   GraphViz, CalendarHeatmap, ScatterPlot, GapBreathTimeline, TemporalBrush,
   ClusterRadar, ClusterStream, MoodFlowers,
   DimensionDistributions, TransitionTimeline, TransitionSankey,
   MoodExperience, MoodTourSandbox, MoodIntroGate, MoodTour, MoodTrajectory,
-  ClusterAttractor, TemperatureBands, MamdaniPlayground
+  ClusterAttractor, TemperatureBands, MamdaniPlayground, BoidsCanvas,
+  LissajousDoodle, Rule30Doodle
 }

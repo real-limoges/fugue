@@ -1,10 +1,8 @@
-defmodule FugueWeb.SandboxLive do
+defmodule FugueWeb.SandboxLive.Fuzzy do
   @moduledoc """
-  Math exploration playground. Each experiment on the page stands on its own —
-  poke at parameters, watch the model respond. Currently hosts a fuzzy
-  temperature-bands experiment on daily Melbourne weather. More experiments
-  will land here over time; the page is structured to let them coexist rather
-  than assume one owns the surface.
+  Fuzzy-logic experiments: triangular membership bands over Melbourne daily
+  temperatures, and a small Mamdani fan controller that routes through Hazy
+  via the Ish `/inference/mamdani` endpoint.
   """
 
   use FugueWeb, :live_view
@@ -192,13 +190,19 @@ defmodule FugueWeb.SandboxLive do
   def render(assigns) do
     ~H"""
     <div class="sandbox-page p-4 max-w-6xl mx-auto">
+      <nav class="mb-6 text-xs">
+        <.link navigate={~p"/sandbox"} class="text-gray-500 hover:text-gray-300">
+          ← Sandbox
+        </.link>
+      </nav>
+
       <header class="mb-12">
-        <h1 class="text-3xl font-semibold text-gray-100 mb-3">Sandbox</h1>
+        <h1 class="text-3xl font-semibold text-gray-100 mb-3">Fuzzy logic</h1>
         <p class="text-sm text-gray-400 leading-relaxed max-w-3xl">
-          A place to push on math. Each experiment below stands on its own —
-          drag the parameters, swap the shapes, watch what the model does
-          differently. There's no narrative tying them together; they're here
-          because they're fun to poke at.
+          Two experiments in fuzzy sets. The first reshapes triangular membership
+          functions over four years of Melbourne daily temperatures. The second
+          runs a Mamdani inference controller server-side through Hazy and lets
+          you watch the rules fire in real time.
         </p>
       </header>
 
