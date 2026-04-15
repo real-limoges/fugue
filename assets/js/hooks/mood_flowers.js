@@ -6,10 +6,16 @@ const MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Se
 export const MoodFlowers = {
   mounted() {
     this.data = { flowers: [], dimensions: [], clusterColors: {}, clusterNames: {} }
+    this.focusMonth = null
 
     this.handleEvent("update-flowers", (data) => {
       this.data = data
       this.render()
+    })
+
+    this.handleEvent("day-focus", ({ day }) => {
+      this.focusMonth = day?.date?.slice(0, 7) || null
+      this.applyFocus()
     })
   },
 
@@ -81,8 +87,12 @@ export const MoodFlowers = {
         const flower = flowerByMonth.get(monthKey)
 
         const cell = grid.append("div")
+          .attr("class", "flower-cell")
+          .attr("data-month", monthKey)
           .style("aspect-ratio", "1 / 1")
           .style("position", "relative")
+          .style("transition", "transform 0.3s ease, filter 0.3s ease")
+          .style("transform-origin", "center")
 
         if (!flower) {
           cell.append("div")
@@ -141,6 +151,24 @@ export const MoodFlowers = {
           .on("mouseleave", function() { hook.hideTooltip() })
       })
     })
+
+    this.applyFocus()
+  },
+
+  applyFocus() {
+    const root = d3.select(this.el)
+    root.selectAll(".flower-cell")
+      .style("transform", "scale(1)")
+      .style("filter", "none")
+      .style("z-index", null)
+
+    if (!this.focusMonth) return
+
+    root.select(`.flower-cell[data-month="${this.focusMonth}"]`)
+      .style("transform", "scale(1.35)")
+      .style("filter", "drop-shadow(0 0 6px rgba(255,255,255,0.6))")
+      .style("z-index", "5")
+      .style("position", "relative")
   },
 
   showTooltip(event, flower, color) {

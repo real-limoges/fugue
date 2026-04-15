@@ -6,7 +6,6 @@ import { TemporalBrush } from "./temporal_brush"
 import { ClusterRadar } from "./cluster_radar"
 import { ClusterStream } from "./cluster_stream"
 import { MoodFlowers } from "./mood_flowers"
-import { CorrelationHeatmap } from "./correlation_heatmap"
 import { DimensionDistributions } from "./dimension_distributions"
 import { TransitionTimeline } from "./transition_timeline"
 import { TransitionSankey } from "./transition_sankey"
@@ -20,7 +19,7 @@ import { ClusterAttractor } from "./cluster_attractor"
 
 export default {
   GraphViz, CalendarHeatmap, ScatterPlot, GapBreathTimeline, TemporalBrush,
-  ClusterRadar, ClusterStream, MoodFlowers, CorrelationHeatmap,
+  ClusterRadar, ClusterStream, MoodFlowers,
   DimensionDistributions, TransitionTimeline, TransitionSankey,
   MoodExperience, MoodTourSandbox, MoodIntroGate, MoodTour, MoodTrajectory,
   MembershipEditor, ClusterAttractor

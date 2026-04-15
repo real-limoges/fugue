@@ -168,7 +168,6 @@ defmodule FugueWeb.MoodLive do
     |> push_radar_data()
     |> push_stream_data()
     |> push_mood_flowers()
-    |> push_correlation_data()
     |> push_distribution_data()
     |> push_mood_transitions()
     |> push_event("highlight-calendar", %{dates: []})
@@ -312,22 +311,31 @@ defmodule FugueWeb.MoodLive do
     })
   end
 
-  defp push_correlation_data(socket) do
-    entries = socket.assigns.entries
-    matrix = DataTransforms.build_correlation_matrix(entries, DataTransforms.dimensions())
-
-    push_event(socket, "update-correlations", %{
-      matrix: matrix,
-      dimensions: DataTransforms.dimensions()
-    })
-  end
-
   defp push_distribution_data(socket) do
-    entries = socket.assigns.entries
+    %{entries: entries, analysis: analysis, smoothed_daily: daily} = socket.assigns
+    cluster_by_date = Map.new(daily, fn d -> {d.date, d.cluster} end)
+
+    points =
+      Enum.map(entries, fn e ->
+        %{
+          dimensions: e["dimensions"] || %{},
+          cluster: Map.get(cluster_by_date, e["date"])
+        }
+      end)
+
+    clusters =
+      Enum.map(analysis.clusters, fn c ->
+        %{
+          id: c["id"],
+          name: c["name"],
+          color: Map.get(analysis.cluster_colors, c["id"], "#666")
+        }
+      end)
 
     push_event(socket, "update-distributions", %{
-      entries: Enum.map(entries, fn e -> %{dimensions: e["dimensions"]} end),
-      dimensions: DataTransforms.dimensions()
+      points: points,
+      dimensions: DataTransforms.dimensions(),
+      clusters: clusters
     })
   end
 
@@ -446,6 +454,46 @@ defmodule FugueWeb.MoodLive do
             </div>
           </div>
         </section>
+
+        <%!-- ═══════════════════════════════════════ --%>
+        <%!-- STICKY CLUSTER LEGEND                   --%>
+        <%!-- ═══════════════════════════════════════ --%>
+
+        <div class="sticky top-16 z-30 -mx-4 md:-mx-8 mb-12 backdrop-blur-md bg-base-100/85 border-y border-white/10">
+          <div class="max-w-6xl mx-auto px-4 py-2 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <span class="text-[10px] uppercase tracking-[0.18em] text-gray-500 mr-1">
+              States
+            </span>
+            <%= for cluster <- @analysis.clusters do %>
+              <button
+                phx-click="cluster_selected"
+                phx-value-cluster={cluster["id"]}
+                class={"inline-flex items-center gap-1.5 text-xs cursor-pointer transition-opacity #{if @selected_cluster && @selected_cluster != cluster["id"], do: "opacity-30 hover:opacity-100", else: "opacity-100"}"}
+              >
+                <span
+                  class="inline-block w-2.5 h-2.5 rounded-full"
+                  style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}"}
+                >
+                </span>
+                <span class={
+                  if @selected_cluster == cluster["id"],
+                    do: "font-semibold text-white",
+                    else: "text-gray-300 hover:text-white"
+                }>
+                  {cluster["name"]}
+                </span>
+              </button>
+            <% end %>
+            <%= if @selected_cluster do %>
+              <button
+                phx-click="clear_highlights"
+                class="text-[10px] text-amber-300 hover:text-amber-200 ml-1 uppercase tracking-wider"
+              >
+                clear
+              </button>
+            <% end %>
+          </div>
+        </div>
 
         <div id="mood-intro" phx-hook="MoodIntroGate">
           <%!-- ═══════════════════════════════════════ --%>
@@ -768,6 +816,7 @@ defmodule FugueWeb.MoodLive do
               cluster_colors={@analysis.cluster_colors}
               cluster_names={id_to_name(@analysis.clusters)}
               selected_cluster={@selected_cluster}
+              highlighted_dates={@highlighted_dates}
             />
           </div>
         </section>
@@ -785,7 +834,7 @@ defmodule FugueWeb.MoodLive do
             of the model — the named states, how they ebb, how they hand off. This section is the <em>input</em>: the five raw numbers I rate every evening, before anything fancy happens to them. Sleep, anxiety, sensitivity, outlook, and speed, each on 0–10.
           </p>
           <p class="text-sm text-gray-400 mb-6 leading-relaxed">
-            They're the only thing the clustering knows about me — every shape further up the page is downstream of them. Here's what the five actually do on their own: how they drift over time, which ones move together, and how they're spread across all {@stats.entry_count} days.
+            They're the only thing the clustering knows about me — every shape further up the page is downstream of them. Here's what the five actually do on their own: how they drift over time across all {@stats.entry_count} days, and how their shape shifts once the model splits the days into states.
           </p>
 
           <div class="bg-base-200 rounded-lg p-4">
@@ -802,33 +851,18 @@ defmodule FugueWeb.MoodLive do
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-            <div class="bg-base-200 rounded-lg p-4 flex flex-col items-center">
-              <h3 class="text-sm font-semibold text-gray-400 mb-2 self-start">Correlations</h3>
-              <p class="text-xs text-gray-500 mb-2 self-start">
-                Which of the five tend to travel together? Pink cells rise and fall in sync; cyan cells pull against each other.
-              </p>
-              <div
-                id="correlation-heatmap"
-                phx-hook="CorrelationHeatmap"
-                phx-update="ignore"
-                style="min-height: 250px;"
-              >
-              </div>
-            </div>
-
-            <div class="bg-base-200 rounded-lg p-4">
-              <h3 class="text-sm font-semibold text-gray-400 mb-2">Distributions</h3>
-              <p class="text-xs text-gray-500 mb-2">
-                Where each dimension usually lands. The line is the median, the dot is the mean — the gap between them tells you which way the tail leans.
-              </p>
-              <div
-                id="dimension-distributions"
-                phx-hook="DimensionDistributions"
-                phx-update="ignore"
-                style="min-height: 230px;"
-              >
-              </div>
+          <div class="bg-base-200 rounded-lg p-4 mt-4">
+            <h3 class="text-sm font-semibold text-gray-400 mb-2">Distributions, by state</h3>
+            <p class="text-xs text-gray-500 mb-3 max-w-3xl">
+              For each of the five inputs: where it usually lands <em>overall</em>
+              (the dashed outline), and where it lands once you split by cluster (the filled shapes). Each row uses its own scale because the five inputs aren't all rated on the same range. A dimension whose shape barely shifts between states is pulling less weight; a dimension whose shape slides across the range is doing a lot of the work.
+            </p>
+            <div
+              id="dimension-distributions"
+              phx-hook="DimensionDistributions"
+              phx-update="ignore"
+              style="min-height: 500px;"
+            >
             </div>
           </div>
         </section>
@@ -861,7 +895,7 @@ defmodule FugueWeb.MoodLive do
         </section>
 
         <%!-- ═══════════════════════════════════════ --%>
-        <%!-- CHAPTER 6: AFTER                          --%>
+        <%!-- CHAPTER 6: AFTER                         --%>
         <%!-- ═══════════════════════════════════════ --%>
 
         <section class="mb-16 max-w-2xl">

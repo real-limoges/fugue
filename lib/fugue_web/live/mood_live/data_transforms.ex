@@ -1,5 +1,5 @@
 defmodule FugueWeb.MoodLive.DataTransforms do
-  @moduledoc "Pure data transformations for mood analysis: clustering, correlations, calendar days."
+  @moduledoc "Pure data transformations for mood analysis: clustering, distributions, calendar days."
 
   alias FugueWeb.MoodLive.Structs.{AnalysisResult, CalendarDay, GapData}
 
@@ -153,25 +153,6 @@ defmodule FugueWeb.MoodLive.DataTransforms do
           end
         end)
     end
-  end
-
-  @doc "Builds Pearson correlation matrix between dimensions."
-  def build_correlation_matrix(entries, dimensions) do
-    vectors =
-      Map.new(dimensions, fn dim ->
-        vals =
-          entries
-          |> Enum.map(fn e -> (e["dimensions"] || %{})[dim] end)
-          |> Enum.reject(&is_nil/1)
-
-        {dim, vals}
-      end)
-
-    Enum.map(dimensions, fn row_dim ->
-      Enum.map(dimensions, fn col_dim ->
-        pearson(vectors[row_dim] || [], vectors[col_dim] || [])
-      end)
-    end)
   end
 
   @doc "Builds membership map from a raw membership row and cluster list."
@@ -734,27 +715,6 @@ defmodule FugueWeb.MoodLive.DataTransforms do
       dominant_id: dominant && dominant["id"],
       dominant_name: dominant && dominant["name"]
     }
-  end
-
-  defp pearson(xs, ys) when length(xs) < 2 or length(ys) < 2, do: 0.0
-
-  defp pearson(xs, ys) do
-    n = min(length(xs), length(ys))
-    xs = Enum.take(xs, n)
-    ys = Enum.take(ys, n)
-    mx = Enum.sum(xs) / n
-    my = Enum.sum(ys) / n
-
-    {num, dx, dy} =
-      Enum.zip(xs, ys)
-      |> Enum.reduce({0.0, 0.0, 0.0}, fn {x, y}, {num, dx, dy} ->
-        xd = x - mx
-        yd = y - my
-        {num + xd * yd, dx + xd * xd, dy + yd * yd}
-      end)
-
-    denom = :math.sqrt(dx) * :math.sqrt(dy)
-    if denom == 0, do: 0.0, else: Float.round(num / denom, 4)
   end
 
   defp remap_keys(map, mapping) when is_map(map) do

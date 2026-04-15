@@ -10,6 +10,7 @@ const INNER_H = HEIGHT - MARGIN.top - MARGIN.bottom
 export const ClusterStream = {
   mounted() {
     this.data = { series: [], clusterColors: {}, clusterIds: [], clusterNames: {} }
+    this.focusDate = null
 
     this.handleEvent("update-stream", (data) => {
       this.data = data
@@ -18,6 +19,11 @@ export const ClusterStream = {
 
     this.handleEvent("isolate-cluster", ({ cluster }) => {
       this.isolate(cluster)
+    })
+
+    this.handleEvent("day-focus", ({ day }) => {
+      this.focusDate = day?.date || null
+      this.applyFocus()
     })
   },
 
@@ -47,9 +53,13 @@ export const ClusterStream = {
     const g = svgEl.append("g")
       .attr("transform", `translate(${MARGIN.left},${MARGIN.top})`)
 
+    this.streamG = g
+
     const x = d3.scaleTime()
       .domain(d3.extent(data, d => d.date))
       .range([0, INNER_W])
+
+    this.x = x
 
     const y = d3.scaleLinear()
       .domain([0, 1])
@@ -131,6 +141,32 @@ export const ClusterStream = {
 
       item.append("span").text(name)
     })
+
+    this.applyFocus()
+  },
+
+  applyFocus() {
+    if (!this.streamG || !this.x) return
+
+    this.streamG.selectAll(".tether-line").remove()
+
+    if (!this.focusDate) return
+
+    const parsed = d3.timeParse("%Y-%m-%d")(this.focusDate)
+    if (!parsed) return
+
+    const xPos = this.x(parsed)
+
+    this.streamG.append("line")
+      .attr("class", "tether-line")
+      .attr("x1", xPos).attr("x2", xPos)
+      .attr("y1", 0).attr("y2", INNER_H)
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 1.5)
+      .attr("stroke-opacity", 0)
+      .attr("pointer-events", "none")
+      .transition().duration(220)
+      .attr("stroke-opacity", 0.9)
   },
 
   isolate(cluster) {

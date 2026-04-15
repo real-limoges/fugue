@@ -57,7 +57,9 @@ defmodule FugueWeb.MoodLiveTest do
 
       html =
         view
-        |> element(~s(button[phx-click="cluster_selected"][phx-value-cluster="#{cluster_id}"]))
+        |> element(
+          ~s(button.rounded-full[phx-click="cluster_selected"][phx-value-cluster="#{cluster_id}"])
+        )
         |> render_click()
 
       assert html =~ "Isolating"
