@@ -79,7 +79,12 @@ defmodule Fugue.MixProject do
         "cmd sh -c 'mkdir -p priv/static/vendor/petri/wasm && cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/'",
         "cmd sh -c 'mkdir -p priv/static/vendor/bloom && cp assets/vendor/bloom/pkg/bloom_bg.wasm assets/vendor/bloom/pkg/bloom.js priv/static/vendor/bloom/'"
       ],
-      "assets.build": ["compile", "tailwind fugue", "esbuild fugue"],
+      "assets.build": [
+        "compile",
+        "cmd sh -c 'mkdir -p priv/static/vendor/petri/wasm && cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/'",
+        "tailwind fugue",
+        "esbuild fugue"
+      ],
       "assets.deploy": [
         "cmd sh -c 'mkdir -p priv/static/vendor/petri/wasm && cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/'",
         "cmd sh -c 'mkdir -p priv/static/vendor/bloom && cp assets/vendor/bloom/pkg/bloom_bg.wasm assets/vendor/bloom/pkg/bloom.js priv/static/vendor/bloom/'",
