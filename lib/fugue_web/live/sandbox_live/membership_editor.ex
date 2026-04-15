@@ -1,5 +1,5 @@
 defmodule FugueWeb.SandboxLive.MembershipEditor do
-  @moduledoc "Renders the five per-dimension triangular membership editors and the control buttons."
+  @moduledoc "Renders the per-dimension triangular membership editors and the control buttons."
 
   use FugueWeb, :live_component
 
@@ -37,7 +37,7 @@ defmodule FugueWeb.SandboxLive.MembershipEditor do
       <p class="text-xs text-gray-500 mb-4 max-w-3xl">
         Each curve says how much a given value counts as <em>low</em>, <em>medium</em>,
         or <em>high</em>. Drag the dots to reshape. Histogram bars behind the curves
-        are the actual distribution of my raw scores for that dimension.
+        are the actual distribution of the raw values for that dimension.
       </p>
 
       <div

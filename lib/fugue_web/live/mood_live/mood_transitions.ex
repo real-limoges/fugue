@@ -39,12 +39,16 @@ defmodule FugueWeb.MoodLive.MoodTransitions do
       </button>
 
       <%= if @expanded do %>
-        <div class="flex-1 overflow-y-auto min-h-0 space-y-1 mt-3">
+        <div
+          id={"mood-transitions-list-rows-#{@myself}"}
+          class="flex-1 overflow-y-auto min-h-0 space-y-1 mt-3"
+        >
           <%= for t <- @filtered do %>
             <div
               phx-click="day_selected"
               phx-value-date={t.date}
-              class="flex items-center gap-2 px-2 py-1 rounded cursor-pointer text-sm hover:bg-base-300"
+              data-date={t.date}
+              class={"flex items-center gap-2 px-2 py-1 rounded cursor-pointer text-sm transition-colors #{if t.date in (@highlighted_dates || []), do: "bg-amber-300/15 ring-1 ring-amber-300/60", else: "hover:bg-base-300"}"}
             >
               <span class="text-gray-400 w-24 shrink-0">{t.date}</span>
               <div class="flex items-center gap-1 flex-1 min-w-0">

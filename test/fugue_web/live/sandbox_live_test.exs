@@ -24,7 +24,8 @@ defmodule FugueWeb.SandboxLiveTest do
       {:ok, view, _html} = live(conn, "/sandbox")
       html = render(view)
 
-      assert html =~ "Fuzzy Sandbox"
+      assert html =~ ">Sandbox</h1>"
+      assert html =~ "Fuzzy clustering"
       refute html =~ "Loading sandbox"
 
       assigns = :sys.get_state(view.pid).socket.assigns

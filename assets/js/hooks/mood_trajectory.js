@@ -4,10 +4,16 @@ import * as d3 from "d3"
 export const MoodTrajectory = {
   mounted() {
     this.data = { points: [], clusterColors: {}, clusterNames: {} }
+    this.focusDate = null
 
     this.handleEvent("update-trajectory", (data) => {
       this.data = data
       this.render()
+    })
+
+    this.handleEvent("day-focus", ({ day }) => {
+      this.focusDate = day?.date || null
+      this.applyFocus()
     })
 
     this.handleEvent("update-trajectory-colors", ({ clusterByDate, clusterColors, clusterNames }) => {
@@ -27,7 +33,7 @@ export const MoodTrajectory = {
         })
 
       // Mutate circle datum in-place so showTooltip sees the new cluster
-      svg.selectAll("circle")
+      svg.selectAll("circle.dot")
         .each(function(d) { d.cluster = clusterByDate[d.date] ?? null })
         .attr("fill", d => (d.cluster && clusterColors[d.cluster]) || "#888")
     })
@@ -54,24 +60,11 @@ export const MoodTrajectory = {
     const innerW = width - margin.left - margin.right
     const innerH = height - margin.top - margin.bottom
 
-    const xExt = d3.extent(points, p => p.x)
-    const yExt = d3.extent(points, p => p.y)
-    const xPad = (xExt[1] - xExt[0]) * 0.05 || 1
-    const yPad = (yExt[1] - yExt[0]) * 0.05 || 1
+    this.dims = { innerW, innerH, margin }
 
-    const dataW = (xExt[1] - xExt[0]) + 2 * xPad
-    const dataH = (yExt[1] - yExt[0]) + 2 * yPad
-    const scale = Math.min(innerW / dataW, innerH / dataH)
-    const xMid = (xExt[0] + xExt[1]) / 2
-    const yMid = (yExt[0] + yExt[1]) / 2
-
-    const x = d3.scaleLinear()
-      .domain([xMid - dataW / 2, xMid + dataW / 2])
-      .range([(innerW - dataW * scale) / 2, (innerW + dataW * scale) / 2])
-
-    const y = d3.scaleLinear()
-      .domain([yMid - dataH / 2, yMid + dataH / 2])
-      .range([(innerH + dataH * scale) / 2, (innerH - dataH * scale) / 2])
+    const { x, y } = this.computeScales()
+    this.x = x
+    this.y = y
 
     const svg = d3.select(this.el)
       .append("svg")
@@ -98,7 +91,7 @@ export const MoodTrajectory = {
       segments.push([points[i - 1], points[i]])
     }
 
-    g.append("g")
+    this.lines = g.append("g")
       .selectAll("line")
       .data(segments)
       .join("line")
@@ -129,19 +122,94 @@ export const MoodTrajectory = {
 
     const hook = this
 
-    g.append("g")
-      .selectAll("circle")
+    this.circles = g.append("g")
+      .selectAll("circle.dot")
       .data(points)
       .join("circle")
+      .attr("class", "dot")
       .attr("cx", d => x(d.x))
       .attr("cy", d => y(d.y))
       .attr("r", 2.2)
       .attr("fill", d => (d.cluster && clusterColors[d.cluster]) || "#888")
       .attr("fill-opacity", 0.85)
       .attr("filter", "url(#traj-glow)")
+      .attr("stroke-opacity", 0)
+
+    this.hitCircles = g.append("g")
+      .selectAll("circle.hit")
+      .data(points)
+      .join("circle")
+      .attr("class", "hit")
+      .attr("cx", d => x(d.x))
+      .attr("cy", d => y(d.y))
+      .attr("r", 7)
+      .attr("fill", "transparent")
       .style("cursor", "crosshair")
       .on("mouseenter", function(event, d) { hook.showTooltip(event, d) })
       .on("mouseleave", function() { hook.hideTooltip() })
+      .on("click", function(event, d) { hook.pushEvent("day_selected", { date: d.date }) })
+
+    this.applyFocus()
+  },
+
+  computeScales() {
+    const { points } = this.data
+    const { innerW, innerH } = this.dims
+
+    const xExt = d3.extent(points, p => p.x)
+    const yExt = d3.extent(points, p => p.y)
+    const xPad = (xExt[1] - xExt[0]) * 0.08 || 1
+    const yPad = (yExt[1] - yExt[0]) * 0.08 || 1
+
+    const dataW = (xExt[1] - xExt[0]) + 2 * xPad
+    const dataH = (yExt[1] - yExt[0]) + 2 * yPad
+    const fit = Math.min(innerW / dataW, innerH / dataH)
+    const xMid = (xExt[0] + xExt[1]) / 2
+    const yMid = (yExt[0] + yExt[1]) / 2
+
+    const x = d3.scaleLinear()
+      .domain([xMid - dataW / 2, xMid + dataW / 2])
+      .range([(innerW - dataW * fit) / 2, (innerW + dataW * fit) / 2])
+
+    const y = d3.scaleLinear()
+      .domain([yMid - dataH / 2, yMid + dataH / 2])
+      .range([(innerH + dataH * fit) / 2, (innerH - dataH * fit) / 2])
+
+    return { x, y }
+  },
+
+  applyFocus() {
+    if (!this.circles) return
+    const target = this.focusDate
+
+    if (!target) {
+      this.circles.interrupt()
+        .transition().duration(220)
+        .attr("r", 2.2)
+        .attr("stroke", "none")
+        .attr("stroke-width", 0)
+        .attr("stroke-opacity", 0)
+      return
+    }
+
+    this.circles.filter(d => d.date !== target)
+      .interrupt()
+      .transition().duration(220)
+      .attr("r", 2.2)
+      .attr("stroke", "none")
+      .attr("stroke-width", 0)
+      .attr("stroke-opacity", 0)
+
+    this.circles.filter(d => d.date === target)
+      .interrupt()
+      .attr("r", 9)
+      .attr("stroke", "#fff")
+      .attr("stroke-width", 2)
+      .attr("stroke-opacity", 1)
+      .transition().duration(900).ease(d3.easeCubicOut)
+      .attr("r", 5)
+      .attr("stroke-width", 1.25)
+      .attr("stroke-opacity", 0.9)
   },
 
   showTooltip(event, d) {

@@ -1,8 +1,10 @@
 defmodule FugueWeb.SandboxLive do
   @moduledoc """
-  Interactive sandbox for learning fuzzy logic by touching the knobs — clustering
-  parameters (k, m) and the membership functions themselves. Stands on its own
-  as a tool-focused page.
+  Math exploration playground. Each experiment on the page stands on its own —
+  poke at parameters, watch the model respond. Currently hosts a fuzzy
+  clustering experiment (k, m, membership-function editor). More experiments
+  will land here over time; the page is structured to let them coexist rather
+  than assume one owns the surface.
   """
 
   use FugueWeb, :live_view
@@ -391,7 +393,7 @@ defmodule FugueWeb.SandboxLive do
 
   def render(assigns) do
     ~H"""
-    <div class="fuzzy-sandbox p-4 max-w-6xl mx-auto">
+    <div class="sandbox-page p-4 max-w-6xl mx-auto">
       <%= if @error do %>
         <div class="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-4">
           {@error}
@@ -403,184 +405,184 @@ defmodule FugueWeb.SandboxLive do
           <p class="text-gray-400 text-lg">Loading sandbox…</p>
         </div>
       <% else %>
-        <header class="mb-8">
+        <header class="mb-12">
           <.link
             navigate="/mood"
             class="text-xs uppercase tracking-widest text-gray-500 hover:text-gray-300 transition-colors mb-3 inline-block"
           >
             &lsaquo; Back to /mood
           </.link>
-          <h1 class="text-3xl font-semibold text-gray-100 mb-3">Fuzzy Sandbox</h1>
+          <h1 class="text-3xl font-semibold text-gray-100 mb-3">Sandbox</h1>
           <p class="text-sm text-gray-400 leading-relaxed max-w-3xl">
-            A hands-on way to learn what fuzzy clustering actually does. Drag the
-            knobs. Reshape the curves. The clusters re-compute live on every
-            change — you can watch the model reorganize itself around whatever
-            you tell it a "state" is.
+            A place to push on math. Each experiment below stands on its own —
+            drag the parameters, swap the shapes, watch what the model does
+            differently. There's no narrative tying them together; they're here
+            because they're fun to poke at.
           </p>
         </header>
 
-        <section class="mb-10">
-          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-3">
-            Why fuzzy for bipolar
-          </h2>
-          <p class="text-sm text-gray-400 leading-relaxed max-w-3xl mb-3">
-            Discrete categories — manic, depressed, euthymic — lose the gradient. Most
-            days aren't pure; the information lives in the blend. Fuzzy logic keeps the
-            blend: every day holds partial membership in every state at once.
-          </p>
-          <p class="text-sm text-gray-400 leading-relaxed max-w-3xl">
-            What counts as "high outlook" for a bipolar baseline sits in a different
-            place than the general-population curve. The whole point of the editor below
-            is that those curves have to be shaped from the data, not assumed.
-          </p>
-        </section>
+        <section class="mb-16 pb-12 border-b border-white/5">
+          <header class="mb-6">
+            <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Experiment</p>
+            <h2 class="text-2xl font-semibold text-gray-100 mb-3">Fuzzy clustering</h2>
+            <p class="text-sm text-gray-400 leading-relaxed max-w-3xl mb-3">
+              Hard categories lose the gradient. Most points aren't pure — the
+              information lives in the blend. Fuzzy logic keeps the blend: every point
+              holds partial membership in every cluster at once.
+            </p>
+            <p class="text-sm text-gray-400 leading-relaxed max-w-3xl">
+              The editor below reshapes what counts as <em>low</em>, <em>medium</em>,
+              or <em>high</em> on each input dimension. Those curves have to be shaped
+              from the data, not assumed — and the clusters re-compute live as you
+              touch them.
+            </p>
+          </header>
 
-        <section class="mb-10">
-          <.live_component
-            module={ParamControls}
-            id="sandbox-param-controls"
-            k={@k}
-            m={@m}
-            cluster_count={length(@analysis.clusters)}
-            fpc={@analysis.fpc}
-            iterations={@analysis.iterations}
-          />
-          <p class="text-xs text-gray-500 mt-2 max-w-3xl">
-            k sets how many states to find. m is fuzziness — higher m means days belong
-            to more states at once. Both re-run clustering on every change.
-          </p>
+          <div class="mb-10">
+            <.live_component
+              module={ParamControls}
+              id="sandbox-param-controls"
+              k={@k}
+              m={@m}
+              cluster_count={length(@analysis.clusters)}
+              fpc={@analysis.fpc}
+              iterations={@analysis.iterations}
+            />
+            <p class="text-xs text-gray-500 mt-2 max-w-3xl">
+              k sets how many clusters to find. m is fuzziness — higher m means points
+              belong to more clusters at once. Both re-run clustering on every change.
+            </p>
 
-          <div class="flex flex-wrap items-center gap-2 mt-4">
-            <span class="text-xs uppercase tracking-wider text-gray-500 mr-1">Presets:</span>
-            <button
-              type="button"
-              phx-click="apply_preset"
-              phx-value-name="conservative"
-              class="btn btn-xs btn-outline"
-            >
-              Conservative
-            </button>
-            <button
-              type="button"
-              phx-click="apply_preset"
-              phx-value-name="aggressive"
-              class="btn btn-xs btn-outline"
-            >
-              Aggressive
-            </button>
-            <button
-              type="button"
-              phx-click="apply_preset"
-              phx-value-name="chaos"
-              class="btn btn-xs btn-outline"
-            >
-              Chaos
-            </button>
-            <button
-              type="button"
-              phx-click="apply_preset"
-              phx-value-name="randomize"
-              class="btn btn-xs btn-outline"
-            >
-              Randomize
-            </button>
-            <div class="grow"></div>
-            <button
-              type="button"
-              phx-click="undo"
-              disabled={@history == []}
-              class="btn btn-xs btn-ghost"
-            >
-              Undo<span :if={@history != []} class="opacity-60 ml-1">({length(@history)})</span>
-            </button>
-          </div>
-
-          <div class="flex flex-wrap gap-2 mt-3">
-            <%= for cluster <- @analysis.clusters do %>
-              <span
-                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border"
-                style={"border-color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}; color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#ccc")}"}
+            <div class="flex flex-wrap items-center gap-2 mt-4">
+              <span class="text-xs uppercase tracking-wider text-gray-500 mr-1">Presets:</span>
+              <button
+                type="button"
+                phx-click="apply_preset"
+                phx-value-name="conservative"
+                class="btn btn-xs btn-outline"
               >
+                Conservative
+              </button>
+              <button
+                type="button"
+                phx-click="apply_preset"
+                phx-value-name="aggressive"
+                class="btn btn-xs btn-outline"
+              >
+                Aggressive
+              </button>
+              <button
+                type="button"
+                phx-click="apply_preset"
+                phx-value-name="chaos"
+                class="btn btn-xs btn-outline"
+              >
+                Chaos
+              </button>
+              <button
+                type="button"
+                phx-click="apply_preset"
+                phx-value-name="randomize"
+                class="btn btn-xs btn-outline"
+              >
+                Randomize
+              </button>
+              <div class="grow"></div>
+              <button
+                type="button"
+                phx-click="undo"
+                disabled={@history == []}
+                class="btn btn-xs btn-ghost"
+              >
+                Undo<span :if={@history != []} class="opacity-60 ml-1">({length(@history)})</span>
+              </button>
+            </div>
+
+            <div class="flex flex-wrap gap-2 mt-3">
+              <%= for cluster <- @analysis.clusters do %>
                 <span
-                  class="w-2 h-2 rounded-full"
-                  style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}"}
+                  class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border"
+                  style={"border-color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}; color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#ccc")}"}
                 >
-                </span>
-                {cluster["name"]}
-              </span>
-            <% end %>
-          </div>
-        </section>
-
-        <section class="mb-10">
-          <.live_component
-            module={MembershipEditor}
-            id="membership-editor"
-            defs={@membership_defs}
-            histograms={@histograms}
-            suggestion={@suggestion}
-          />
-        </section>
-
-        <section class="mb-10">
-          <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-3">
-            Downstream effects
-          </h2>
-          <p class="text-xs text-gray-500 mb-4 max-w-3xl">
-            This re-computes whenever you touch a slider or reshape a curve — the same
-            data seen through whatever fuzzy lens you're building above.
-          </p>
-
-          <div class="bg-base-200 rounded-lg p-4 mb-4">
-            <div class="flex items-baseline justify-between mb-2">
-              <h3 class="text-xs uppercase tracking-widest text-gray-500">
-                Cluster crispness (FPC)
-              </h3>
-              <span class="text-xs text-gray-500 font-mono">
-                floor 1/k = {Float.round(1.0 / max(@k, 1), 3)} · ceiling 1.0
-              </span>
-            </div>
-            <div class="flex items-center gap-4">
-              <div class="text-4xl font-semibold tabular-nums text-amber-300 w-28">
-                {format_fpc(@analysis.fpc)}
-              </div>
-              <div class="flex-1">
-                <div class="h-3 w-full bg-base-300 rounded-full overflow-hidden relative">
-                  <div
-                    class="h-full bg-amber-400 transition-all duration-300 ease-out"
-                    style={"width: #{fpc_pct(@analysis.fpc, @k)}%"}
+                  <span
+                    class="w-2 h-2 rounded-full"
+                    style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}"}
                   >
-                  </div>
+                  </span>
+                  {cluster["name"]}
+                </span>
+              <% end %>
+            </div>
+          </div>
+
+          <div class="mb-10">
+            <.live_component
+              module={MembershipEditor}
+              id="membership-editor"
+              defs={@membership_defs}
+              histograms={@histograms}
+              suggestion={@suggestion}
+            />
+          </div>
+
+          <div class="mb-6">
+            <h3 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-3">
+              Downstream effects
+            </h3>
+            <p class="text-xs text-gray-500 mb-4 max-w-3xl">
+              This re-computes whenever you touch a slider or reshape a curve — the
+              same input points seen through whatever fuzzy lens you're building above.
+            </p>
+
+            <div class="bg-base-200 rounded-lg p-4 mb-4">
+              <div class="flex items-baseline justify-between mb-2">
+                <h4 class="text-xs uppercase tracking-widest text-gray-500">
+                  Cluster crispness (FPC)
+                </h4>
+                <span class="text-xs text-gray-500 font-mono">
+                  floor 1/k = {Float.round(1.0 / max(@k, 1), 3)} · ceiling 1.0
+                </span>
+              </div>
+              <div class="flex items-center gap-4">
+                <div class="text-4xl font-semibold tabular-nums text-amber-300 w-28">
+                  {format_fpc(@analysis.fpc)}
                 </div>
-                <p class="text-xs text-gray-500 mt-2 leading-snug">
-                  1.0 means every day belongs cleanly to one state. 1/k is the worst
-                  case — every day split evenly across all clusters. Lower m and tighter
-                  curves push it up; higher m and wider curves push it down.
-                </p>
+                <div class="flex-1">
+                  <div class="h-3 w-full bg-base-300 rounded-full overflow-hidden relative">
+                    <div
+                      class="h-full bg-amber-400 transition-all duration-300 ease-out"
+                      style={"width: #{fpc_pct(@analysis.fpc, @k)}%"}
+                    >
+                    </div>
+                  </div>
+                  <p class="text-xs text-gray-500 mt-2 leading-snug">
+                    1.0 means every point belongs cleanly to one cluster. 1/k is the
+                    worst case — every point split evenly across all clusters. Lower m
+                    and tighter curves push it up; higher m and wider curves push it down.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-base-200 rounded-lg p-4">
+              <h4 class="text-sm font-semibold text-gray-400 mb-2">Cluster memberships over time</h4>
+              <div
+                id="sandbox-cluster-stream"
+                phx-hook="ClusterStream"
+                phx-update="ignore"
+                style="min-height: 210px;"
+              >
               </div>
             </div>
           </div>
 
-          <div class="bg-base-200 rounded-lg p-4">
-            <h3 class="text-sm font-semibold text-gray-400 mb-2">How the states ebb and flow</h3>
-            <div
-              id="sandbox-cluster-stream"
-              phx-hook="ClusterStream"
-              phx-update="ignore"
-              style="min-height: 210px;"
-            >
-            </div>
-          </div>
-        </section>
-
-        <footer class="mt-16 pb-8 text-xs text-gray-500">
-          <p>
+          <p class="text-xs text-gray-500 mt-8 max-w-3xl leading-snug">
             Heads up: the membership functions you edit here are stored globally —
             Ish holds one fuzzy system at a time, so changes here persist for any
             other page that reads from it. Hit reset before you leave if you want
             the defaults back.
           </p>
-        </footer>
+        </section>
       <% end %>
     </div>
     """
