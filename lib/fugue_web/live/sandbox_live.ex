@@ -2,588 +2,412 @@ defmodule FugueWeb.SandboxLive do
   @moduledoc """
   Math exploration playground. Each experiment on the page stands on its own —
   poke at parameters, watch the model respond. Currently hosts a fuzzy
-  clustering experiment (k, m, membership-function editor). More experiments
+  temperature-bands experiment on daily Melbourne weather. More experiments
   will land here over time; the page is structured to let them coexist rather
   than assume one owns the surface.
   """
 
   use FugueWeb, :live_view
 
-  alias FugueWeb.MoodLive.{DataTransforms, ParamControls}
-  alias FugueWeb.MoodLive.Structs.{AnalysisResult, GapData}
-  alias FugueWeb.SandboxLive.MembershipEditor
-  alias Fugue.{Ish, MembershipDefaults}
+  require Logger
 
-  @default_k 3
-  @default_m 1.5
-  @history_limit 20
-  @presets ~w(conservative aggressive chaos randomize)
+  alias Fugue.Ish
+  alias Fugue.Sandbox.{Fuzzy, Mamdani, MelbourneWeather}
+
+  @default_center_offset 0.0
+  @default_spread 1.0
 
   def mount(_params, _session, socket) do
+    mfs = Fuzzy.build_mfs(@default_center_offset, @default_spread)
+
+    {first_date, last_date} =
+      case MelbourneWeather.date_range() do
+        nil -> {"", ""}
+        {f, l} -> {f, l}
+      end
+
     socket =
       assign(socket,
-        k: @default_k,
-        m: @default_m,
-        loading: true,
-        error: nil,
-        entries: [],
-        analysis: %AnalysisResult{
-          clusters: [],
-          membership: [],
-          cluster_colors: %{},
-          name_to_id: %{}
-        },
-        gaps: nil,
-        smoothed_daily: [],
-        membership_defs: nil,
-        histograms: %{},
-        suggestion: nil,
-        history: []
+        center_offset: @default_center_offset,
+        spread: @default_spread,
+        mfs: mfs,
+        row_count: MelbourneWeather.count(),
+        first_date: first_date,
+        last_date: last_date,
+        mamdani_temperature: Mamdani.default_temperature(),
+        mamdani_humidity: Mamdani.default_humidity(),
+        mamdani_response: nil,
+        mamdani_crisp: nil,
+        mamdani_error: nil
       )
-
-    if connected?(socket), do: send(self(), :load_all)
 
     {:ok, socket}
   end
 
-  def handle_info(:load_all, socket) do
-    tasks = %{
-      data: Task.async(fn -> Ish.data() end),
-      analysis: Task.async(fn -> Ish.cluster(@default_k, @default_m) end),
-      gaps: Task.async(fn -> Ish.gaps() end),
-      mf: Task.async(fn -> Ish.membership_functions() end),
-      _snapshot: Task.async(fn -> MembershipDefaults.get() end)
-    }
-
-    results = Map.new(tasks, fn {key, task} -> {key, Task.await(task, 15_000)} end)
-
-    case {results.data, results.analysis, results.gaps, results.mf} do
-      {{:ok, entries}, {:ok, raw_analysis}, {:ok, raw_gaps}, {:ok, mf_defs}} ->
-        analysis = DataTransforms.parse_analysis(raw_analysis, entries)
-
-        gaps =
-          raw_gaps |> GapData.from_api() |> DataTransforms.remap_gap_keys(analysis.name_to_id)
-
-        histograms = build_histograms(entries, mf_defs)
-
-        socket =
-          socket
-          |> assign(
-            loading: false,
-            entries: entries,
-            analysis: analysis,
-            gaps: gaps,
-            membership_defs: mf_defs,
-            histograms: histograms
-          )
-          |> push_cluster_viz()
-          |> push_editor_data()
-
-        {:noreply, socket}
-
-      _ ->
-        {:noreply, assign(socket, loading: false, error: "Could not connect to Ish API")}
-    end
+  def handle_event("sandbox:bands_ready", _params, socket) do
+    {:noreply, push_bands(socket)}
   end
 
-  def handle_info({:recluster, k, m}, socket) do
-    case Ish.cluster(k, m) do
-      {:ok, raw} ->
-        analysis = DataTransforms.parse_analysis(raw, socket.assigns.entries)
-
-        socket =
-          socket
-          |> assign(analysis: analysis)
-          |> push_cluster_viz()
-
-        {:noreply, socket}
-
-      {:error, _} ->
-        {:noreply, assign(socket, error: "Clustering failed")}
-    end
+  def handle_event("sandbox:mamdani_ready", _params, socket) do
+    {:noreply, refresh_mamdani(socket)}
   end
 
-  def handle_event("update_params", %{"k" => k_str, "m" => m_str}, socket) do
-    k = String.to_integer(k_str)
+  def handle_event(
+        "update_mamdani_inputs",
+        %{"temperature" => t_str, "humidity" => h_str},
+        socket
+      ) do
+    temperature = parse_float(t_str, socket.assigns.mamdani_temperature)
+    humidity = parse_float(h_str, socket.assigns.mamdani_humidity)
 
-    m =
-      case Float.parse(m_str) do
-        {val, _} -> val
-        :error -> socket.assigns.m
-      end
-
-    if k == socket.assigns.k and m == socket.assigns.m do
+    if temperature == socket.assigns.mamdani_temperature and
+         humidity == socket.assigns.mamdani_humidity do
       {:noreply, socket}
     else
-      socket = socket |> push_history() |> assign(k: k, m: m)
-      send(self(), {:recluster, k, m})
+      socket =
+        socket
+        |> assign(mamdani_temperature: temperature, mamdani_humidity: humidity)
+        |> refresh_mamdani()
+
       {:noreply, socket}
     end
   end
 
-  def handle_event("mf_commit", %{"inputs" => new_inputs}, socket) do
-    new_defs = Map.put(socket.assigns.membership_defs, "inputs", new_inputs)
+  def handle_event(
+        "update_fuzzy_params",
+        %{"center_offset" => co_str, "spread" => s_str},
+        socket
+      ) do
+    center_offset = parse_float(co_str, socket.assigns.center_offset)
+    spread = parse_float(s_str, socket.assigns.spread)
 
-    case Ish.update_membership_functions(new_defs) do
-      {:ok, committed} ->
-        send(self(), {:recluster, socket.assigns.k, socket.assigns.m})
-
-        {:noreply,
-         socket
-         |> push_history()
-         |> assign(membership_defs: committed, suggestion: nil)
-         |> push_event("clear-suggestion", %{})}
-
-      {:error, _} ->
-        {:noreply, assign(socket, error: "Could not update membership functions")}
-    end
-  end
-
-  def handle_event("mf_suggest", _params, socket) do
-    case Ish.suggest_membership_functions() do
-      {:ok, suggestion} ->
-        {:noreply,
-         socket
-         |> assign(suggestion: suggestion)
-         |> push_event("show-suggestion", %{defs: suggestion})}
-
-      {:error, _} ->
-        {:noreply, assign(socket, error: "Suggestion failed")}
-    end
-  end
-
-  def handle_event("mf_apply_suggestion", _params, %{assigns: %{suggestion: nil}} = socket) do
-    {:noreply, socket}
-  end
-
-  def handle_event("mf_apply_suggestion", _params, socket) do
-    case Ish.update_membership_functions(socket.assigns.suggestion) do
-      {:ok, committed} ->
-        send(self(), {:recluster, socket.assigns.k, socket.assigns.m})
-
-        socket =
-          socket
-          |> push_history()
-          |> assign(
-            membership_defs: committed,
-            suggestion: nil,
-            histograms: build_histograms(socket.assigns.entries, committed)
-          )
-          |> push_editor_data()
-          |> push_event("clear-suggestion", %{})
-
-        {:noreply, socket}
-
-      {:error, _} ->
-        {:noreply, assign(socket, error: "Could not apply suggestion")}
-    end
-  end
-
-  def handle_event("mf_reset", _params, socket) do
-    with {:ok, defaults} <- MembershipDefaults.get(),
-         {:ok, committed} <- Ish.update_membership_functions(defaults) do
-      send(self(), {:recluster, socket.assigns.k, socket.assigns.m})
+    if center_offset == socket.assigns.center_offset and spread == socket.assigns.spread do
+      {:noreply, socket}
+    else
+      mfs = Fuzzy.build_mfs(center_offset, spread)
 
       socket =
         socket
-        |> push_history()
-        |> assign(
-          membership_defs: committed,
-          suggestion: nil,
-          histograms: build_histograms(socket.assigns.entries, committed)
-        )
-        |> push_editor_data()
-        |> push_event("clear-suggestion", %{})
+        |> assign(center_offset: center_offset, spread: spread, mfs: mfs)
+        |> push_bands()
 
       {:noreply, socket}
-    else
-      _ -> {:noreply, assign(socket, error: "Could not reset membership functions")}
     end
   end
 
-  def handle_event("apply_preset", %{"name" => name}, socket) when name in @presets do
-    {k, m, new_defs} = preset_config(name, socket.assigns.membership_defs)
+  defp push_bands(socket) do
+    %{mfs: mfs} = socket.assigns
+    bands = Fuzzy.bands(MelbourneWeather.rows(), mfs)
 
-    case Ish.update_membership_functions(new_defs) do
-      {:ok, committed} ->
-        send(self(), {:recluster, k, m})
-
-        socket =
-          socket
-          |> push_history()
-          |> assign(
-            k: k,
-            m: m,
-            membership_defs: committed,
-            suggestion: nil,
-            histograms: build_histograms(socket.assigns.entries, committed)
-          )
-          |> push_editor_data()
-          |> push_event("clear-suggestion", %{})
-
-        {:noreply, socket}
-
-      {:error, _} ->
-        {:noreply, assign(socket, error: "Could not apply preset")}
-    end
-  end
-
-  def handle_event("undo", _params, %{assigns: %{history: []}} = socket) do
-    {:noreply, socket}
-  end
-
-  def handle_event("undo", _params, socket) do
-    [snapshot | rest] = socket.assigns.history
-    %{k: k, m: m, membership_defs: old_defs} = snapshot
-
-    case Ish.update_membership_functions(old_defs) do
-      {:ok, committed} ->
-        send(self(), {:recluster, k, m})
-
-        socket =
-          socket
-          |> assign(
-            k: k,
-            m: m,
-            membership_defs: committed,
-            suggestion: nil,
-            history: rest,
-            histograms: build_histograms(socket.assigns.entries, committed)
-          )
-          |> push_editor_data()
-          |> push_event("clear-suggestion", %{})
-
-        {:noreply, socket}
-
-      {:error, _} ->
-        {:noreply, assign(socket, error: "Could not undo")}
-    end
-  end
-
-  # --- Push helpers ---
-
-  defp push_cluster_viz(socket) do
-    %{entries: entries, analysis: analysis} = socket.assigns
-
-    smoothed_daily =
-      entries
-      |> DataTransforms.daily_dominants(analysis)
-      |> DataTransforms.smooth_runs()
-
-    socket
-    |> assign(smoothed_daily: smoothed_daily)
-    |> push_stream()
-  end
-
-  defp push_stream(socket) do
-    %{entries: entries, analysis: analysis} = socket.assigns
-
-    series =
-      entries
-      |> Enum.with_index()
-      |> Enum.map(fn {entry, idx} ->
-        mems =
-          DataTransforms.build_memberships(Enum.at(analysis.membership, idx), analysis.clusters)
-
-        %{date: entry["date"], memberships: mems}
-      end)
-
-    cluster_ids = Enum.map(analysis.clusters, & &1["id"])
-    cluster_names = Enum.into(analysis.clusters, %{}, fn c -> {c["id"], c["name"]} end)
-
-    push_event(socket, "update-stream", %{
-      series: series,
-      clusterColors: analysis.cluster_colors,
-      clusterIds: cluster_ids,
-      clusterNames: cluster_names
+    push_event(socket, "update-bands", %{
+      series: bands,
+      mfs:
+        Enum.map(mfs, fn mf ->
+          %{name: mf.name, color: mf.color, a: mf.a, b: mf.b, c: mf.c}
+        end),
+      bounds: [0.0, 48.0]
     })
   end
 
-  defp push_editor_data(socket) do
-    push_event(socket, "update-membership-editor", %{
-      defs: socket.assigns.membership_defs,
-      histograms: socket.assigns.histograms
-    })
+  defp refresh_mamdani(socket) do
+    %{mamdani_temperature: t, mamdani_humidity: h} = socket.assigns
+    request = Mamdani.request(t, h)
+
+    case Ish.mamdani(request) do
+      {:ok, response} ->
+        summaries = Mamdani.rule_summaries()
+
+        strengths =
+          response
+          |> Map.get("rule_strengths", [])
+          |> pad_strengths(length(summaries))
+
+        rules =
+          summaries
+          |> Enum.zip(strengths)
+          |> Enum.map(fn {%{text: text, output_term: term}, strength} ->
+            %{text: text, output_term: term, strength: strength}
+          end)
+
+        crisp = Map.get(response, "crisp", %{})
+
+        socket
+        |> assign(
+          mamdani_response: response,
+          mamdani_crisp: Map.get(crisp, "fan_speed"),
+          mamdani_error: nil
+        )
+        |> push_event("update-mamdani", %{
+          mfs: Mamdani.mfs(),
+          rules: rules,
+          inputs: %{temperature: t, humidity: h},
+          input_degrees: Map.get(response, "input_degrees", %{}),
+          output_curves: Map.get(response, "output_curves", %{}),
+          crisp: crisp
+        })
+
+      {:error, reason} ->
+        Logger.error("Ish mamdani call failed: #{inspect(reason)}")
+        assign(socket, mamdani_error: "inference service unavailable")
+    end
   end
 
-  # --- Helpers ---
+  defp pad_strengths(strengths, expected) when is_list(strengths) do
+    actual = length(strengths)
 
-  defp build_histograms(entries, %{"inputs" => inputs}) do
-    bounds =
-      Map.new(inputs, fn %{"name" => n, "bounds" => [lo, hi]} -> {n, {lo * 1.0, hi * 1.0}} end)
+    cond do
+      actual == expected ->
+        strengths
 
-    DataTransforms.build_histograms(entries, bounds)
+      actual < expected ->
+        Logger.warning(
+          "Ish returned #{actual} rule strengths, expected #{expected}; padding with zeros"
+        )
+
+        strengths ++ List.duplicate(0.0, expected - actual)
+
+      true ->
+        Logger.warning("Ish returned #{actual} rule strengths, expected #{expected}; truncating")
+
+        Enum.take(strengths, expected)
+    end
   end
 
-  defp build_histograms(_, _), do: %{}
-
-  defp format_fpc(nil), do: "—"
-  defp format_fpc(fpc) when is_number(fpc), do: :erlang.float_to_binary(fpc * 1.0, decimals: 3)
-
-  defp fpc_pct(nil, _k), do: 0
-
-  defp fpc_pct(fpc, k) when is_number(fpc) and is_integer(k) and k > 1 do
-    floor = 1.0 / k
-    pct = (fpc - floor) / (1.0 - floor) * 100
-    pct |> max(0) |> min(100) |> Float.round(1)
+  defp pad_strengths(_other, expected) do
+    Logger.warning("Ish returned non-list rule_strengths; using zeros")
+    List.duplicate(0.0, expected)
   end
 
-  defp fpc_pct(_, _), do: 0
-
-  defp push_history(socket) do
-    snapshot = %{
-      k: socket.assigns.k,
-      m: socket.assigns.m,
-      membership_defs: socket.assigns.membership_defs
-    }
-
-    history = [snapshot | socket.assigns.history] |> Enum.take(@history_limit)
-    assign(socket, history: history)
+  defp parse_float(str, default) do
+    case Float.parse(str) do
+      {v, _} -> v
+      :error -> default
+    end
   end
 
-  # --- Presets ---
-
-  defp preset_config("conservative", defs), do: {2, 1.2, reshape_mf(defs, :tight)}
-  defp preset_config("aggressive", defs), do: {5, 1.8, reshape_mf(defs, :wide)}
-  defp preset_config("chaos", defs), do: {5, 2.8, reshape_mf(defs, :wide)}
-
-  defp preset_config("randomize", defs) do
-    k = Enum.random(2..5)
-    m = (12 + :rand.uniform(14)) / 10.0
-    {k, m, reshape_mf(defs, :random)}
+  defp format_number(n, decimals) when is_number(n) do
+    :erlang.float_to_binary(n / 1, decimals: decimals)
   end
-
-  defp reshape_mf(%{"inputs" => inputs} = defs, shape) do
-    Map.put(defs, "inputs", Enum.map(inputs, &reshape_var(&1, shape)))
-  end
-
-  defp reshape_var(%{"bounds" => [lo, hi]} = var, shape) do
-    Map.put(var, "terms", triangle_terms(shape, lo * 1.0, (hi - lo) * 1.0))
-  end
-
-  defp triangle_terms(:tight, lo, range) do
-    [
-      %{"name" => "low", "params" => [lo, lo, lo + 0.25 * range]},
-      %{"name" => "medium", "params" => [lo + 0.35 * range, lo + 0.5 * range, lo + 0.65 * range]},
-      %{"name" => "high", "params" => [lo + 0.75 * range, lo + range, lo + range]}
-    ]
-  end
-
-  defp triangle_terms(:wide, lo, range) do
-    [
-      %{"name" => "low", "params" => [lo, lo + 0.15 * range, lo + 0.55 * range]},
-      %{"name" => "medium", "params" => [lo + 0.15 * range, lo + 0.5 * range, lo + 0.85 * range]},
-      %{"name" => "high", "params" => [lo + 0.45 * range, lo + 0.85 * range, lo + range]}
-    ]
-  end
-
-  defp triangle_terms(:random, lo, range) do
-    low_peak = lo + :rand.uniform() * 0.35 * range
-    mid_peak = lo + (0.35 + :rand.uniform() * 0.3) * range
-    high_peak = lo + (0.65 + :rand.uniform() * 0.35) * range
-
-    [
-      %{"name" => "low", "params" => [lo, low_peak, mid_peak]},
-      %{"name" => "medium", "params" => [low_peak, mid_peak, high_peak]},
-      %{"name" => "high", "params" => [mid_peak, high_peak, lo + range]}
-    ]
-  end
-
-  # --- Render ---
 
   def render(assigns) do
     ~H"""
     <div class="sandbox-page p-4 max-w-6xl mx-auto">
-      <%= if @error do %>
-        <div class="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-4">
-          {@error}
-        </div>
-      <% end %>
+      <header class="mb-12">
+        <h1 class="text-3xl font-semibold text-gray-100 mb-3">Sandbox</h1>
+        <p class="text-sm text-gray-400 leading-relaxed max-w-3xl">
+          A place to push on math. Each experiment below stands on its own —
+          drag the parameters, swap the shapes, watch what the model does
+          differently. There's no narrative tying them together; they're here
+          because they're fun to poke at.
+        </p>
+      </header>
 
-      <%= if @loading do %>
-        <div class="flex items-center justify-center h-64">
-          <p class="text-gray-400 text-lg">Loading sandbox…</p>
-        </div>
-      <% else %>
-        <header class="mb-12">
-          <.link
-            navigate="/mood"
-            class="text-xs uppercase tracking-widest text-gray-500 hover:text-gray-300 transition-colors mb-3 inline-block"
-          >
-            &lsaquo; Back to /mood
-          </.link>
-          <h1 class="text-3xl font-semibold text-gray-100 mb-3">Sandbox</h1>
-          <p class="text-sm text-gray-400 leading-relaxed max-w-3xl">
-            A place to push on math. Each experiment below stands on its own —
-            drag the parameters, swap the shapes, watch what the model does
-            differently. There's no narrative tying them together; they're here
-            because they're fun to poke at.
+      <section class="mb-16 pb-12 border-b border-white/5">
+        <header class="mb-6">
+          <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Experiment</p>
+          <h2 class="text-2xl font-semibold text-gray-100 mb-3">Fuzzy temperature bands</h2>
+          <p class="text-sm text-gray-400 leading-relaxed max-w-3xl mb-3">
+            Hard categories lose the gradient. A 22°C day isn't exactly <em>mild</em>
+            and exactly nothing else — it's mostly mild, a little cool, a little warm.
+            Five overlapping triangular membership functions let every day hold partial
+            membership in every fuzzy set at once.
+          </p>
+          <p class="text-xs text-gray-500 max-w-3xl">
+            Data: {@row_count} days of daily max temperatures from Melbourne Airport
+            (GHCN-D {@first_date} → {@last_date}).
           </p>
         </header>
 
-        <section class="mb-16 pb-12 border-b border-white/5">
-          <header class="mb-6">
-            <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Experiment</p>
-            <h2 class="text-2xl font-semibold text-gray-100 mb-3">Fuzzy clustering</h2>
-            <p class="text-sm text-gray-400 leading-relaxed max-w-3xl mb-3">
-              Hard categories lose the gradient. Most points aren't pure — the
-              information lives in the blend. Fuzzy logic keeps the blend: every point
-              holds partial membership in every cluster at once.
-            </p>
-            <p class="text-sm text-gray-400 leading-relaxed max-w-3xl">
-              The editor below reshapes what counts as <em>low</em>, <em>medium</em>,
-              or <em>high</em> on each input dimension. Those curves have to be shaped
-              from the data, not assumed — and the clusters re-compute live as you
-              touch them.
-            </p>
-          </header>
-
-          <div class="mb-10">
-            <.live_component
-              module={ParamControls}
-              id="sandbox-param-controls"
-              k={@k}
-              m={@m}
-              cluster_count={length(@analysis.clusters)}
-              fpc={@analysis.fpc}
-              iterations={@analysis.iterations}
-            />
-            <p class="text-xs text-gray-500 mt-2 max-w-3xl">
-              k sets how many clusters to find. m is fuzziness — higher m means points
-              belong to more clusters at once. Both re-run clustering on every change.
-            </p>
-
-            <div class="flex flex-wrap items-center gap-2 mt-4">
-              <span class="text-xs uppercase tracking-wider text-gray-500 mr-1">Presets:</span>
-              <button
-                type="button"
-                phx-click="apply_preset"
-                phx-value-name="conservative"
-                class="btn btn-xs btn-outline"
-              >
-                Conservative
-              </button>
-              <button
-                type="button"
-                phx-click="apply_preset"
-                phx-value-name="aggressive"
-                class="btn btn-xs btn-outline"
-              >
-                Aggressive
-              </button>
-              <button
-                type="button"
-                phx-click="apply_preset"
-                phx-value-name="chaos"
-                class="btn btn-xs btn-outline"
-              >
-                Chaos
-              </button>
-              <button
-                type="button"
-                phx-click="apply_preset"
-                phx-value-name="randomize"
-                class="btn btn-xs btn-outline"
-              >
-                Randomize
-              </button>
-              <div class="grow"></div>
-              <button
-                type="button"
-                phx-click="undo"
-                disabled={@history == []}
-                class="btn btn-xs btn-ghost"
-              >
-                Undo<span :if={@history != []} class="opacity-60 ml-1">({length(@history)})</span>
-              </button>
-            </div>
-
-            <div class="flex flex-wrap gap-2 mt-3">
-              <%= for cluster <- @analysis.clusters do %>
-                <span
-                  class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border"
-                  style={"border-color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}; color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#ccc")}"}
-                >
-                  <span
-                    class="w-2 h-2 rounded-full"
-                    style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}"}
-                  >
-                  </span>
-                  {cluster["name"]}
-                </span>
-              <% end %>
-            </div>
-          </div>
-
-          <div class="mb-10">
-            <.live_component
-              module={MembershipEditor}
-              id="membership-editor"
-              defs={@membership_defs}
-              histograms={@histograms}
-              suggestion={@suggestion}
-            />
-          </div>
-
-          <div class="mb-6">
-            <h3 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-3">
-              Downstream effects
-            </h3>
-            <p class="text-xs text-gray-500 mb-4 max-w-3xl">
-              This re-computes whenever you touch a slider or reshape a curve — the
-              same input points seen through whatever fuzzy lens you're building above.
-            </p>
-
-            <div class="bg-base-200 rounded-lg p-4 mb-4">
-              <div class="flex items-baseline justify-between mb-2">
-                <h4 class="text-xs uppercase tracking-widest text-gray-500">
-                  Cluster crispness (FPC)
-                </h4>
-                <span class="text-xs text-gray-500 font-mono">
-                  floor 1/k = {Float.round(1.0 / max(@k, 1), 3)} · ceiling 1.0
+        <form phx-change="update_fuzzy_params" class="mb-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
+            <label class="block">
+              <div class="flex justify-between items-baseline mb-2">
+                <span class="text-xs uppercase tracking-wider text-gray-400">Center offset</span>
+                <span class="text-xs text-gray-500 font-mono tabular-nums">
+                  {format_number(@center_offset, 1)} °C
                 </span>
               </div>
-              <div class="flex items-center gap-4">
-                <div class="text-4xl font-semibold tabular-nums text-amber-300 w-28">
-                  {format_fpc(@analysis.fpc)}
-                </div>
-                <div class="flex-1">
-                  <div class="h-3 w-full bg-base-300 rounded-full overflow-hidden relative">
-                    <div
-                      class="h-full bg-amber-400 transition-all duration-300 ease-out"
-                      style={"width: #{fpc_pct(@analysis.fpc, @k)}%"}
-                    >
-                    </div>
-                  </div>
-                  <p class="text-xs text-gray-500 mt-2 leading-snug">
-                    1.0 means every point belongs cleanly to one cluster. 1/k is the
-                    worst case — every point split evenly across all clusters. Lower m
-                    and tighter curves push it up; higher m and wider curves push it down.
-                  </p>
-                </div>
-              </div>
-            </div>
+              <input
+                type="range"
+                name="center_offset"
+                min="-10"
+                max="10"
+                step="0.5"
+                value={@center_offset}
+                phx-debounce="50"
+                class="range range-xs range-primary"
+              />
+              <p class="text-xs text-gray-500 mt-1">
+                Shift all five peaks left or right along the temperature axis.
+              </p>
+            </label>
 
-            <div class="bg-base-200 rounded-lg p-4">
-              <h4 class="text-sm font-semibold text-gray-400 mb-2">Cluster memberships over time</h4>
-              <div
-                id="sandbox-cluster-stream"
-                phx-hook="ClusterStream"
-                phx-update="ignore"
-                style="min-height: 210px;"
-              >
+            <label class="block">
+              <div class="flex justify-between items-baseline mb-2">
+                <span class="text-xs uppercase tracking-wider text-gray-400">Spread</span>
+                <span class="text-xs text-gray-500 font-mono tabular-nums">
+                  {format_number(@spread, 2)}×
+                </span>
               </div>
-            </div>
+              <input
+                type="range"
+                name="spread"
+                min="0.3"
+                max="2.0"
+                step="0.05"
+                value={@spread}
+                phx-debounce="50"
+                class="range range-xs range-primary"
+              />
+              <p class="text-xs text-gray-500 mt-1">
+                Widen the triangles for more blending between adjacent sets.
+              </p>
+            </label>
           </div>
+        </form>
 
-          <p class="text-xs text-gray-500 mt-8 max-w-3xl leading-snug">
-            Heads up: the membership functions you edit here are stored globally —
-            Ish holds one fuzzy system at a time, so changes here persist for any
-            other page that reads from it. Hit reset before you leave if you want
-            the defaults back.
+        <div class="mb-3 flex flex-wrap gap-2">
+          <%= for mf <- @mfs do %>
+            <span
+              class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border"
+              style={"border-color: #{mf.color}; color: #{mf.color}"}
+            >
+              <span class="w-2 h-2 rounded-full" style={"background: #{mf.color}"}></span>
+              {mf.name}
+              <span class="opacity-60">· peak {format_number(mf.b, 1)}°C</span>
+            </span>
+          <% end %>
+        </div>
+
+        <div class="rounded-lg bg-base-200 p-4">
+          <div
+            id="sandbox-temperature-bands"
+            phx-hook="TemperatureBands"
+            phx-update="ignore"
+            style="min-height: 440px;"
+          >
+          </div>
+          <p class="mt-3 max-w-3xl text-xs leading-snug text-gray-500">
+            Top strip: the five triangular membership functions on the temperature
+            axis — drag the sliders to reshape them. Bottom: for every day in the
+            dataset, the bands show how much that day belongs to each set.
+            Memberships are normalized so every column fills the full height;
+            hover for the exact breakdown.
           </p>
-        </section>
-      <% end %>
+        </div>
+      </section>
+
+      <section class="mb-16 pb-12">
+        <header class="mb-6">
+          <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Experiment</p>
+          <h2 class="text-2xl font-semibold text-gray-100 mb-3">Mamdani fan controller</h2>
+          <p class="text-sm text-gray-400 leading-relaxed max-w-3xl mb-3">
+            A fuzzy controller the shape of an old-school rule of thumb: if it's hot
+            and humid, run the fan hard; if it's cold, leave it off. Two crisp inputs
+            get fuzzified, seven rules fire with varying strength, the output terms
+            get clipped and aggregated, and the centroid of that aggregated shape is
+            the crisp fan speed.
+          </p>
+          <p class="text-xs text-gray-500 max-w-3xl">
+            Math runs server-side through Hazy (Haskell) via the Ish
+            <code class="text-gray-400">/inference/mamdani</code>
+            endpoint. Drag the sliders to watch the rule firings, output shape, and
+            defuzzified crisp value respond.
+          </p>
+        </header>
+
+        <form phx-change="update_mamdani_inputs" class="mb-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
+            <label class="block">
+              <div class="flex justify-between items-baseline mb-2">
+                <span class="text-xs uppercase tracking-wider text-gray-400">Temperature</span>
+                <span class="text-xs text-gray-500 font-mono tabular-nums">
+                  {format_number(@mamdani_temperature, 1)} °C
+                </span>
+              </div>
+              <input
+                type="range"
+                name="temperature"
+                min="0"
+                max="40"
+                step="0.5"
+                value={@mamdani_temperature}
+                phx-debounce="50"
+                class="range range-xs range-primary"
+              />
+              <p class="text-xs text-gray-500 mt-1">
+                Crisp temperature input, fuzzified into cold / warm / hot.
+              </p>
+            </label>
+
+            <label class="block">
+              <div class="flex justify-between items-baseline mb-2">
+                <span class="text-xs uppercase tracking-wider text-gray-400">Humidity</span>
+                <span class="text-xs text-gray-500 font-mono tabular-nums">
+                  {format_number(@mamdani_humidity, 0)}%
+                </span>
+              </div>
+              <input
+                type="range"
+                name="humidity"
+                min="0"
+                max="100"
+                step="1"
+                value={@mamdani_humidity}
+                phx-debounce="50"
+                class="range range-xs range-primary"
+              />
+              <p class="text-xs text-gray-500 mt-1">
+                Relative humidity, fuzzified into dry / comfortable / humid.
+              </p>
+            </label>
+          </div>
+        </form>
+
+        <%= if @mamdani_error do %>
+          <div class="mb-4 flex items-center gap-3 rounded-lg border border-amber-900/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-200">
+            <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-400">
+              inference offline
+            </span>
+            <span class="text-amber-100/80">
+              {@mamdani_error}
+              <%= if @mamdani_response do %>
+                · showing last result
+              <% end %>
+            </span>
+          </div>
+        <% end %>
+
+        <%= if @mamdani_crisp do %>
+          <div class="mb-4 flex items-baseline gap-4 rounded-lg border border-white/5 bg-base-200 px-6 py-3">
+            <span class="text-[10px] uppercase tracking-[0.2em] text-gray-500">
+              Defuzzified output
+            </span>
+            <span class="text-xs font-medium text-gray-300">fan speed</span>
+            <span class="font-mono text-2xl font-semibold tabular-nums text-amber-300">
+              {format_number(@mamdani_crisp, 1)}
+            </span>
+            <span class="text-xs text-gray-500">% of max</span>
+          </div>
+        <% end %>
+
+        <div class="rounded-lg bg-base-200 p-4">
+          <div
+            id="sandbox-mamdani-playground"
+            phx-hook="MamdaniPlayground"
+            phx-update="ignore"
+            style="min-height: 640px;"
+          >
+          </div>
+          <p class="mt-3 max-w-3xl text-xs leading-snug text-gray-500">
+            Top row shows each input fuzzified into its term set, with a dashed
+            crisp line and dots marking the degree of membership at that input.
+            Middle shows each rule's firing strength — colored by the fan speed
+            term it votes for. Bottom layers each rule's clipped consequent
+            underneath the aggregated envelope; the white marker is the centroid.
+          </p>
+        </div>
+      </section>
     </div>
     """
   end

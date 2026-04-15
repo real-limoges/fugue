@@ -85,6 +85,11 @@ defmodule Fugue.Ish do
     Req.post("#{base_url()}/membership-functions/suggest", req_opts()) |> parse_response()
   end
 
+  def mamdani(request) do
+    Req.post("#{base_url()}/inference/mamdani", Keyword.merge(req_opts(), json: request))
+    |> parse_response()
+  end
+
   defp fetch_id_token do
     audience = base_url()
 
