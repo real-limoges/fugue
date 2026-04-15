@@ -11,12 +11,13 @@ defmodule Fugue.Db do
   # Client API
 
   def start_link(opts) do
-    GenServer.start_link(__MODULE__, opts, name: __MODULE__)
+    name = Keyword.get(opts, :name, __MODULE__)
+    GenServer.start_link(__MODULE__, opts, name: name)
   end
 
   @doc "Execute a CozoScript query with optional parameter bindings."
-  def query(script, params \\ %{}) do
-    GenServer.call(__MODULE__, {:query, script, params}, 30_000)
+  def query(script, params \\ %{}, server \\ __MODULE__) do
+    GenServer.call(server, {:query, script, params}, 30_000)
   end
 
   # Server callbacks
@@ -25,10 +26,12 @@ defmodule Fugue.Db do
   def init(opts) do
     url = Keyword.fetch!(opts, :url)
     auth_token = Keyword.get(opts, :auth_token)
+    plug = Keyword.get(opts, :plug)
+    state = %{url: url, auth_token: auth_token, plug: plug}
 
-    case ping(url, auth_token) do
+    case ping(state) do
       :ok ->
-        {:ok, %{url: url, auth_token: auth_token}}
+        {:ok, state}
 
       {:error, reason} ->
         Logger.error("CozoDB not reachable at #{url}: #{inspect(reason)}")
@@ -38,10 +41,9 @@ defmodule Fugue.Db do
 
   @impl true
   def handle_call({:query, script, params}, _from, state) do
-    %{url: url, auth_token: auth_token} = state
     body = %{"script" => script, "params" => params}
 
-    case Req.post("#{url}/text-query", json: body, headers: auth_headers(auth_token)) do
+    case Req.post(req_opts(state, json: body)) do
       {:ok, %Req.Response{status: 200, body: %{"ok" => true} = resp}} ->
         rows = resp["rows"] || []
         headers = resp["headers"] || []
@@ -67,14 +69,24 @@ defmodule Fugue.Db do
 
   # Helpers
 
-  defp ping(url, auth_token) do
+  defp ping(state) do
     body = %{"script" => "?[] <- [[1]]", "params" => %{}}
 
-    case Req.post("#{url}/text-query", json: body, headers: auth_headers(auth_token)) do
+    case Req.post(req_opts(state, json: body)) do
       {:ok, %Req.Response{status: 200, body: %{"ok" => true}}} -> :ok
       {:ok, %Req.Response{status: s}} -> {:error, "CozoDB returned #{s}"}
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  defp req_opts(%{url: url, auth_token: token, plug: plug}, extra) do
+    base = [
+      url: "#{url}/text-query",
+      headers: auth_headers(token)
+    ]
+
+    base = if plug, do: Keyword.merge(base, plug: plug, retry: false), else: base
+    Keyword.merge(base, extra)
   end
 
   defp auth_headers(nil), do: []
