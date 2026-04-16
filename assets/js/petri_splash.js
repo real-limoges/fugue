@@ -78,7 +78,7 @@ function refreshColors() {
 
 let cleanup = null;
 
-export async function initSplash(canvasId, simName) {
+export async function initSplash(canvasId, simName, readingId) {
   if (cleanup) { cleanup(); cleanup = null; }
 
   const sim = sims[simName];
@@ -100,6 +100,29 @@ export async function initSplash(canvasId, simName) {
   refreshColors();
   const pixelCount = canvasW * canvasH;
   const rgbaBuffer = new Uint8ClampedArray(pixelCount * 4);
+
+  const reading = readingId ? document.getElementById(readingId) : null;
+  const startTime = performance.now();
+  const sampleStride = 64;
+  const sampleCount = Math.max(1, Math.floor(pixelCount / sampleStride));
+  let lastReadingUpdate = 0;
+  let activityEMA = null;
+
+  function updateReading(now, intensity) {
+    if (!reading) return;
+    if (now - lastReadingUpdate < 250) return;
+    lastReadingUpdate = now;
+
+    let sum = 0;
+    for (let i = 0; i < pixelCount; i += sampleStride) sum += intensity[i];
+    const mean = sum / sampleCount / 255;
+    activityEMA = activityEMA === null ? mean : activityEMA * 0.7 + mean * 0.3;
+
+    const elapsed = Math.floor((now - startTime) / 1000);
+    const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
+    const ss = String(elapsed % 60).padStart(2, "0");
+    reading.textContent = `${simName} · ${activityEMA.toFixed(2)} · t+${mm}:${ss}`;
+  }
 
   let rafId;
   let frameCount = 0;
@@ -123,6 +146,9 @@ export async function initSplash(canvasId, simName) {
 
     const imageData = new ImageData(rgbaBuffer, canvasW, canvasH);
     ctx.putImageData(imageData, 0, 0);
+
+    updateReading(performance.now(), intensity);
+
     rafId = requestAnimationFrame(loop);
   }
   rafId = requestAnimationFrame(loop);

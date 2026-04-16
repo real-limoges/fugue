@@ -25,7 +25,7 @@
 /* Synthwave — neon on deep purple-black */
 @plugin "../vendor/daisyui-theme" {
   name: "dark";
-  default: false;
+  default: true;
   prefersdark: true;
   color-scheme: "dark";
   --color-base-100: oklch(18% 0.04 300);
@@ -58,41 +58,6 @@
   --noise: 0;
 }
 
-/* Synthwave Light — softened neons on pale lavender */
-@plugin "../vendor/daisyui-theme" {
-  name: "light";
-  default: true;
-  prefersdark: false;
-  color-scheme: "light";
-  --color-base-100: oklch(96% 0.02 300);
-  --color-base-200: oklch(93% 0.03 300);
-  --color-base-300: oklch(88% 0.04 300);
-  --color-base-content: oklch(20% 0.04 300);
-  --color-primary: oklch(55% 0.25 330);
-  --color-primary-content: oklch(98% 0.01 300);
-  --color-secondary: oklch(50% 0.18 200);
-  --color-secondary-content: oklch(98% 0.01 300);
-  --color-accent: oklch(52% 0.2 140);
-  --color-accent-content: oklch(98% 0.01 300);
-  --color-neutral: oklch(50% 0.04 300);
-  --color-neutral-content: oklch(96% 0.01 300);
-  --color-info: oklch(50% 0.18 240);
-  --color-info-content: oklch(98% 0.01 300);
-  --color-success: oklch(52% 0.2 140);
-  --color-success-content: oklch(98% 0.01 300);
-  --color-warning: oklch(58% 0.18 85);
-  --color-warning-content: oklch(98% 0.01 300);
-  --color-error: oklch(52% 0.25 15);
-  --color-error-content: oklch(98% 0.01 300);
-  --radius-selector: 0.125rem;
-  --radius-field: 0.25rem;
-  --radius-box: 0.375rem;
-  --size-selector: 0.21875rem;
-  --size-field: 0.21875rem;
-  --border: 1px;
-  --depth: 0;
-  --noise: 0;
-}
 
 /* Add variants based on LiveView classes */
 @custom-variant phx-click-loading (.phx-click-loading&, .phx-click-loading &);
@@ -126,23 +91,9 @@
   border: 1px solid oklch(28% 0.05 300);
 }
 
-[data-theme="light"] .prose :not(pre) > code {
-  background-color: oklch(90% 0.03 300);
-  border-color: oklch(85% 0.04 300);
-}
-
-[data-theme="light"] .prose pre {
-  background-color: oklch(93% 0.03 300);
-  border-color: oklch(85% 0.04 300);
-}
-
 /* Glow effect for primary links on hover */
 .glow-hover:hover {
   box-shadow: 0 0 24px oklch(72% 0.25 330 / 0.35);
-}
-
-[data-theme="light"] .glow-hover:hover {
-  box-shadow: 0 0 20px oklch(55% 0.25 330 / 0.2);
 }
 
 /* Accent divider — neon pink rule */
@@ -150,8 +101,4 @@
   border: none;
   height: 2px;
   background: oklch(72% 0.25 330);
-}
-
-[data-theme="light"] .divider-accent {
-  background: oklch(55% 0.25 330);
 }

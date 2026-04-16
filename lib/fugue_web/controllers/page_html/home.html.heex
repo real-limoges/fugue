@@ -3,26 +3,53 @@
   style="height: calc(100vh - 8rem); width: 100vw; margin-left: calc(50% - 50vw);"
 >
   <canvas id="petri-canvas" class="absolute inset-0 w-full h-full object-cover"></canvas>
-  <div class="absolute inset-0 flex items-end justify-center pb-12">
-    <div class="text-center space-y-4 px-4 py-3 rounded-box backdrop-blur-sm bg-base-100/20">
-      <div class="space-y-4">
-        <h1 class="text-5xl sm:text-6xl font-bold tracking-tight">
-          <span class="text-primary">Real -&gt; Complex</span>
-        </h1>
-        <p class="font-mono text-base-content/70 text-sm">
-          computational tools for complex systems
-        </p>
-      </div>
-      <div class="flex justify-center items-center gap-3">
-        <a href="/mood" class="btn btn-primary btn-sm font-mono tracking-wider glow-hover">
-          mood journal
-        </a>
-        <select id="sim-picker" class="select select-sm select-ghost font-mono text-xs">
-          <option value="boids">boids</option>
-          <option value="langton">langton's ant</option>
-          <option value="oscillators">oscillators</option>
-        </select>
-      </div>
-    </div>
+
+  <div class="absolute inset-0 flex flex-col items-center justify-center gap-5">
+    <p class="font-mono text-white/60 text-xs uppercase tracking-[0.25em]">
+      what simple rules become
+    </p>
+    <a
+      href="/mood"
+      class="group font-mono text-xl tracking-wider text-white/90 hover:text-white transition-colors"
+    >
+      moods
+      <span
+        aria-hidden="true"
+        class="inline-block text-white/40 transition-all group-hover:text-white group-hover:translate-x-1"
+      >
+        &rarr;
+      </span>
+    </a>
   </div>
+
+  <div class="absolute bottom-6 left-6 flex flex-col gap-2">
+    <p
+      id="sim-reading"
+      aria-hidden="true"
+      class="font-mono text-[10px] text-white/40 tracking-wider tabular-nums min-h-[1em]"
+    >
+    </p>
+    <select
+      id="sim-picker"
+      class="select select-xs select-ghost font-mono text-xs !text-white/70 hover:!text-white transition-colors"
+    >
+      <option value="boids">boids</option>
+      <option value="langton">langton's ant</option>
+      <option value="oscillators">oscillators</option>
+    </select>
+  </div>
+
+  <%= if @latest_post do %>
+    <a
+      href={~p"/blog/#{@latest_post.slug}"}
+      class="group absolute bottom-6 right-6 flex items-center gap-2 font-mono text-[11px] text-white/70 hover:text-white transition-colors"
+    >
+      <span class="uppercase tracking-[0.2em]">blog</span>
+      <span class="text-white/40">·</span>
+      <span class="underline-offset-2 group-hover:underline">{@latest_post.title}</span>
+      <span aria-hidden="true" class="transition-transform group-hover:translate-x-0.5">
+        &rarr;
+      </span>
+    </a>
+  <% end %>
 </div>
