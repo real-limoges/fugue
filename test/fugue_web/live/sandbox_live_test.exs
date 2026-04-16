@@ -128,6 +128,10 @@ defmodule FugueWeb.SandboxLiveTest do
       {:ok, view, _html} = live(conn, "/sandbox/mamdani")
       render_hook(view, "sandbox:mamdani_ready", %{})
 
+      # Wait for the async Task to deliver :mamdani_result
+      Process.sleep(200)
+      _ = render(view)
+
       assigns = :sys.get_state(view.pid).socket.assigns
       assert assigns.mamdani_response == IshFixtures.mamdani_response()
       assert assigns.mamdani_error == nil
@@ -143,6 +147,10 @@ defmodule FugueWeb.SandboxLiveTest do
       view
       |> element("form[phx-change=update_mamdani_inputs]")
       |> render_change(%{"temperature" => "30.0", "humidity" => "75"})
+
+      # Wait for the async Task to deliver :mamdani_result
+      Process.sleep(200)
+      _ = render(view)
 
       assigns = :sys.get_state(view.pid).socket.assigns
       assert assigns.mamdani_temperature == 30.0
@@ -172,6 +180,9 @@ defmodule FugueWeb.SandboxLiveTest do
 
       {:ok, view, _html} = live(conn, "/sandbox/mamdani")
       render_hook(view, "sandbox:mamdani_ready", %{})
+
+      # Wait for the async Task to deliver :mamdani_result
+      Process.sleep(200)
 
       html = render(view)
       assert html =~ "inference service unavailable"

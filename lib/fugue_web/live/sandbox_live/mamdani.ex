@@ -73,7 +73,7 @@ defmodule FugueWeb.SandboxLive.Mamdani do
 
     pid = self()
 
-    Task.start(fn ->
+    Task.start_link(fn ->
       send(pid, {:mamdani_result, gen, Ish.mamdani(request), t, h})
     end)
 
