@@ -1,5 +1,5 @@
 # Build stage
-FROM hexpm/elixir:1.19.5-erlang-27.3.4.9-alpine-3.21.3 AS builder
+FROM hexpm/elixir:1.19.5-erlang-26.2.3-alpine-3.23.4 AS builder
 
 # Install system dependencies needed for compilation and assets (Node.js)
 RUN apk add --no-cache build-base nodejs npm git ca-certificates
@@ -22,7 +22,7 @@ RUN mix assets.deploy
 RUN mix release
 
 # Runner stage — minimal runtime image
-FROM alpine:3.21 AS runner
+FROM alpine:3.23 AS runner
 
 RUN apk add --no-cache openssl ncurses-libs ca-certificates
 
