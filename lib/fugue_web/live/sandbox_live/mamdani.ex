@@ -19,7 +19,8 @@ defmodule FugueWeb.SandboxLive.Mamdani do
         mamdani_humidity: MamdaniLogic.default_humidity(),
         mamdani_response: nil,
         mamdani_crisp: nil,
-        mamdani_error: nil
+        mamdani_error: nil,
+        mamdani_gen: 0
       )
 
     {:ok, socket}
@@ -50,47 +51,66 @@ defmodule FugueWeb.SandboxLive.Mamdani do
     end
   end
 
+  def handle_info({:mamdani_result, gen, result, t, h}, socket) do
+    if gen != socket.assigns.mamdani_gen do
+      {:noreply, socket}
+    else
+      case result do
+        {:ok, response} ->
+          {:noreply, apply_mamdani_result(socket, response, t, h)}
+
+        {:error, reason} ->
+          Logger.error("Ish mamdani call failed: #{inspect(reason)}")
+          {:noreply, assign(socket, mamdani_error: "inference service unavailable")}
+      end
+    end
+  end
+
   defp refresh_mamdani(socket) do
     %{mamdani_temperature: t, mamdani_humidity: h} = socket.assigns
     request = MamdaniLogic.request(t, h)
+    gen = socket.assigns.mamdani_gen + 1
 
-    case Ish.mamdani(request) do
-      {:ok, response} ->
-        summaries = MamdaniLogic.rule_summaries()
+    pid = self()
 
-        strengths =
-          response
-          |> Map.get("rule_strengths", [])
-          |> pad_strengths(length(summaries))
+    Task.start_link(fn ->
+      send(pid, {:mamdani_result, gen, Ish.mamdani(request), t, h})
+    end)
 
-        rules =
-          summaries
-          |> Enum.zip(strengths)
-          |> Enum.map(fn {%{text: text, output_term: term}, strength} ->
-            %{text: text, output_term: term, strength: strength}
-          end)
+    assign(socket, mamdani_gen: gen)
+  end
 
-        crisp = Map.get(response, "crisp", %{})
+  defp apply_mamdani_result(socket, response, t, h) do
+    summaries = MamdaniLogic.rule_summaries()
 
-        socket
-        |> assign(
-          mamdani_response: response,
-          mamdani_crisp: Map.get(crisp, "fan_speed"),
-          mamdani_error: nil
-        )
-        |> push_event("update-mamdani", %{
-          mfs: MamdaniLogic.mfs(),
-          rules: rules,
-          inputs: %{temperature: t, humidity: h},
-          input_degrees: Map.get(response, "input_degrees", %{}),
-          output_curves: Map.get(response, "output_curves", %{}),
-          crisp: crisp
-        })
+    strengths =
+      response
+      |> Map.get("rule_strengths", [])
+      |> pad_strengths(length(summaries))
 
-      {:error, reason} ->
-        Logger.error("Ish mamdani call failed: #{inspect(reason)}")
-        assign(socket, mamdani_error: "inference service unavailable")
-    end
+    rules =
+      summaries
+      |> Enum.zip(strengths)
+      |> Enum.map(fn {%{text: text, output_term: term}, strength} ->
+        %{text: text, output_term: term, strength: strength}
+      end)
+
+    crisp = Map.get(response, "crisp", %{})
+
+    socket
+    |> assign(
+      mamdani_response: response,
+      mamdani_crisp: Map.get(crisp, "fan_speed"),
+      mamdani_error: nil
+    )
+    |> push_event("update-mamdani", %{
+      mfs: MamdaniLogic.mfs(),
+      rules: rules,
+      inputs: %{temperature: t, humidity: h},
+      input_degrees: Map.get(response, "input_degrees", %{}),
+      output_curves: Map.get(response, "output_curves", %{}),
+      crisp: crisp
+    })
   end
 
   defp pad_strengths(strengths, expected) when is_list(strengths) do
@@ -172,7 +192,7 @@ defmodule FugueWeb.SandboxLive.Mamdani do
               max="40"
               step="0.5"
               value={@mamdani_temperature}
-              phx-debounce="50"
+              phx-throttle="80"
               class="range range-xs range-primary"
             />
             <p class="text-[11px] text-gray-500 mt-1">
@@ -194,7 +214,7 @@ defmodule FugueWeb.SandboxLive.Mamdani do
               max="100"
               step="1"
               value={@mamdani_humidity}
-              phx-debounce="50"
+              phx-throttle="80"
               class="range range-xs range-primary"
             />
             <p class="text-[11px] text-gray-500 mt-1">

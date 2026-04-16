@@ -100,7 +100,9 @@ defmodule FugueWeb.SandboxLive.Index do
           navigate={~p"/sandbox/sandpile"}
           class="group block min-h-[220px] rounded-lg border border-white/5 bg-base-200 p-6 transition hover:border-white/20 hover:bg-base-300"
         >
-          <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Self-organized criticality</p>
+          <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">
+            Self-organized criticality
+          </p>
           <h2 class="text-xl font-semibold text-gray-100 mb-2">Abelian sandpile</h2>
           <p class="text-sm text-gray-400 leading-relaxed">
             Drop grains onto a grid. When a cell hits four it topples, cascading
