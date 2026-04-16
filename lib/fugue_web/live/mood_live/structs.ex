@@ -3,7 +3,18 @@ defmodule FugueWeb.MoodLive.Structs do
 
   defmodule AnalysisResult do
     @moduledoc "Parsed result from Ish clustering API."
-    defstruct [:clusters, :membership, :cluster_colors, :name_to_id, :fpc, :iterations]
+
+    defstruct [
+      :clusters,
+      :membership,
+      :cluster_colors,
+      :name_to_id,
+      :cluster_names,
+      :cluster_ids,
+      :raw_centroids,
+      :fpc,
+      :iterations
+    ]
   end
 
   defmodule CalendarDay do

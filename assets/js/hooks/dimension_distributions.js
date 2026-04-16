@@ -17,6 +17,28 @@ const MARGIN = { top: 10, right: 28, bottom: 10, left: 12 }
 const SAMPLE_POINTS = 80
 const BANDWIDTH_FRAC = 0.07
 
+// Each mood dimension is rated on a fixed integer scale: sleep is 0–15
+// (hours), outlook and speed are 0–10, sensitivity and anxiety are 0–5.
+// Pinning the x-domain per dimension keeps the axes honest (no KDE padding
+// leaking into negatives) and preserves the real differences in rating
+// range across rows.
+const DIM_DOMAINS = {
+  sleep: [0, 15],
+  outlook: [0, 10],
+  speed: [0, 10],
+  anxiety: [0, 5],
+  sensitivity: [0, 5]
+}
+const DIM_TICKS = {
+  sleep: [0, 3, 6, 9, 12, 15],
+  outlook: [0, 2, 4, 6, 8, 10],
+  speed: [0, 2, 4, 6, 8, 10],
+  anxiety: [0, 1, 2, 3, 4, 5],
+  sensitivity: [0, 1, 2, 3, 4, 5]
+}
+const FALLBACK_DOMAIN = [0, 10]
+const FALLBACK_TICKS = [0, 2, 4, 6, 8, 10]
+
 function gaussianKde(values, bandwidth) {
   const h = bandwidth
   const norm = 1 / (Math.sqrt(2 * Math.PI) * h)
@@ -42,21 +64,14 @@ function densityCurve(values, domain, bandwidth) {
   return out
 }
 
-function niceDomain(values) {
-  const lo = d3.min(values)
-  const hi = d3.max(values)
-  if (lo == null || hi == null) return [0, 1]
-  if (lo === hi) return [lo - 0.5, hi + 0.5]
-  const pad = (hi - lo) * 0.05
-  return [lo - pad, hi + pad]
-}
-
 export const DimensionDistributions = {
   mounted() {
     this.data = { points: [], dimensions: [], clusters: [] }
+    this._cachedCurves = null
 
     this.handleEvent("update-distributions", (data) => {
       this.data = data
+      this._cachedCurves = null
       this.render()
     })
 
@@ -68,46 +83,19 @@ export const DimensionDistributions = {
     window.removeEventListener("resize", this.resize)
   },
 
-  render() {
+  computeCurves() {
+    if (this._cachedCurves) return this._cachedCurves
+
     const { points, dimensions, clusters } = this.data
-    if (!points || points.length === 0 || !dimensions || dimensions.length === 0) return
-
-    this.el.innerHTML = ""
-
-    const containerW = this.el.clientWidth || 640
-    const chartW = containerW - LABEL_W - MARGIN.left - MARGIN.right
-    const totalH = MARGIN.top + dimensions.length * ROW_H + MARGIN.bottom
-
-    const svg = d3.select(this.el)
-      .append("svg")
-      .attr("width", containerW)
-      .attr("height", totalH)
-
-    dimensions.forEach((dim, rowIdx) => {
-      const rowTop = MARGIN.top + rowIdx * ROW_H
-      const plotTop = rowTop + 10
-      const plotBottom = rowTop + ROW_H - 28
-      const axisY = plotBottom + 2
-
+    this._cachedCurves = dimensions.map(dim => {
       const allValues = points
         .map(p => (p.dimensions || {})[dim])
         .filter(v => v != null)
 
-      if (allValues.length === 0) return
+      if (allValues.length === 0) return { dim, empty: true }
 
-      const domain = niceDomain(allValues)
+      const domain = DIM_DOMAINS[dim] || FALLBACK_DOMAIN
       const bandwidth = Math.max((domain[1] - domain[0]) * BANDWIDTH_FRAC, 0.05)
-      const x = d3.scaleLinear().domain(domain).range([0, chartW])
-
-      svg.append("text")
-        .attr("x", LABEL_W - 10)
-        .attr("y", (plotTop + plotBottom) / 2)
-        .attr("text-anchor", "end")
-        .attr("dominant-baseline", "middle")
-        .attr("fill", DIM_COLORS[dim] || "#aaa")
-        .attr("font-size", "12px")
-        .attr("font-weight", "600")
-        .text(dim)
 
       const clusterCurves = clusters.map(c => {
         const vals = points
@@ -123,7 +111,51 @@ export const DimensionDistributions = {
         ...clusterCurves.map(cc => d3.max(cc.curve, d => d[1]) || 0)
       ]) || 1
 
+      return { dim, domain, clusterCurves, overallCurve, maxDensity, empty: false }
+    })
+
+    return this._cachedCurves
+  },
+
+  render() {
+    const { dimensions } = this.data
+    if (!dimensions || dimensions.length === 0) return
+
+    const curves = this.computeCurves()
+    if (!curves || curves.every(c => c.empty)) return
+
+    this.el.innerHTML = ""
+
+    const containerW = this.el.clientWidth || 640
+    const chartW = containerW - LABEL_W - MARGIN.left - MARGIN.right
+    const totalH = MARGIN.top + dimensions.length * ROW_H + MARGIN.bottom
+
+    const svg = d3.select(this.el)
+      .append("svg")
+      .attr("width", containerW)
+      .attr("height", totalH)
+
+    curves.forEach((row, rowIdx) => {
+      if (row.empty) return
+
+      const { dim, domain, clusterCurves, overallCurve, maxDensity } = row
+      const rowTop = MARGIN.top + rowIdx * ROW_H
+      const plotTop = rowTop + 10
+      const plotBottom = rowTop + ROW_H - 28
+      const axisY = plotBottom + 2
+
+      const x = d3.scaleLinear().domain(domain).range([0, chartW])
       const y = d3.scaleLinear().domain([0, maxDensity]).range([plotBottom, plotTop])
+
+      svg.append("text")
+        .attr("x", LABEL_W - 10)
+        .attr("y", (plotTop + plotBottom) / 2)
+        .attr("text-anchor", "end")
+        .attr("dominant-baseline", "middle")
+        .attr("fill", DIM_COLORS[dim] || "#aaa")
+        .attr("font-size", "12px")
+        .attr("font-weight", "600")
+        .text(dim)
 
       const g = svg.append("g").attr("transform", `translate(${LABEL_W + MARGIN.left},0)`)
 
@@ -165,15 +197,10 @@ export const DimensionDistributions = {
             .attr("stroke-opacity", 0.9)
         })
 
-      // Per-row axis: just the domain endpoints (and 0 if it's in range).
       const axisG = svg.append("g")
         .attr("transform", `translate(${LABEL_W + MARGIN.left}, ${axisY})`)
 
-      const endpoints = [domain[0], domain[1]]
-      if (domain[0] < 0 && domain[1] > 0) endpoints.push(0)
-
-      const tickVals = Array.from(new Set(endpoints.map(v => Number(v.toFixed(2)))))
-        .sort((a, b) => a - b)
+      const tickVals = DIM_TICKS[dim] || FALLBACK_TICKS
 
       tickVals.forEach(t => {
         axisG.append("line")

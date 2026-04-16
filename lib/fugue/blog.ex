@@ -18,7 +18,7 @@ defmodule Fugue.Blog do
     for path <- blog_paths do
       @external_resource path
 
-      slug = path |> Path.basename() |> Path.rootname()
+      slug = path |> Path.basename() |> Path.rootname() |> String.replace(~r/^\d+_/, "")
       raw = File.read!(path)
 
       {frontmatter, body} = Parser.split_frontmatter(raw)

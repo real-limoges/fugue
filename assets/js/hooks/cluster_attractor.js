@@ -106,22 +106,29 @@ export const ClusterAttractor = {
     this.ctx = ctx
     this.w = w
     this.h = h
+    this.cacheProjection()
     this.prev = this.project(this.p)
   },
 
-  project(p) {
+  cacheProjection() {
     const { xMin, xMax, yMin, yMax } = this.bounds
     const pad = 24
     const dataW = xMax - xMin
     const dataH = yMax - yMin
     const sx = (this.w - pad * 2) / dataW
     const sy = (this.h - pad * 2) / dataH
-    const scale = Math.min(sx, sy)
-    const cx = this.w / 2
-    const cy = this.h / 2
-    const xMid = (xMin + xMax) / 2
-    const yMid = (yMin + yMax) / 2
-    return [cx + (p[0] - xMid) * scale, cy + (p[1] - yMid) * scale]
+    this._projScale = Math.min(sx, sy)
+    this._projCx = this.w / 2
+    this._projCy = this.h / 2
+    this._projXMid = (xMin + xMax) / 2
+    this._projYMid = (yMin + yMax) / 2
+  },
+
+  project(p) {
+    return [
+      this._projCx + (p[0] - this._projXMid) * this._projScale,
+      this._projCy + (p[1] - this._projYMid) * this._projScale,
+    ]
   },
 
   nearestColor(p) {

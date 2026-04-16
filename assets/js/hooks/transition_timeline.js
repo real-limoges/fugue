@@ -6,6 +6,7 @@ const WIDTH = 800
 const HEIGHT = 50
 const INNER_W = WIDTH - MARGIN.left - MARGIN.right
 const BAR_H = 18
+const parseDate = d3.timeParse("%Y-%m-%d")
 
 export const TransitionTimeline = {
   mounted() {
@@ -26,8 +27,6 @@ export const TransitionTimeline = {
     if (!segments || segments.length === 0) return
 
     this.el.innerHTML = ""
-
-    const parseDate = d3.timeParse("%Y-%m-%d")
 
     const allDates = segments.flatMap(s => [parseDate(s.start), parseDate(s.end_date)])
     const extent = d3.extent(allDates)

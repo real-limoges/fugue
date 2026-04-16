@@ -6,6 +6,7 @@ const WIDTH = 800
 const HEIGHT = 200
 const INNER_W = WIDTH - MARGIN.left - MARGIN.right
 const INNER_H = HEIGHT - MARGIN.top - MARGIN.bottom
+const parseDate = d3.timeParse("%Y-%m-%d")
 
 export const ClusterStream = {
   mounted() {
@@ -32,8 +33,6 @@ export const ClusterStream = {
     if (!series || series.length === 0) return
 
     this.el.innerHTML = ""
-
-    const parseDate = d3.timeParse("%Y-%m-%d")
 
     const data = series.map(d => ({
       date: parseDate(d.date),

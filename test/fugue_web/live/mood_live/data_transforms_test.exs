@@ -203,7 +203,7 @@ defmodule FugueWeb.MoodLive.DataTransformsTest do
 
       analysis = %AnalysisResult{
         clusters: [%{"id" => "cluster_0"}, %{"id" => "cluster_1"}],
-        membership: [[0.9, 0.1], [0.2, 0.8], [0.6, 0.4]]
+        membership: {{0.9, 0.1}, {0.2, 0.8}, {0.6, 0.4}}
       }
 
       result = DataTransforms.daily_dominants(entries, analysis)
@@ -216,7 +216,7 @@ defmodule FugueWeb.MoodLive.DataTransformsTest do
 
       analysis = %AnalysisResult{
         clusters: [],
-        membership: [[], []]
+        membership: {{}, {}}
       }
 
       assert DataTransforms.daily_dominants(entries, analysis) == []
@@ -330,7 +330,7 @@ defmodule FugueWeb.MoodLive.DataTransformsTest do
 
       analysis = %AnalysisResult{
         clusters: [%{"id" => "cluster_0"}],
-        membership: [[1.0], [1.0]]
+        membership: {{1.0}, {1.0}}
       }
 
       gaps = %GapData{
@@ -359,7 +359,7 @@ defmodule FugueWeb.MoodLive.DataTransformsTest do
 
       analysis = %AnalysisResult{
         clusters: [%{"id" => "cluster_0"}],
-        membership: [[1.0], [1.0]]
+        membership: {{1.0}, {1.0}}
       }
 
       days = DataTransforms.build_calendar_days(entries, analysis, nil)
@@ -370,7 +370,7 @@ defmodule FugueWeb.MoodLive.DataTransformsTest do
     end
 
     test "empty entries yield empty days" do
-      analysis = %AnalysisResult{clusters: [], membership: []}
+      analysis = %AnalysisResult{clusters: [], membership: {}}
       assert DataTransforms.build_calendar_days([], analysis, nil) == []
     end
   end

@@ -5,6 +5,7 @@ const WIDTH = 800
 const HEIGHT = 50
 const INNER_W = WIDTH - MARGIN.left - MARGIN.right
 const INNER_H = HEIGHT - MARGIN.top - MARGIN.bottom
+const parseDate = d3.timeParse("%Y-%m-%d")
 
 export const TemporalBrush = {
   mounted() {
@@ -29,7 +30,6 @@ export const TemporalBrush = {
 
     this.el.innerHTML = ""
 
-    const parseDate = d3.timeParse("%Y-%m-%d")
     const allDates = this.dates.map(d => parseDate(d)).filter(Boolean)
     if (allDates.length === 0) return
 
@@ -92,5 +92,8 @@ export const TemporalBrush = {
       .attr("rx", 2)
   },
 
-  destroyed() {}
+  destroyed() {
+    this.brush = null
+    this.svg = null
+  }
 }

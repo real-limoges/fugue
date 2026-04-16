@@ -3,7 +3,7 @@ import * as d3 from "d3"
 /** PCA projection of daily mood dimensions to 2D — one scribble for the whole run. */
 export const MoodTrajectory = {
   mounted() {
-    this.data = { points: [], clusterColors: {}, clusterNames: {} }
+    this.data = { points: [], annotations: [], clusterColors: {}, clusterNames: {} }
     this.focusDate = null
 
     this.handleEvent("update-trajectory", (data) => {
@@ -149,7 +149,131 @@ export const MoodTrajectory = {
       .on("mouseleave", function() { hook.hideTooltip() })
       .on("click", function(event, d) { hook.pushEvent("day_selected", { date: d.date }) })
 
+    this.renderAnnotations(g, x, y)
+
     this.applyFocus()
+  },
+
+  /**
+   * Personal milestones overlaid on the trajectory. Each annotation is
+   * authored as `{date, label, note?}` in `Fugue.MoodLive.Annotations`. We
+   * resolve each date to a projected (x, y), drop a small ring marker, and
+   * place the label with a leader line. Layout is intentionally simple:
+   * labels alternate above/below the point so successive annotations don't
+   * collide horizontally. Tweak the file, refresh, see it move.
+   *
+   * Markers are interactive: hovering shows a tooltip with the label, date,
+   * cluster, and optional note. Clicking selects the day (same as clicking
+   * any trajectory point), so the calendar and day-detail panels react.
+   */
+  renderAnnotations(g, x, y) {
+    const { points, annotations } = this.data
+    if (!annotations || annotations.length === 0) return
+
+    const byDate = new Map(points.map(p => [p.date, p]))
+
+    const resolved = annotations
+      .map((a, i) => {
+        const point = byDate.get(a.date)
+        if (!point) {
+          console.warn(`[trajectory] annotation date not in dataset: ${a.date}`)
+          return null
+        }
+        return { ...a, point, idx: i }
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.date < b.date ? -1 : 1)
+
+    if (resolved.length === 0) return
+
+    const hook = this
+    const layer = g.append("g").attr("class", "trajectory-annotations")
+    const labels = layer.append("g").attr("pointer-events", "none")
+    const markers = layer.append("g")
+
+    resolved.forEach((a, i) => {
+      const px = x(a.point.x)
+      const py = y(a.point.y)
+      // Alternate above/below so adjacent labels stagger vertically.
+      const above = i % 2 === 0
+      const dy = above ? -28 : 28
+      const dx = 14
+      const lx = px + dx
+      const ly = py + dy
+
+      labels.append("line")
+        .attr("x1", px).attr("y1", py)
+        .attr("x2", lx).attr("y2", ly)
+        .attr("stroke", "rgba(255,255,255,0.45)")
+        .attr("stroke-width", 0.75)
+
+      const text = labels.append("text")
+        .attr("x", lx + 4)
+        .attr("y", ly)
+        .attr("text-anchor", "start")
+        .attr("dominant-baseline", "middle")
+        .attr("fill", "rgba(255,255,255,0.92)")
+        .attr("font-size", "10.5px")
+        .attr("font-family", "ui-serif, Georgia, serif")
+        .attr("font-style", "italic")
+        .text(a.label)
+
+      // Dark halo behind the label for legibility against any cluster color.
+      const bbox = text.node().getBBox()
+      labels.insert("rect", "text:last-child")
+        .attr("x", bbox.x - 3)
+        .attr("y", bbox.y - 1)
+        .attr("width", bbox.width + 6)
+        .attr("height", bbox.height + 2)
+        .attr("fill", "rgba(10,10,26,0.55)")
+        .attr("rx", 2)
+
+      markers.append("circle")
+        .attr("cx", px).attr("cy", py)
+        .attr("r", 4)
+        .attr("fill", "none")
+        .attr("stroke", "#fff")
+        .attr("stroke-width", 1.25)
+        .attr("stroke-opacity", 0.9)
+        .attr("pointer-events", "none")
+
+      // Generous transparent hit target. Sits above the day-level hit circles
+      // so an annotated day's hover surfaces the milestone instead of the
+      // generic cluster tooltip — that's almost always what the reader wants.
+      markers.append("circle")
+        .attr("cx", px).attr("cy", py)
+        .attr("r", 10)
+        .attr("fill", "transparent")
+        .style("cursor", "pointer")
+        .on("mouseenter", function(event) { hook.showAnnotationTooltip(event, a) })
+        .on("mouseleave", function() { hook.hideTooltip() })
+        .on("click", function() { hook.pushEvent("day_selected", { date: a.date }) })
+    })
+  },
+
+  showAnnotationTooltip(event, a) {
+    const cluster = a.point.cluster
+    const clusterName = (cluster && this.data.clusterNames[cluster]) || null
+    const color = (cluster && this.data.clusterColors[cluster]) || "#888"
+    const noteHtml = a.note
+      ? `<div style="margin-top:4px;color:#ddd;white-space:normal;max-width:240px">${a.note}</div>`
+      : ""
+    const clusterHtml = clusterName
+      ? `<div style="margin-top:4px;color:${color}">${clusterName}</div>`
+      : ""
+    const html = `
+      <div style="font-style:italic;font-family:ui-serif,Georgia,serif;font-size:12px">${a.label}</div>
+      <div style="color:#888;font-size:10px;margin-top:1px">${a.date}</div>
+      ${noteHtml}
+      ${clusterHtml}
+    `
+    const rect = this.el.getBoundingClientRect()
+    this.tooltip
+      .html(html)
+      .style("white-space", a.note ? "normal" : "nowrap")
+      .style("top", (event.clientY - rect.top + 12) + "px")
+      .style("left", Math.min(event.clientX - rect.left + 12, rect.width - 260) + "px")
+      .style("opacity", 1)
   },
 
   computeScales() {
@@ -219,6 +343,7 @@ export const MoodTrajectory = {
     const rect = this.el.getBoundingClientRect()
     this.tooltip
       .html(html)
+      .style("white-space", "nowrap")
       .style("top", (event.clientY - rect.top + 12) + "px")
       .style("left", Math.min(event.clientX - rect.left + 12, rect.width - 160) + "px")
       .style("opacity", 1)
