@@ -68,14 +68,16 @@ defmodule FugueWeb.MoodLive.DataTransforms do
     peak = Enum.max(raw, fn -> 1 end)
     peak = if peak == 0, do: 1, else: peak
 
-    Enum.map(0..(bin_count - 1), fn i ->
-      %{x0: lo + i * width, x1: lo + (i + 1) * width, n: Enum.at(raw, i) / peak}
+    raw
+    |> Enum.with_index()
+    |> Enum.map(fn {count, i} ->
+      %{x0: lo + i * width, x1: lo + (i + 1) * width, n: count / peak}
     end)
   end
 
   @doc "Parses raw API response into an AnalysisResult with generated cluster names."
   def parse_analysis(raw, entries) do
-    membership = raw["membership"] || []
+    raw_membership = raw["membership"] || []
 
     clusters =
       (raw["clusters"] || [])
@@ -86,22 +88,29 @@ defmodule FugueWeb.MoodLive.DataTransforms do
     name_to_id =
       Enum.into(clusters, %{}, fn c -> {c["name"], c["id"]} end)
 
-    clusters = generate_cluster_names(clusters, membership, entries)
+    # Store membership as tuple-of-tuples for O(1) indexed access
+    membership = raw_membership |> Enum.map(&List.to_tuple/1) |> List.to_tuple()
+
+    # Compute centroids once — used for naming and later for radar charts
+    raw_centroids = weighted_centroids(clusters, membership, entries)
+    clusters = generate_cluster_names_from_centroids(clusters, raw_centroids)
 
     %AnalysisResult{
       clusters: clusters,
       membership: membership,
       cluster_colors: build_cluster_colors(clusters),
       name_to_id: name_to_id,
+      cluster_names: Enum.into(clusters, %{}, fn c -> {c["id"], c["name"]} end),
+      cluster_ids: Enum.map(clusters, & &1["id"]),
+      raw_centroids: raw_centroids,
       fpc: raw["fpc"],
       iterations: raw["iterations"]
     }
   end
 
-  @doc "Builds normalized radar centroids for each cluster."
-  def build_centroids(entries, %AnalysisResult{} = analysis) do
-    analysis.clusters
-    |> weighted_centroids(analysis.membership, entries)
+  @doc "Builds normalized radar centroids for each cluster from cached raw centroids."
+  def build_centroids(%AnalysisResult{} = analysis) do
+    analysis.raw_centroids
     |> Enum.map(fn {cluster, values} ->
       %{id: cluster["id"], name: cluster["name"], values: values}
     end)
@@ -116,7 +125,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
       entries
       |> Enum.with_index()
       |> Enum.into(%{}, fn {entry, idx} ->
-        mems = build_memberships(Enum.at(analysis.membership, idx), analysis.clusters)
+        mems = build_memberships(elem(analysis.membership, idx), analysis.clusters)
         {entry["date"], %{dimensions: entry["dimensions"], memberships: mems}}
       end)
 
@@ -155,11 +164,19 @@ defmodule FugueWeb.MoodLive.DataTransforms do
     end
   end
 
-  @doc "Builds membership map from a raw membership row and cluster list."
-  def build_memberships(row, clusters) when is_list(row) do
+  @doc "Builds membership map from a raw membership row (tuple or list) and cluster list."
+  def build_memberships(row, clusters) when is_tuple(row) do
+    size = tuple_size(row)
+
     clusters
     |> Enum.with_index()
-    |> Enum.into(%{}, fn {c, i} -> {c["id"], Enum.at(row, i, 0)} end)
+    |> Enum.into(%{}, fn {c, i} ->
+      {c["id"], if(i < size, do: elem(row, i), else: 0)}
+    end)
+  end
+
+  def build_memberships(row, clusters) when is_list(row) do
+    build_memberships(List.to_tuple(row), clusters)
   end
 
   def build_memberships(_, _), do: %{}
@@ -197,12 +214,12 @@ defmodule FugueWeb.MoodLive.DataTransforms do
     entries
     |> Enum.with_index()
     |> Enum.map(fn {entry, idx} ->
-      row = Enum.at(analysis.membership, idx, [])
+      row = elem(analysis.membership, idx)
 
       dominant =
         analysis.clusters
         |> Enum.with_index()
-        |> Enum.max_by(fn {_c, i} -> Enum.at(row, i, 0) end, fn -> {nil, 0} end)
+        |> Enum.max_by(fn {_c, i} -> elem(row, i) end, fn -> {nil, 0} end)
         |> elem(0)
 
       %{date: entry["date"], cluster: dominant && dominant["id"]}
@@ -429,6 +446,80 @@ defmodule FugueWeb.MoodLive.DataTransforms do
     end)
   end
 
+  @doc "Aggregates cluster dominance by month-of-year across all years for seasonality analysis."
+  def build_seasonality(smoothed_daily) do
+    by_month =
+      smoothed_daily
+      |> Enum.group_by(fn d ->
+        d.date |> String.slice(5, 2) |> String.to_integer()
+      end)
+
+    Enum.map(1..12, fn month ->
+      days = Map.get(by_month, month, [])
+      total = length(days)
+      counts = Enum.frequencies_by(days, & &1.cluster)
+      %{month: month, counts: counts, total: total}
+    end)
+  end
+
+  @doc "Builds a histogram of max-membership values for the ambiguity visualization."
+  def build_ambiguity_histogram(entries, %AnalysisResult{} = analysis) do
+    max_memberships =
+      entries
+      |> Enum.with_index()
+      |> Enum.map(fn {_entry, idx} ->
+        row = elem(analysis.membership, idx)
+        row |> Tuple.to_list() |> Enum.max(fn -> 0 end)
+      end)
+
+    lo = 0.3
+    hi = 1.0
+    bin_count = 20
+    width = (hi - lo) / bin_count
+
+    counts =
+      Enum.reduce(max_memberships, :array.new(bin_count, default: 0), fn v, acc ->
+        idx = min(max(trunc((v - lo) / width), 0), bin_count - 1)
+        :array.set(idx, :array.get(idx, acc) + 1, acc)
+      end)
+
+    Enum.map(0..(bin_count - 1), fn i ->
+      %{
+        x0: Float.round(lo + i * width, 3),
+        x1: Float.round(lo + (i + 1) * width, 3),
+        count: :array.get(i, counts)
+      }
+    end)
+  end
+
+  @doc "Computes per-dimension rolling averages for long-term drift analysis."
+  def build_drift(entries, window \\ 90) do
+    sorted = Enum.sort_by(entries, & &1["date"])
+    n = length(sorted)
+    half = div(window, 2)
+
+    Enum.map(@dimensions, fn dim ->
+      values =
+        Enum.map(sorted, fn e ->
+          v = (e["dimensions"] || %{})[dim]
+          if is_nil(v), do: 0.0, else: v * 1.0
+        end)
+
+      series =
+        sorted
+        |> Enum.with_index()
+        |> Enum.map(fn {entry, i} ->
+          win_lo = max(0, i - half)
+          win_hi = min(n - 1, i + half)
+          window_vals = Enum.slice(values, win_lo, win_hi - win_lo + 1)
+          mean = Enum.sum(window_vals) / length(window_vals)
+          %{date: entry["date"], value: Float.round(mean, 2)}
+        end)
+
+      %{dimension: dim, series: series}
+    end)
+  end
+
   @doc "Builds contiguous time segments where the dominant cluster stays the same."
   def build_segments([]), do: []
 
@@ -441,12 +532,12 @@ defmodule FugueWeb.MoodLive.DataTransforms do
           if day.cluster == cur.cluster do
             {segs, %{cur | end_date: day.date}}
           else
-            {segs ++ [cur], %{start: day.date, end_date: day.date, cluster: day.cluster}}
+            {[cur | segs], %{start: day.date, end_date: day.date, cluster: day.cluster}}
           end
         end
       )
 
-    segments ++ [current]
+    Enum.reverse([current | segments])
   end
 
   @doc "Builds a detail map for a single day, including neighbors."
@@ -463,13 +554,13 @@ defmodule FugueWeb.MoodLive.DataTransforms do
       idx ->
         entry = Enum.at(entries, idx)
         dims = entry["dimensions"] || %{}
-        row = Enum.at(analysis.membership, idx, [])
+        row = elem(analysis.membership, idx)
 
         memberships =
           analysis.clusters
           |> Enum.with_index()
           |> Enum.map(fn {c, i} ->
-            %{id: c["id"], name: c["name"], weight: Enum.at(row, i, 0)}
+            %{id: c["id"], name: c["name"], weight: elem(row, i)}
           end)
           |> Enum.sort_by(& &1.weight, :desc)
 
@@ -573,7 +664,8 @@ defmodule FugueWeb.MoodLive.DataTransforms do
       longest_run: longest_run,
       first_state: lookup_cluster(summary.first, analysis.clusters),
       last_state: lookup_cluster(summary.last, analysis.clusters),
-      biggest_flow: biggest_flow
+      biggest_flow: biggest_flow,
+      ambiguity: ambiguity_summary(entries, analysis)
     }
   end
 
@@ -589,6 +681,24 @@ defmodule FugueWeb.MoodLive.DataTransforms do
 
   # -- Private helpers --
 
+  defp ambiguity_summary(entries, analysis, threshold \\ 0.45) do
+    count =
+      entries
+      |> Enum.with_index()
+      |> Enum.count(fn {_entry, idx} ->
+        row = elem(analysis.membership, idx)
+        row |> Tuple.to_list() |> Enum.max(fn -> 0 end) < threshold
+      end)
+
+    total = length(entries)
+
+    %{
+      count: count,
+      pct: if(total > 0, do: round(count / total * 100), else: 0),
+      threshold: threshold
+    }
+  end
+
   defp weighted_centroids(clusters, membership, entries) do
     Enum.map(clusters, fn cluster ->
       cluster_idx = String.replace(cluster["id"], "cluster_", "") |> String.to_integer()
@@ -597,8 +707,8 @@ defmodule FugueWeb.MoodLive.DataTransforms do
         entries
         |> Enum.with_index()
         |> Enum.reduce({%{}, 0.0}, fn {entry, idx}, {sums, tw} ->
-          row = Enum.at(membership, idx, [])
-          weight = Enum.at(row, cluster_idx, 0.0)
+          row = elem(membership, idx)
+          weight = elem(row, cluster_idx)
           dims = entry["dimensions"] || %{}
 
           new_sums =
@@ -619,9 +729,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
     end)
   end
 
-  defp generate_cluster_names(clusters, membership, entries) do
-    raw_centroids = weighted_centroids(clusters, membership, entries)
-
+  defp generate_cluster_names_from_centroids(_clusters, raw_centroids) do
     global_means =
       Map.new(@dimensions, fn dim ->
         vals = Enum.map(raw_centroids, fn {_, v} -> v[dim] end)
@@ -701,12 +809,12 @@ defmodule FugueWeb.MoodLive.DataTransforms do
 
   defp neighbor_summary(idx, entries, analysis) do
     entry = Enum.at(entries, idx)
-    row = Enum.at(analysis.membership, idx, [])
+    row = elem(analysis.membership, idx)
 
     dominant =
       analysis.clusters
       |> Enum.with_index()
-      |> Enum.max_by(fn {_c, i} -> Enum.at(row, i, 0) end, fn -> {nil, 0} end)
+      |> Enum.max_by(fn {_c, i} -> elem(row, i) end, fn -> {nil, 0} end)
       |> elem(0)
 
     %{

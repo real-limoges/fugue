@@ -9,7 +9,12 @@ defmodule FugueWeb.MoodLive.MoodTransitions do
       |> assign(assigns)
       |> assign_new(:expanded, fn -> true end)
 
-    {:ok, socket}
+    filtered =
+      socket.assigns.transitions
+      |> filter_by_cluster(socket.assigns[:selected_cluster])
+      |> Enum.sort_by(fn t -> t.date end, :desc)
+
+    {:ok, assign(socket, :filtered, filtered)}
   end
 
   def handle_event("toggle_list", _params, socket) do
@@ -17,13 +22,6 @@ defmodule FugueWeb.MoodLive.MoodTransitions do
   end
 
   def render(assigns) do
-    transitions =
-      assigns.transitions
-      |> filter_by_cluster(assigns[:selected_cluster])
-      |> Enum.sort_by(fn t -> t.date end, :desc)
-
-    assigns = assign(assigns, :filtered, transitions)
-
     ~H"""
     <div class="bg-base-200 rounded-lg p-4 h-full flex flex-col overflow-hidden">
       <button

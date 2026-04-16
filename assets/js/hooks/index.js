@@ -21,6 +21,9 @@ import { BoidsCanvas } from "./boids_canvas"
 import { QuantumWalk } from "./quantum_walk"
 import { QuantumStats } from "./quantum_stats"
 import { SandpileCanvas } from "./sandpile_canvas"
+import { SeasonRing } from "./season_ring"
+import { AmbiguityHistogram } from "./ambiguity_histogram"
+import { DimensionDrift } from "./dimension_drift"
 
 export default {
   GraphViz, CalendarHeatmap, ScatterPlot, GapBreathTimeline, TemporalBrush,
@@ -28,5 +31,6 @@ export default {
   DimensionDistributions, TransitionTimeline, TransitionSankey,
   MoodExperience, MoodTourSandbox, MoodIntroGate, MoodTour, MoodTrajectory,
   ClusterAttractor, TemperatureBands, MamdaniPlayground, BoidsCanvas,
-  QuantumWalk, QuantumStats, SandpileCanvas
+  QuantumWalk, QuantumStats, SandpileCanvas, SeasonRing,
+  AmbiguityHistogram, DimensionDrift
 }
