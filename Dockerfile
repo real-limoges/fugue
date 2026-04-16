@@ -24,7 +24,7 @@ RUN mix release
 # Runner stage — minimal runtime image
 FROM alpine:3.23 AS runner
 
-RUN apk add --no-cache openssl ncurses-libs ca-certificates
+RUN apk add --no-cache openssl ncurses-libs ca-certificates libstdc++
 
 ENV LANG=C.UTF-8
 
