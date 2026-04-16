@@ -135,7 +135,7 @@ defmodule FugueWeb.SandboxLive.Fuzzy do
               max="10"
               step="0.5"
               value={@center_offset}
-              phx-debounce="50"
+              phx-throttle="80"
               class="range range-xs range-primary"
             />
             <p class="text-[11px] text-gray-500 mt-1">
@@ -157,7 +157,7 @@ defmodule FugueWeb.SandboxLive.Fuzzy do
               max="2.0"
               step="0.05"
               value={@spread}
-              phx-debounce="50"
+              phx-throttle="80"
               class="range range-xs range-primary"
             />
             <p class="text-[11px] text-gray-500 mt-1">

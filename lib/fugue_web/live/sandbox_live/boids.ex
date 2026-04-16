@@ -121,7 +121,13 @@ defmodule FugueWeb.SandboxLive.Boids do
   defp parse_number(_, fallback), do: fallback
 
   defp format_value("count", v), do: trunc(v) |> Integer.to_string()
-  defp format_value(_, v) when is_float(v), do: :erlang.float_to_binary(v, decimals: 4)
+
+  defp format_value(_, v) when is_float(v) do
+    # Show enough precision to distinguish one step, but no trailing zeros
+    raw = :erlang.float_to_binary(v, decimals: 4)
+    raw |> String.replace(~r/0+$/, "") |> String.replace(~r/\.$/, ".0")
+  end
+
   defp format_value(_, v), do: to_string(v)
 
   def render(assigns) do
