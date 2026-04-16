@@ -104,7 +104,9 @@ defmodule FugueWeb.SandboxLive.QuantumWalk do
         <label class="block bg-base-200 rounded-lg p-3">
           <div class="flex items-center justify-between mb-1">
             <span class="text-xs font-semibold text-gray-300">Decoherence</span>
-            <span class="text-xs font-mono text-gray-400">{format_decoherence(@params.decoherence)}</span>
+            <span class="text-xs font-mono text-gray-400">
+              {format_decoherence(@params.decoherence)}
+            </span>
           </div>
           <input
             type="range"
