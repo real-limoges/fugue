@@ -1,15 +1,8 @@
 # Build stage
-FROM hexpm/elixir:1.19.5-erlang-27.3.4.9-ubuntu-noble-20260217 AS builder
+FROM hexpm/elixir:1.19.5-erlang-27.3.4.9-alpine-3.21.3 AS builder
 
 # Install system dependencies needed for compilation and assets (Node.js)
-RUN apt-get update -q && \
-    apt-get install -y --no-install-recommends \
-      build-essential \
-      nodejs \
-      npm \
-      git \
-      ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache build-base nodejs npm git ca-certificates
 
 WORKDIR /app
 
@@ -29,14 +22,9 @@ RUN mix assets.deploy
 RUN mix release
 
 # Runner stage — minimal runtime image
-FROM ubuntu:noble AS runner
+FROM alpine:3.21 AS runner
 
-RUN apt-get update -q && \
-    apt-get install -y --no-install-recommends \
-      libssl3 \
-      libncurses6 \
-      ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache openssl ncurses-libs ca-certificates
 
 ENV LANG=C.UTF-8
 
