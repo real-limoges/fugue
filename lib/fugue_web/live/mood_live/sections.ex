@@ -385,7 +385,9 @@ defmodule FugueWeb.MoodLive.Sections do
         How my moods shift
       </h2>
       <p class="text-sm text-gray-400 mb-4 leading-relaxed">
-        The interesting question isn't which state I'm in — it's the verbs. The hand-offs. What does a day tend to <em>become</em> the next morning? Some pairs are well-worn paths and some almost never happen, and the shape of those preferences says something about me I couldn't have named on my own. The motion is what bipolar actually is, from the inside; the states are just where the motion pauses to catch its breath.
+        The interesting question isn't which state I'm in — it's the verbs. The hand-offs. What does a day tend to
+        <em>become</em>
+        the next morning? Some pairs are well-worn paths and some almost never happen, and the shape of those preferences says something about me I couldn't have named on my own. The motion is what bipolar actually is, from the inside; the states are just where the motion pauses to catch its breath.
       </p>
       <p class="text-sm text-gray-400 mb-6 leading-relaxed">
         The dominant state flipped {@stats.transition_count} times across {@stats.entry_count} days — roughly once every {div(
@@ -537,7 +539,9 @@ defmodule FugueWeb.MoodLive.Sections do
       </p>
       <p class="text-sm text-gray-400 mb-6 leading-relaxed">
         <%= if @stats.gap_count > 0 do %>
-          I'm not perfect at this — I missed some days. There are {@stats.gap_count} stretches where I went quiet, and a lot of the time the state I came back in wasn't the state I left in. The shape of <em>that</em> turned out to be its own interesting pattern. Click a mood state above to see which gaps touched it.
+          I'm not perfect at this — I missed some days. There are {@stats.gap_count} stretches where I went quiet, and a lot of the time the state I came back in wasn't the state I left in. The shape of
+          <em>that</em>
+          turned out to be its own interesting pattern. Click a mood state above to see which gaps touched it.
         <% else %>
           No gaps — every day in the window is accounted for.
         <% end %>

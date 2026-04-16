@@ -9,13 +9,19 @@ defmodule FugueWeb.SandboxLiveTest do
     test "lists the experiments and links to their pages", %{conn: conn} do
       {:ok, _view, html} = live(conn, "/sandbox")
 
-      assert html =~ ">Sandbox</h1>"
+      assert html =~ ">Math playgrounds</h1>"
       assert html =~ "Fuzzy logic"
       assert html =~ "Boids playground"
       assert html =~ "Mamdani fan controller"
+      assert html =~ "Classical vs quantum walk"
+      assert html =~ "Three ways to count"
+      assert html =~ "Abelian sandpile"
       assert html =~ ~s(href="/sandbox/fuzzy")
       assert html =~ ~s(href="/sandbox/mamdani")
       assert html =~ ~s(href="/sandbox/boids")
+      assert html =~ ~s(href="/sandbox/quantum-walk")
+      assert html =~ ~s(href="/sandbox/quantum-stats")
+      assert html =~ ~s(href="/sandbox/sandpile")
     end
   end
 

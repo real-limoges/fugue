@@ -25,11 +25,11 @@ window.liveSocket = liveSocket
 if (document.getElementById("petri-canvas")) {
   const picker = document.getElementById("sim-picker")
   const defaultSim = picker ? picker.value : "physarum"
-  initSplash("petri-canvas", defaultSim)
+  initSplash("petri-canvas", defaultSim, "sim-reading")
 
   if (picker) {
     picker.addEventListener("change", (e) => {
-      initSplash("petri-canvas", e.target.value)
+      initSplash("petri-canvas", e.target.value, "sim-reading")
     })
   }
 }
