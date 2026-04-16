@@ -18,7 +18,9 @@ import { ClusterAttractor } from "./cluster_attractor"
 import { TemperatureBands } from "./temperature_bands"
 import { MamdaniPlayground } from "./mamdani_playground"
 import { BoidsCanvas } from "./boids_canvas"
-import { LissajousDoodle, Rule30Doodle } from "./sandbox_doodles"
+import { QuantumWalk } from "./quantum_walk"
+import { QuantumStats } from "./quantum_stats"
+import { SandpileCanvas } from "./sandpile_canvas"
 
 export default {
   GraphViz, CalendarHeatmap, ScatterPlot, GapBreathTimeline, TemporalBrush,
@@ -26,5 +28,5 @@ export default {
   DimensionDistributions, TransitionTimeline, TransitionSankey,
   MoodExperience, MoodTourSandbox, MoodIntroGate, MoodTour, MoodTrajectory,
   ClusterAttractor, TemperatureBands, MamdaniPlayground, BoidsCanvas,
-  LissajousDoodle, Rule30Doodle
+  QuantumWalk, QuantumStats, SandpileCanvas
 }

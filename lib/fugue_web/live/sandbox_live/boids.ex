@@ -135,8 +135,12 @@ defmodule FugueWeb.SandboxLive.Boids do
 
       <div class="mb-4">
         <h1 class="text-2xl font-bold text-gray-100">Boids playground</h1>
-        <p class="text-sm text-gray-400 mt-1">
-          Flocking simulation running in WebAssembly. Tune the parameters to see how separation, alignment, and cohesion interact.
+        <p class="text-sm text-gray-400 mt-1 max-w-3xl leading-relaxed">
+          Each bird follows three simple rules: steer away from crowded neighbors,
+          turn toward the average heading of the flock, and drift toward the local
+          center of mass. Small changes to any of the three produce wildly
+          different group behavior — tight flocks, streaming schools, or ragged
+          chaos.
         </p>
       </div>
 

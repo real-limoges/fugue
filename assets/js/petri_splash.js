@@ -14,6 +14,11 @@ langton: {
     setup: async (m, w, h) => { await m.init(); m.start(w, h); },
     loop: (m) => m.step(2),
   },
+  sandpile: {
+    module: () => import("../vendor/petri/js/sandpile.js"),
+    setup: async (m, w, h) => { await m.init(); m.start(w, h); },
+    loop: (m) => m.step(10),
+  },
 };
 
 // Read theme colors by sampling computed styles

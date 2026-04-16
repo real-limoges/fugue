@@ -20,7 +20,11 @@ defmodule FugueWeb.Router do
     live "/mood", MoodLive
     live "/sandbox", SandboxLive.Index
     live "/sandbox/fuzzy", SandboxLive.Fuzzy
+    live "/sandbox/mamdani", SandboxLive.Mamdani
     live "/sandbox/boids", SandboxLive.Boids
+    live "/sandbox/quantum-walk", SandboxLive.QuantumWalk
+    live "/sandbox/quantum-stats", SandboxLive.QuantumStats
+    live "/sandbox/sandpile", SandboxLive.Sandpile
     live "/graph", GraphLive
   end
 end
