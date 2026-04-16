@@ -12,16 +12,17 @@ defmodule FugueWeb.SandboxLiveTest do
       assert html =~ ">Sandbox</h1>"
       assert html =~ "Fuzzy logic"
       assert html =~ "Boids playground"
+      assert html =~ "Mamdani fan controller"
       assert html =~ ~s(href="/sandbox/fuzzy")
+      assert html =~ ~s(href="/sandbox/mamdani")
       assert html =~ ~s(href="/sandbox/boids")
     end
   end
 
-  describe "mount" do
+  describe "mount /sandbox/fuzzy" do
     test "renders the temperature bands experiment", %{conn: conn} do
       {:ok, _view, html} = live(conn, "/sandbox/fuzzy")
 
-      assert html =~ ">Fuzzy logic</h1>"
       assert html =~ "Fuzzy temperature bands"
       assert html =~ "cold"
       assert html =~ "cool"
@@ -30,26 +31,7 @@ defmodule FugueWeb.SandboxLiveTest do
       assert html =~ "hot"
       assert html =~ ~s(phx-hook="TemperatureBands")
       refute html =~ "Fuzzy clustering"
-    end
-
-    test "renders the Mamdani fan controller experiment", %{conn: conn} do
-      {:ok, _view, html} = live(conn, "/sandbox/fuzzy")
-
-      assert html =~ "Mamdani fan controller"
-      assert html =~ "temperature"
-      assert html =~ "humidity"
-      assert html =~ ~s(phx-hook="MamdaniPlayground")
-      assert html =~ ~s(phx-change="update_mamdani_inputs")
-    end
-
-    test "defaults Mamdani inputs to the fixture's starting values", %{conn: conn} do
-      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
-
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.mamdani_temperature == 22.0
-      assert assigns.mamdani_humidity == 50.0
-      assert assigns.mamdani_response == nil
-      assert assigns.mamdani_error == nil
+      refute html =~ "Mamdani fan controller"
     end
 
     test "initializes params to defaults", %{conn: conn} do
@@ -67,6 +49,29 @@ defmodule FugueWeb.SandboxLiveTest do
 
       assert html =~ "Melbourne Airport"
       assert html =~ ~r/20\d\d-\d\d-\d\d/
+    end
+  end
+
+  describe "mount /sandbox/mamdani" do
+    test "renders the Mamdani fan controller experiment", %{conn: conn} do
+      {:ok, _view, html} = live(conn, "/sandbox/mamdani")
+
+      assert html =~ "Mamdani fan controller"
+      assert html =~ "temperature"
+      assert html =~ "humidity"
+      assert html =~ ~s(phx-hook="MamdaniPlayground")
+      assert html =~ ~s(phx-change="update_mamdani_inputs")
+      refute html =~ "Fuzzy temperature bands"
+    end
+
+    test "defaults Mamdani inputs to the fixture's starting values", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/sandbox/mamdani")
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.mamdani_temperature == 22.0
+      assert assigns.mamdani_humidity == 50.0
+      assert assigns.mamdani_response == nil
+      assert assigns.mamdani_error == nil
     end
   end
 
@@ -120,7 +125,7 @@ defmodule FugueWeb.SandboxLiveTest do
          %{conn: conn} do
       stub_mamdani()
 
-      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
+      {:ok, view, _html} = live(conn, "/sandbox/mamdani")
       render_hook(view, "sandbox:mamdani_ready", %{})
 
       assigns = :sys.get_state(view.pid).socket.assigns
@@ -132,7 +137,7 @@ defmodule FugueWeb.SandboxLiveTest do
          %{conn: conn} do
       stub_mamdani()
 
-      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
+      {:ok, view, _html} = live(conn, "/sandbox/mamdani")
       render_hook(view, "sandbox:mamdani_ready", %{})
 
       view
@@ -148,7 +153,7 @@ defmodule FugueWeb.SandboxLiveTest do
     test "no-op when the inputs haven't moved", %{conn: conn} do
       stub_mamdani()
 
-      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
+      {:ok, view, _html} = live(conn, "/sandbox/mamdani")
       render_hook(view, "sandbox:mamdani_ready", %{})
 
       before = :sys.get_state(view.pid).socket.assigns
@@ -165,7 +170,7 @@ defmodule FugueWeb.SandboxLiveTest do
     test "surfaces an error banner when Ish is unreachable", %{conn: conn} do
       Req.Test.stub(Fugue.Ish, fn conn -> Plug.Conn.send_resp(conn, 500, "boom") end)
 
-      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
+      {:ok, view, _html} = live(conn, "/sandbox/mamdani")
       render_hook(view, "sandbox:mamdani_ready", %{})
 
       html = render(view)

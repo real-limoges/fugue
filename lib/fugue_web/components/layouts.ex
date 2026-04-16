@@ -77,7 +77,7 @@ defmodule FugueWeb.Layouts do
         <div class="flex items-center gap-4">
           <a href="/blog/feed.xml" class="hover:text-primary transition-colors">feed</a>
           <span class="text-base-content/20">|</span>
-          <a href="https://github.com" class="hover:text-primary transition-colors">github</a>
+          <a href="https://github.com/real-limoges" class="hover:text-primary transition-colors">github</a>
         </div>
       </div>
     </footer>

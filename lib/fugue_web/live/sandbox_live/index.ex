@@ -1,8 +1,7 @@
 defmodule FugueWeb.SandboxLive.Index do
   @moduledoc """
   Landing page for /sandbox — a thin index that points at the individual
-  math-exploration experiments, with a pair of small generative doodles in the
-  empty cells.
+  math-exploration experiments.
   """
 
   use FugueWeb, :live_view
@@ -29,42 +28,29 @@ defmodule FugueWeb.SandboxLive.Index do
         >
           <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Fuzzy logic</p>
           <h2 class="text-xl font-semibold text-gray-100 mb-2">
-            Triangular bands & a Mamdani fan
+            Triangular temperature bands
           </h2>
           <p class="text-sm text-gray-400 leading-relaxed">
-            Reshape membership functions over four years of Melbourne daily
-            temperatures, then watch a Mamdani controller fuzzify, fire rules,
-            and defuzzify in real time through Hazy.
+            Reshape triangular membership bands over four years of Melbourne daily
+            temperatures. Every day holds partial membership in five overlapping
+            fuzzy sets at once — drag the sliders to see the gradient reshape.
           </p>
         </.link>
 
-        <figure class="relative min-h-[220px] overflow-hidden rounded-lg border border-white/5 bg-base-200">
-          <canvas
-            id="sandbox-index-lissajous"
-            phx-hook="LissajousDoodle"
-            phx-update="ignore"
-            class="block h-full w-full"
-            style="min-height: 220px;"
-          >
-          </canvas>
-          <figcaption class="absolute bottom-3 left-4 text-[10px] uppercase tracking-[0.2em] text-gray-500">
-            Lissajous · x = sin(at+δ), y = sin(bt)
-          </figcaption>
-        </figure>
-
-        <figure class="relative min-h-[220px] overflow-hidden rounded-lg border border-white/5 bg-base-200">
-          <canvas
-            id="sandbox-index-rule30"
-            phx-hook="Rule30Doodle"
-            phx-update="ignore"
-            class="block h-full w-full"
-            style="min-height: 220px;"
-          >
-          </canvas>
-          <figcaption class="absolute bottom-3 left-4 text-[10px] uppercase tracking-[0.2em] text-gray-500">
-            Rule 30 · 1D cellular automaton
-          </figcaption>
-        </figure>
+        <.link
+          navigate={~p"/sandbox/mamdani"}
+          class="group block min-h-[220px] rounded-lg border border-white/5 bg-base-200 p-6 transition hover:border-white/20 hover:bg-base-300"
+        >
+          <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Fuzzy logic</p>
+          <h2 class="text-xl font-semibold text-gray-100 mb-2">
+            Mamdani fan controller
+          </h2>
+          <p class="text-sm text-gray-400 leading-relaxed">
+            An old-school rule of thumb wired up as a fuzzy controller: hot and
+            humid means run hard, cold means off. Watch seven weighted rules fire
+            in real time and turn two crisp inputs into a crisp fan speed.
+          </p>
+        </.link>
 
         <.link
           navigate={~p"/sandbox/boids"}
@@ -73,9 +59,54 @@ defmodule FugueWeb.SandboxLive.Index do
           <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Flocking</p>
           <h2 class="text-xl font-semibold text-gray-100 mb-2">Boids playground</h2>
           <p class="text-sm text-gray-400 leading-relaxed">
-            A WebAssembly boids sim with live sliders for separation, alignment,
-            cohesion, and trail persistence. Tune the forces; watch flocks form,
-            schools stream, or dissolve into chaos.
+            Each bird follows three simple rules — separate from neighbors, align
+            with them, cohere toward the flock. Drag the force sliders and watch
+            tight flocks form, schools stream past each other, or the whole crowd
+            dissolve into chaos.
+          </p>
+        </.link>
+
+        <.link
+          navigate={~p"/sandbox/quantum-walk"}
+          class="group block min-h-[220px] rounded-lg border border-white/5 bg-base-200 p-6 transition hover:border-white/20 hover:bg-base-300"
+        >
+          <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Quantum</p>
+          <h2 class="text-xl font-semibold text-gray-100 mb-2">
+            Classical vs quantum walk
+          </h2>
+          <p class="text-sm text-gray-400 leading-relaxed">
+            Two walkers start at the center. The classical one drifts into a bell;
+            the quantum one races out into two horns at the edges. A decoherence
+            slider blends one into the other — the dial that turns quantum back
+            into classical.
+          </p>
+        </.link>
+
+        <.link
+          navigate={~p"/sandbox/quantum-stats"}
+          class="group block min-h-[220px] rounded-lg border border-white/5 bg-base-200 p-6 transition hover:border-white/20 hover:bg-base-300"
+        >
+          <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Quantum</p>
+          <h2 class="text-xl font-semibold text-gray-100 mb-2">Three ways to count</h2>
+          <p class="text-sm text-gray-400 leading-relaxed">
+            Three curves on one chart, one for each rule particles can follow
+            about whether they're allowed to share a state. Drag the temperature:
+            hot and they lie right on top of each other, cold and they peel into
+            three dramatically different shapes.
+          </p>
+        </.link>
+
+        <.link
+          navigate={~p"/sandbox/sandpile"}
+          class="group block min-h-[220px] rounded-lg border border-white/5 bg-base-200 p-6 transition hover:border-white/20 hover:bg-base-300"
+        >
+          <p class="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-2">Self-organized criticality</p>
+          <h2 class="text-xl font-semibold text-gray-100 mb-2">Abelian sandpile</h2>
+          <p class="text-sm text-gray-400 leading-relaxed">
+            Drop grains onto a grid. When a cell hits four it topples, cascading
+            to neighbors. The system tunes itself to a critical state — avalanche
+            sizes follow a power law that nobody programmed in. Watch the
+            log-log histogram converge to a straight line as grains accumulate.
           </p>
         </.link>
       </div>
