@@ -1,6 +1,6 @@
-defmodule FugueWeb.SandboxLive.Mamdani do
+defmodule FugueWeb.MenagerieLive.Mamdani do
   @moduledoc """
-  Mamdani fan controller sandbox. Two crisp inputs get fuzzified, seven rules
+  Mamdani fan controller. Two crisp inputs get fuzzified, seven rules
   fire server-side through Hazy via the Ish `/inference/mamdani` endpoint, and
   the aggregated output shape is defuzzified into a crisp fan speed.
   """
@@ -10,7 +10,7 @@ defmodule FugueWeb.SandboxLive.Mamdani do
   require Logger
 
   alias Fugue.Ish
-  alias Fugue.Sandbox.Mamdani, as: MamdaniLogic
+  alias Fugue.Menagerie.Mamdani, as: MamdaniLogic
 
   def mount(_params, _session, socket) do
     socket =
@@ -26,7 +26,7 @@ defmodule FugueWeb.SandboxLive.Mamdani do
     {:ok, socket}
   end
 
-  def handle_event("sandbox:mamdani_ready", _params, socket) do
+  def handle_event("menagerie:mamdani_ready", _params, socket) do
     {:noreply, refresh_mamdani(socket)}
   end
 
@@ -152,10 +152,10 @@ defmodule FugueWeb.SandboxLive.Mamdani do
 
   def render(assigns) do
     ~H"""
-    <div class="mamdani-sandbox p-4 max-w-6xl mx-auto">
+    <div class="mamdani-menagerie p-4 max-w-6xl mx-auto">
       <nav class="mb-6 text-xs">
-        <.link navigate={~p"/sandbox"} class="text-gray-500 hover:text-gray-300">
-          ← Sandbox
+        <.link navigate={~p"/menagerie"} class="text-gray-500 hover:text-gray-300">
+          ← Menagerie
         </.link>
       </nav>
 
@@ -253,7 +253,7 @@ defmodule FugueWeb.SandboxLive.Mamdani do
 
       <div class="rounded-lg bg-base-200 p-4">
         <div
-          id="sandbox-mamdani-playground"
+          id="menagerie-mamdani-playground"
           phx-hook="MamdaniPlayground"
           phx-update="ignore"
           style="min-height: 640px;"

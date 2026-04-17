@@ -1,6 +1,6 @@
-defmodule Fugue.Sandbox.Fuzzy do
+defmodule Fugue.Menagerie.Fuzzy do
   @moduledoc """
-  Pure triangular membership functions for the sandbox fuzzy-math experiments.
+  Pure triangular membership functions for the menagerie fuzzy-math experiments.
   No state, no I/O — just math that the LiveView re-runs when parameters change.
   """
 

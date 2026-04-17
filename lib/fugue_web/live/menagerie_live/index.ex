@@ -1,6 +1,6 @@
-defmodule FugueWeb.SandboxLive.Index do
+defmodule FugueWeb.MenagerieLive.Index do
   @moduledoc """
-  Landing page for /sandbox — a thin index that points at the individual
+  Landing page for /menagerie — a thin index that points at the individual
   math-exploration experiments.
   """
 
@@ -15,7 +15,7 @@ defmodule FugueWeb.SandboxLive.Index do
     <div class="max-w-4xl mx-auto py-8">
       <header class="mb-10">
         <p class="font-mono text-[10px] uppercase tracking-[0.25em] text-primary/60 mb-3">
-          / sandbox
+          / menagerie
         </p>
         <h1 class="text-2xl font-mono font-semibold text-base-content mb-3">Math playgrounds</h1>
         <p class="text-sm text-base-content/50 leading-relaxed max-w-2xl">
@@ -25,7 +25,7 @@ defmodule FugueWeb.SandboxLive.Index do
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <.card
-          href={~p"/sandbox/fuzzy"}
+          href={~p"/menagerie/fuzzy"}
           category="Fuzzy logic"
           title="Triangular temperature bands"
           accent="primary"
@@ -36,7 +36,7 @@ defmodule FugueWeb.SandboxLive.Index do
         </.card>
 
         <.card
-          href={~p"/sandbox/mamdani"}
+          href={~p"/menagerie/mamdani"}
           category="Fuzzy logic"
           title="Mamdani fan controller"
           accent="primary"
@@ -46,7 +46,7 @@ defmodule FugueWeb.SandboxLive.Index do
           in real time and turn two crisp inputs into a crisp fan speed.
         </.card>
 
-        <.card href={~p"/sandbox/boids"} category="Flocking" title="Boids playground" accent="accent">
+        <.card href={~p"/menagerie/boids"} category="Flocking" title="Boids playground" accent="accent">
           Each bird follows three simple rules — separate from neighbors, align
           with them, cohere toward the flock. Drag the force sliders and watch
           tight flocks form, schools stream past each other, or the whole crowd
@@ -54,7 +54,7 @@ defmodule FugueWeb.SandboxLive.Index do
         </.card>
 
         <.card
-          href={~p"/sandbox/quantum-walk"}
+          href={~p"/menagerie/quantum-walk"}
           category="Quantum"
           title="Classical vs quantum walk"
           accent="secondary"
@@ -66,7 +66,7 @@ defmodule FugueWeb.SandboxLive.Index do
         </.card>
 
         <.card
-          href={~p"/sandbox/quantum-stats"}
+          href={~p"/menagerie/quantum-stats"}
           category="Quantum"
           title="Three ways to count"
           accent="secondary"
@@ -78,7 +78,7 @@ defmodule FugueWeb.SandboxLive.Index do
         </.card>
 
         <.card
-          href={~p"/sandbox/sandpile"}
+          href={~p"/menagerie/sandpile"}
           category="Self-organized criticality"
           title="Abelian sandpile"
           accent="warning"

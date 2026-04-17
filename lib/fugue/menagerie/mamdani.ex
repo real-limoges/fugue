@@ -1,6 +1,6 @@
-defmodule Fugue.Sandbox.Mamdani do
+defmodule Fugue.Menagerie.Mamdani do
   @moduledoc """
-  Fan-controller Mamdani fixture for the /sandbox playground. Pure: given
+  Fan-controller Mamdani fixture for the /menagerie playground. Pure: given
   crisp temperature and humidity, produces the wire-format MamdaniRequest
   that Ish's `POST /inference/mamdani` expects. Two inputs with three terms
   each, one four-term output, and seven rules covering the 3x3 grid.

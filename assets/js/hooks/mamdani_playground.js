@@ -49,7 +49,7 @@ export const MamdaniPlayground = {
     }
     document.addEventListener("input", this._onSliderInput)
 
-    this.pushEvent("sandbox:mamdani_ready", {})
+    this.pushEvent("menagerie:mamdani_ready", {})
   },
 
   destroyed() {

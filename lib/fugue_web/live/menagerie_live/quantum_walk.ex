@@ -1,4 +1,4 @@
-defmodule FugueWeb.SandboxLive.QuantumWalk do
+defmodule FugueWeb.MenagerieLive.QuantumWalk do
   @moduledoc """
   Classical vs quantum random walk, side by side, with a decoherence slider
   that morphs the quantum walk into the classical one.
@@ -57,10 +57,10 @@ defmodule FugueWeb.SandboxLive.QuantumWalk do
 
   def render(assigns) do
     ~H"""
-    <div class="quantum-walk-sandbox p-4 max-w-6xl mx-auto">
+    <div class="quantum-walk-menagerie p-4 max-w-6xl mx-auto">
       <nav class="mb-6 text-xs">
-        <.link navigate={~p"/sandbox"} class="text-gray-500 hover:text-gray-300">
-          ← Sandbox
+        <.link navigate={~p"/menagerie"} class="text-gray-500 hover:text-gray-300">
+          ← Menagerie
         </.link>
       </nav>
 
@@ -83,7 +83,7 @@ defmodule FugueWeb.SandboxLive.QuantumWalk do
 
       <div class="bg-base-200 rounded-lg overflow-hidden mb-4">
         <canvas
-          id="sandbox-quantum-walk-canvas"
+          id="menagerie-quantum-walk-canvas"
           phx-hook="QuantumWalk"
           phx-update="ignore"
           class="block w-full"

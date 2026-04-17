@@ -1,4 +1,4 @@
-defmodule FugueWeb.SandboxLive.Boids do
+defmodule FugueWeb.MenagerieLive.Boids do
   use FugueWeb, :live_view
 
   @defaults %{
@@ -132,10 +132,10 @@ defmodule FugueWeb.SandboxLive.Boids do
 
   def render(assigns) do
     ~H"""
-    <div class="boids-sandbox p-4 max-w-6xl mx-auto">
+    <div class="boids-menagerie p-4 max-w-6xl mx-auto">
       <nav class="mb-6 text-xs">
-        <.link navigate={~p"/sandbox"} class="text-gray-500 hover:text-gray-300">
-          ← Sandbox
+        <.link navigate={~p"/menagerie"} class="text-gray-500 hover:text-gray-300">
+          ← Menagerie
         </.link>
       </nav>
 
@@ -152,7 +152,7 @@ defmodule FugueWeb.SandboxLive.Boids do
 
       <div class="bg-base-200 rounded-lg overflow-hidden mb-4">
         <canvas
-          id="sandbox-boids-canvas"
+          id="menagerie-boids-canvas"
           phx-hook="BoidsCanvas"
           phx-update="ignore"
           class="block w-full"

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Rebuild priv/static/sandbox/melbourne_weather.csv from NCEI daily summaries
+"""Rebuild priv/static/menagerie/melbourne_weather.csv from NCEI daily summaries
 (ASN00086282 Melbourne Airport: temps + precip) merged with Open-Meteo ERA5
 reanalysis wind speed at the same coordinates. 5yr trailing window."""
 
@@ -10,7 +10,7 @@ import urllib.request
 from datetime import date
 from pathlib import Path
 
-OUT = Path("priv/static/sandbox/melbourne_weather.csv")
+OUT = Path("priv/static/menagerie/melbourne_weather.csv")
 STATION = "ASN00086282"
 LAT = -37.6655
 LON = 144.8321

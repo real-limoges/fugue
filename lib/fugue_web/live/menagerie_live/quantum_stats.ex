@@ -1,4 +1,4 @@
-defmodule FugueWeb.SandboxLive.QuantumStats do
+defmodule FugueWeb.MenagerieLive.QuantumStats do
   @moduledoc """
   Occupation histograms for Maxwell-Boltzmann, Bose-Einstein, and Fermi-Dirac
   statistics overlaid on one panel. A temperature slider drives all three
@@ -62,10 +62,10 @@ defmodule FugueWeb.SandboxLive.QuantumStats do
 
   def render(assigns) do
     ~H"""
-    <div class="quantum-stats-sandbox p-4 max-w-6xl mx-auto">
+    <div class="quantum-stats-menagerie p-4 max-w-6xl mx-auto">
       <nav class="mb-6 text-xs">
-        <.link navigate={~p"/sandbox"} class="text-gray-500 hover:text-gray-300">
-          ← Sandbox
+        <.link navigate={~p"/menagerie"} class="text-gray-500 hover:text-gray-300">
+          ← Menagerie
         </.link>
       </nav>
 
@@ -91,7 +91,7 @@ defmodule FugueWeb.SandboxLive.QuantumStats do
 
       <div class="bg-base-200 rounded-lg overflow-hidden mb-4">
         <canvas
-          id="sandbox-quantum-stats-canvas"
+          id="menagerie-quantum-stats-canvas"
           phx-hook="QuantumStats"
           phx-update="ignore"
           class="block w-full"

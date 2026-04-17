@@ -1,4 +1,4 @@
-defmodule FugueWeb.SandboxLiveTest do
+defmodule FugueWeb.MenagerieLiveTest do
   use FugueWeb.ConnCase, async: true
 
   import Phoenix.LiveViewTest
@@ -7,7 +7,7 @@ defmodule FugueWeb.SandboxLiveTest do
 
   describe "index" do
     test "lists the experiments and links to their pages", %{conn: conn} do
-      {:ok, _view, html} = live(conn, "/sandbox")
+      {:ok, _view, html} = live(conn, "/menagerie")
 
       assert html =~ ">Math playgrounds</h1>"
       assert html =~ "Fuzzy logic"
@@ -16,18 +16,18 @@ defmodule FugueWeb.SandboxLiveTest do
       assert html =~ "Classical vs quantum walk"
       assert html =~ "Three ways to count"
       assert html =~ "Abelian sandpile"
-      assert html =~ ~s(href="/sandbox/fuzzy")
-      assert html =~ ~s(href="/sandbox/mamdani")
-      assert html =~ ~s(href="/sandbox/boids")
-      assert html =~ ~s(href="/sandbox/quantum-walk")
-      assert html =~ ~s(href="/sandbox/quantum-stats")
-      assert html =~ ~s(href="/sandbox/sandpile")
+      assert html =~ ~s(href="/menagerie/fuzzy")
+      assert html =~ ~s(href="/menagerie/mamdani")
+      assert html =~ ~s(href="/menagerie/boids")
+      assert html =~ ~s(href="/menagerie/quantum-walk")
+      assert html =~ ~s(href="/menagerie/quantum-stats")
+      assert html =~ ~s(href="/menagerie/sandpile")
     end
   end
 
-  describe "mount /sandbox/fuzzy" do
+  describe "mount /menagerie/fuzzy" do
     test "renders the temperature bands experiment", %{conn: conn} do
-      {:ok, _view, html} = live(conn, "/sandbox/fuzzy")
+      {:ok, _view, html} = live(conn, "/menagerie/fuzzy")
 
       assert html =~ "Fuzzy temperature bands"
       assert html =~ "cold"
@@ -41,7 +41,7 @@ defmodule FugueWeb.SandboxLiveTest do
     end
 
     test "initializes params to defaults", %{conn: conn} do
-      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
+      {:ok, view, _html} = live(conn, "/menagerie/fuzzy")
 
       assigns = :sys.get_state(view.pid).socket.assigns
       assert assigns.center_offset == 0.0
@@ -51,16 +51,16 @@ defmodule FugueWeb.SandboxLiveTest do
     end
 
     test "renders a Melbourne date range from the bundled CSV", %{conn: conn} do
-      {:ok, _view, html} = live(conn, "/sandbox/fuzzy")
+      {:ok, _view, html} = live(conn, "/menagerie/fuzzy")
 
       assert html =~ "Melbourne Airport"
       assert html =~ ~r/20\d\d-\d\d-\d\d/
     end
   end
 
-  describe "mount /sandbox/mamdani" do
+  describe "mount /menagerie/mamdani" do
     test "renders the Mamdani fan controller experiment", %{conn: conn} do
-      {:ok, _view, html} = live(conn, "/sandbox/mamdani")
+      {:ok, _view, html} = live(conn, "/menagerie/mamdani")
 
       assert html =~ "Mamdani fan controller"
       assert html =~ "temperature"
@@ -71,7 +71,7 @@ defmodule FugueWeb.SandboxLiveTest do
     end
 
     test "defaults Mamdani inputs to the fixture's starting values", %{conn: conn} do
-      {:ok, view, _html} = live(conn, "/sandbox/mamdani")
+      {:ok, view, _html} = live(conn, "/menagerie/mamdani")
 
       assigns = :sys.get_state(view.pid).socket.assigns
       assert assigns.mamdani_temperature == 22.0
@@ -83,7 +83,7 @@ defmodule FugueWeb.SandboxLiveTest do
 
   describe "update_fuzzy_params event" do
     test "center_offset shifts every MF peak", %{conn: conn} do
-      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
+      {:ok, view, _html} = live(conn, "/menagerie/fuzzy")
 
       view
       |> element("form[phx-change=update_fuzzy_params]")
@@ -97,7 +97,7 @@ defmodule FugueWeb.SandboxLiveTest do
     end
 
     test "spread widens the triangle half-widths", %{conn: conn} do
-      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
+      {:ok, view, _html} = live(conn, "/menagerie/fuzzy")
 
       view
       |> element("form[phx-change=update_fuzzy_params]")
@@ -113,7 +113,7 @@ defmodule FugueWeb.SandboxLiveTest do
     end
 
     test "no-op when values are unchanged", %{conn: conn} do
-      {:ok, view, _html} = live(conn, "/sandbox/fuzzy")
+      {:ok, view, _html} = live(conn, "/menagerie/fuzzy")
 
       before = :sys.get_state(view.pid).socket.assigns.mfs
 
@@ -127,12 +127,12 @@ defmodule FugueWeb.SandboxLiveTest do
   end
 
   describe "Mamdani playground" do
-    test "sandbox:mamdani_ready stores the inference response and clears error",
+    test "menagerie:mamdani_ready stores the inference response and clears error",
          %{conn: conn} do
       stub_mamdani()
 
-      {:ok, view, _html} = live(conn, "/sandbox/mamdani")
-      render_hook(view, "sandbox:mamdani_ready", %{})
+      {:ok, view, _html} = live(conn, "/menagerie/mamdani")
+      render_hook(view, "menagerie:mamdani_ready", %{})
 
       # Wait for the async Task to deliver :mamdani_result
       Process.sleep(200)
@@ -147,8 +147,8 @@ defmodule FugueWeb.SandboxLiveTest do
          %{conn: conn} do
       stub_mamdani()
 
-      {:ok, view, _html} = live(conn, "/sandbox/mamdani")
-      render_hook(view, "sandbox:mamdani_ready", %{})
+      {:ok, view, _html} = live(conn, "/menagerie/mamdani")
+      render_hook(view, "menagerie:mamdani_ready", %{})
 
       view
       |> element("form[phx-change=update_mamdani_inputs]")
@@ -167,8 +167,8 @@ defmodule FugueWeb.SandboxLiveTest do
     test "no-op when the inputs haven't moved", %{conn: conn} do
       stub_mamdani()
 
-      {:ok, view, _html} = live(conn, "/sandbox/mamdani")
-      render_hook(view, "sandbox:mamdani_ready", %{})
+      {:ok, view, _html} = live(conn, "/menagerie/mamdani")
+      render_hook(view, "menagerie:mamdani_ready", %{})
 
       before = :sys.get_state(view.pid).socket.assigns
 
@@ -184,8 +184,8 @@ defmodule FugueWeb.SandboxLiveTest do
     test "surfaces an error banner when Ish is unreachable", %{conn: conn} do
       Req.Test.stub(Fugue.Ish, fn conn -> Plug.Conn.send_resp(conn, 500, "boom") end)
 
-      {:ok, view, _html} = live(conn, "/sandbox/mamdani")
-      render_hook(view, "sandbox:mamdani_ready", %{})
+      {:ok, view, _html} = live(conn, "/menagerie/mamdani")
+      render_hook(view, "menagerie:mamdani_ready", %{})
 
       # Wait for the async Task to deliver :mamdani_result
       Process.sleep(200)
@@ -198,8 +198,8 @@ defmodule FugueWeb.SandboxLiveTest do
     end
   end
 
-  describe "Fugue.Sandbox.Mamdani" do
-    alias Fugue.Sandbox.Mamdani
+  describe "Fugue.Menagerie.Mamdani" do
+    alias Fugue.Menagerie.Mamdani
 
     test "request/2 wraps crisp values into the wire format" do
       req = Mamdani.request(25, 40)
@@ -224,8 +224,8 @@ defmodule FugueWeb.SandboxLiveTest do
     end
   end
 
-  describe "Fugue.Sandbox.Fuzzy" do
-    alias Fugue.Sandbox.Fuzzy
+  describe "Fugue.Menagerie.Fuzzy" do
+    alias Fugue.Menagerie.Fuzzy
 
     test "triangular/4 peaks at 1 at the center" do
       assert Fuzzy.triangular(10.0, 5.0, 10.0, 15.0) == 1.0
@@ -270,8 +270,8 @@ defmodule FugueWeb.SandboxLiveTest do
     end)
   end
 
-  describe "Fugue.Sandbox.MelbourneWeather" do
-    alias Fugue.Sandbox.MelbourneWeather
+  describe "Fugue.Menagerie.MelbourneWeather" do
+    alias Fugue.Menagerie.MelbourneWeather
 
     test "count/0 matches length of rows/0" do
       assert MelbourneWeather.count() == length(MelbourneWeather.rows())
