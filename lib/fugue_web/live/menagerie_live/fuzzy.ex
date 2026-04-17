@@ -1,4 +1,4 @@
-defmodule FugueWeb.SandboxLive.Fuzzy do
+defmodule FugueWeb.MenagerieLive.Fuzzy do
   @moduledoc """
   Triangular fuzzy membership bands over four years of Melbourne daily
   temperatures. Drag the sliders to reshape the bands and watch every day's
@@ -7,7 +7,7 @@ defmodule FugueWeb.SandboxLive.Fuzzy do
 
   use FugueWeb, :live_view
 
-  alias Fugue.Sandbox.{Fuzzy, MelbourneWeather}
+  alias Fugue.Menagerie.{Fuzzy, MelbourneWeather}
 
   @default_center_offset 0.0
   @default_spread 1.0
@@ -37,7 +37,7 @@ defmodule FugueWeb.SandboxLive.Fuzzy do
     {:ok, socket}
   end
 
-  def handle_event("sandbox:bands_ready", _params, socket) do
+  def handle_event("menagerie:bands_ready", _params, socket) do
     {:noreply, push_bands(socket)}
   end
 
@@ -98,10 +98,10 @@ defmodule FugueWeb.SandboxLive.Fuzzy do
 
   def render(assigns) do
     ~H"""
-    <div class="fuzzy-sandbox p-4 max-w-6xl mx-auto">
+    <div class="fuzzy-menagerie p-4 max-w-6xl mx-auto">
       <nav class="mb-6 text-xs">
-        <.link navigate={~p"/sandbox"} class="text-gray-500 hover:text-gray-300">
-          ← Sandbox
+        <.link navigate={~p"/menagerie"} class="text-gray-500 hover:text-gray-300">
+          ← Menagerie
         </.link>
       </nav>
 
@@ -182,7 +182,7 @@ defmodule FugueWeb.SandboxLive.Fuzzy do
 
       <div class="rounded-lg bg-base-200 p-4">
         <div
-          id="sandbox-temperature-bands"
+          id="menagerie-temperature-bands"
           phx-hook="TemperatureBands"
           phx-update="ignore"
           style="min-height: 440px;"

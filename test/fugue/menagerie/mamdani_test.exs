@@ -1,7 +1,7 @@
-defmodule Fugue.Sandbox.MamdaniTest do
+defmodule Fugue.Menagerie.MamdaniTest do
   use ExUnit.Case, async: true
 
-  alias Fugue.Sandbox.Mamdani
+  alias Fugue.Menagerie.Mamdani
 
   describe "defaults" do
     test "default_temperature is a Celsius value inside the fuzzifier bounds" do

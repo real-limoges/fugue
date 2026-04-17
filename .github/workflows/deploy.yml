@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths-ignore:
-      - 'priv/static/sandbox/melbourne_weather.csv'
+      - 'priv/static/menagerie/melbourne_weather.csv'
 
 permissions:
   contents: read

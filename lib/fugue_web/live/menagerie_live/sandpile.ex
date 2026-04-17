@@ -1,4 +1,4 @@
-defmodule FugueWeb.SandboxLive.Sandpile do
+defmodule FugueWeb.MenagerieLive.Sandpile do
   use FugueWeb, :live_view
 
   @defaults %{
@@ -43,10 +43,10 @@ defmodule FugueWeb.SandboxLive.Sandpile do
 
   def render(assigns) do
     ~H"""
-    <div class="sandpile-sandbox p-4 max-w-6xl mx-auto">
+    <div class="sandpile-menagerie p-4 max-w-6xl mx-auto">
       <nav class="mb-6 text-xs">
-        <.link navigate={~p"/sandbox"} class="text-gray-500 hover:text-gray-300">
-          ← Sandbox
+        <.link navigate={~p"/menagerie"} class="text-gray-500 hover:text-gray-300">
+          ← Menagerie
         </.link>
       </nav>
 
@@ -64,7 +64,7 @@ defmodule FugueWeb.SandboxLive.Sandpile do
       <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
         <div class="bg-base-200 rounded-lg overflow-hidden">
           <canvas
-            id="sandbox-sandpile-canvas"
+            id="menagerie-sandpile-canvas"
             phx-hook="SandpileCanvas"
             phx-update="ignore"
             class="block w-full cursor-crosshair"

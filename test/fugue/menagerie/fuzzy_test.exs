@@ -1,7 +1,7 @@
-defmodule Fugue.Sandbox.FuzzyTest do
+defmodule Fugue.Menagerie.FuzzyTest do
   use ExUnit.Case, async: true
 
-  alias Fugue.Sandbox.Fuzzy
+  alias Fugue.Menagerie.Fuzzy
 
   describe "triangular/4" do
     test "zero outside the support" do

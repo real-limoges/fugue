@@ -18,13 +18,13 @@ defmodule FugueWeb.Router do
     get "/blog/feed.xml", BlogController, :feed
     get "/blog/:slug", BlogController, :show
     live "/mood", MoodLive
-    live "/sandbox", SandboxLive.Index
-    live "/sandbox/fuzzy", SandboxLive.Fuzzy
-    live "/sandbox/mamdani", SandboxLive.Mamdani
-    live "/sandbox/boids", SandboxLive.Boids
-    live "/sandbox/quantum-walk", SandboxLive.QuantumWalk
-    live "/sandbox/quantum-stats", SandboxLive.QuantumStats
-    live "/sandbox/sandpile", SandboxLive.Sandpile
+    live "/menagerie", MenagerieLive.Index
+    live "/menagerie/fuzzy", MenagerieLive.Fuzzy
+    live "/menagerie/mamdani", MenagerieLive.Mamdani
+    live "/menagerie/boids", MenagerieLive.Boids
+    live "/menagerie/quantum-walk", MenagerieLive.QuantumWalk
+    live "/menagerie/quantum-stats", MenagerieLive.QuantumStats
+    live "/menagerie/sandpile", MenagerieLive.Sandpile
     live "/graph", GraphLive
   end
 end

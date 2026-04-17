@@ -127,8 +127,8 @@ defmodule FugueWeb.MoodLive.Sections do
           Three fake clusters on an axis with no units. Drag the dot. Drag the sliders. The bar shows how much the dot belongs to each cluster — at high fuzziness it belongs to
           <em>all</em>
           of them, a little. If you want more than a toy, there's a
-          <a href="/sandbox" class="underline decoration-dotted hover:text-gray-200">
-            bigger sandbox
+          <a href="/menagerie" class="underline decoration-dotted hover:text-gray-200">
+            bigger menagerie
           </a>
           where you can reshape the membership curves themselves.
         </p>
@@ -185,7 +185,7 @@ defmodule FugueWeb.MoodLive.Sections do
       <p class="text-sm text-gray-400 mb-4 leading-relaxed">
         Same idea as the toy above, now with four years of real days behind it. These aren't categories I picked off a list — they're shapes the data found on its own, and I named them once I could see what they looked like. The clustering doesn't care about diagnostic labels; it just notices when days look like other days. Naming them after the fact felt like meeting parts of myself I'd been living with but never introduced.
         <.link
-          navigate="/sandbox"
+          navigate="/menagerie"
           class="text-amber-300 hover:text-amber-200 underline decoration-dotted underline-offset-4"
         >
           Play with the knobs yourself &rsaquo;

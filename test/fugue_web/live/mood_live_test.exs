@@ -25,13 +25,13 @@ defmodule FugueWeb.MoodLiveTest do
       assert assigns.analysis.clusters != []
     end
 
-    test "renders a cross-link to /sandbox in chapter 1", %{conn: conn} do
+    test "renders a cross-link to /menagerie in chapter 1", %{conn: conn} do
       stub_ish()
 
       {:ok, view, _html} = live(conn, "/mood")
       html = render(view)
 
-      assert html =~ ~s(href="/sandbox")
+      assert html =~ ~s(href="/menagerie")
       assert html =~ "Play with the knobs yourself"
     end
 

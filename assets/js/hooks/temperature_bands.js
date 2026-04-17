@@ -15,7 +15,7 @@ export const TemperatureBands = {
       this.render()
     })
 
-    this.pushEvent("sandbox:bands_ready", {})
+    this.pushEvent("menagerie:bands_ready", {})
   },
 
   render() {

@@ -1,13 +1,13 @@
-defmodule Fugue.Sandbox.MelbourneWeather do
+defmodule Fugue.Menagerie.MelbourneWeather do
   @moduledoc """
   Compile-time bundled Melbourne Airport (GHCN-D station `ASN00086282`)
   daily weather, sourced from NCEI (temps + precip) and Open-Meteo ERA5
-  (wind). The CSV at `priv/static/sandbox/melbourne_weather.csv` is
+  (wind). The CSV at `priv/static/menagerie/melbourne_weather.csv` is
   refreshed daily by `.github/workflows/update-melbourne-weather.yml`;
   `@external_resource` makes this module recompile when it changes.
   """
 
-  @csv_path "priv/static/sandbox/melbourne_weather.csv"
+  @csv_path "priv/static/menagerie/melbourne_weather.csv"
   @external_resource @csv_path
 
   @rows @csv_path
