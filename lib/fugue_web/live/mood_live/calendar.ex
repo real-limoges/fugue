@@ -1,6 +1,8 @@
 defmodule FugueWeb.MoodLive.Calendar do
   use FugueWeb, :live_component
 
+  alias FugueWeb.MoodLive.CalendarGrid
+
   def render(assigns) do
     ~H"""
     <div class="calendar-section bg-base-200 rounded-lg p-4">
@@ -12,13 +14,16 @@ defmodule FugueWeb.MoodLive.Calendar do
           </button>
         <% end %>
       </div>
-      <div
-        id="calendar-heatmap"
-        phx-hook="CalendarHeatmap"
-        phx-update="ignore"
-        class="overflow-x-auto"
-        style="min-height: 200px;"
-      >
+      <div class="overflow-x-auto" style="min-height: 200px;">
+        <CalendarGrid.grid
+          days={@days}
+          cluster_colors={@cluster_colors}
+          cluster_names={@cluster_names}
+          transition_dates={@transition_dates}
+          highlighted_dates={@highlighted_dates}
+          selected_gap={@selected_gap}
+          selected_cluster={@selected_cluster}
+        />
       </div>
     </div>
     """

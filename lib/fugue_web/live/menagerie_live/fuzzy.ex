@@ -8,6 +8,7 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
   use FugueWeb, :live_view
 
   alias Fugue.Menagerie.{Fuzzy, MelbourneWeather}
+  alias FugueWeb.MenagerieLive.TemperatureBands
 
   @default_center_offset 0.0
   @default_spread 1.0
@@ -25,20 +26,21 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
       end
 
     socket =
-      assign(socket,
+      socket
+      |> assign(
         center_offset: @default_center_offset,
         spread: @default_spread,
         mfs: mfs,
         row_count: MelbourneWeather.count(),
         first_date: first_date,
-        last_date: last_date
+        last_date: last_date,
+        bands_series: [],
+        bands_shapes: [],
+        bands_bounds: [@bands_lo, @bands_hi]
       )
+      |> assign_bands()
 
     {:ok, socket}
-  end
-
-  def handle_event("menagerie:bands_ready", _params, socket) do
-    {:noreply, push_bands(socket)}
   end
 
   def handle_event(
@@ -57,15 +59,14 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
       socket =
         socket
         |> assign(center_offset: center_offset, spread: spread, mfs: mfs)
-        |> push_bands()
+        |> assign_bands()
 
       {:noreply, socket}
     end
   end
 
-  defp push_bands(socket) do
-    %{mfs: mfs} = socket.assigns
-    bands = Fuzzy.bands(MelbourneWeather.rows(), mfs)
+  defp assign_bands(socket) do
+    mfs = socket.assigns.mfs
 
     shapes =
       Enum.map(mfs, fn mf ->
@@ -77,12 +78,10 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
         }
       end)
 
-    push_event(socket, "update-bands", %{
-      series: bands,
-      mfs: Enum.map(mfs, fn mf -> %{name: mf.name, color: mf.color} end),
-      shapes: shapes,
-      bounds: [@bands_lo, @bands_hi]
-    })
+    assign(socket,
+      bands_series: Fuzzy.bands(MelbourneWeather.rows(), mfs),
+      bands_shapes: shapes
+    )
   end
 
   defp parse_float(str, default) do
@@ -181,13 +180,12 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
       </div>
 
       <div class="rounded-lg bg-base-200 p-4">
-        <div
-          id="menagerie-temperature-bands"
-          phx-hook="TemperatureBands"
-          phx-update="ignore"
-          style="min-height: 440px;"
-        >
-        </div>
+        <TemperatureBands.bands
+          series={@bands_series}
+          mfs={@mfs}
+          shapes={@bands_shapes}
+          bounds={@bands_bounds}
+        />
         <p class="mt-3 max-w-3xl text-xs leading-snug text-gray-500">
           Top strip: the five triangular membership functions on the temperature
           axis — drag the sliders to reshape them. Bottom: for every day in the

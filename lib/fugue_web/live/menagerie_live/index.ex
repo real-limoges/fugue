@@ -46,7 +46,12 @@ defmodule FugueWeb.MenagerieLive.Index do
           in real time and turn two crisp inputs into a crisp fan speed.
         </.card>
 
-        <.card href={~p"/menagerie/boids"} category="Flocking" title="Boids playground" accent="accent">
+        <.card
+          href={~p"/menagerie/boids"}
+          category="Flocking"
+          title="Boids playground"
+          accent="accent"
+        >
           Each bird follows three simple rules — separate from neighbors, align
           with them, cohere toward the flock. Drag the force sliders and watch
           tight flocks form, schools stream past each other, or the whole crowd
