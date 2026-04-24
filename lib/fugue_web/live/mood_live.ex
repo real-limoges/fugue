@@ -3,8 +3,8 @@ defmodule FugueWeb.MoodLive do
 
   use FugueWeb, :live_view
 
-  alias FugueWeb.MoodLive.{Annotations, DataTransforms, Sections}
-  alias FugueWeb.MoodLive.Structs.{AnalysisResult, CalendarDay, GapData}
+  alias FugueWeb.MoodLive.{Annotations, DataTransforms, ExperiencePanel, Sections}
+  alias FugueWeb.MoodLive.Structs.{AnalysisResult, GapData}
   alias Fugue.Ish
 
   @default_k 3
@@ -34,7 +34,25 @@ defmodule FugueWeb.MoodLive do
         smoothed_daily: [],
         stats: nil,
         cluster_names: %{},
-        full_date_range: nil
+        full_date_range: nil,
+        calendar_days: [],
+        transition_dates: [],
+        stream_series: [],
+        radar_centroids: [],
+        radar_dimensions: [],
+        ambiguity_bins: [],
+        ambiguity_threshold: 0.45,
+        timeline_segments: [],
+        season_months: [],
+        drift_dimensions: [],
+        mood_flowers_list: [],
+        flower_dimensions: [],
+        distribution_points: [],
+        distribution_clusters: [],
+        gap_transitions: [],
+        imputed_memberships: %{},
+        trajectory_points: [],
+        trajectory_annotations: []
       )
 
     if connected?(socket), do: send(self(), :load_data)
@@ -79,36 +97,26 @@ defmodule FugueWeb.MoodLive do
     day_detail = DataTransforms.build_day_detail(date, socket.assigns)
 
     {:noreply,
-     socket
-     |> assign(highlighted_dates: [date], selected_gap: nil, selected_day: day_detail)
-     |> push_event("highlight-calendar", %{dates: [date]})
-     |> push_event("day-focus", %{day: day_detail})}
+     assign(socket, highlighted_dates: [date], selected_gap: nil, selected_day: day_detail)}
   end
 
   def handle_event("lasso_selected", %{"dates" => dates}, socket) do
-    {:noreply,
-     socket
-     |> assign(highlighted_dates: dates)
-     |> push_event("highlight-calendar", %{dates: dates})}
+    {:noreply, assign(socket, highlighted_dates: dates)}
   end
 
   def handle_event("gap_selected", %{"start" => start, "length" => length}, socket) do
     gap = %{"start" => start, "length" => length}
-    len = if is_binary(length), do: String.to_integer(length), else: length
-
-    {:noreply,
-     socket
-     |> assign(selected_gap: gap, highlighted_dates: [])
-     |> push_event("highlight-calendar-gap", %{start: start, length: len})}
+    {:noreply, assign(socket, selected_gap: gap, highlighted_dates: [])}
   end
 
   def handle_event("clear_highlights", _params, socket) do
     {:noreply,
-     socket
-     |> assign(highlighted_dates: [], selected_gap: nil, selected_cluster: nil, selected_day: nil)
-     |> push_event("highlight-calendar", %{dates: []})
-     |> push_event("isolate-cluster", %{cluster: nil})
-     |> push_event("day-focus", %{day: nil})}
+     assign(socket,
+       highlighted_dates: [],
+       selected_gap: nil,
+       selected_cluster: nil,
+       selected_day: nil
+     )}
   end
 
   def handle_event("cluster_selected", %{"cluster" => cluster}, socket) do
@@ -117,10 +125,6 @@ defmodule FugueWeb.MoodLive do
     socket =
       socket
       |> assign(selected_cluster: selected, highlighted_dates: [], selected_gap: nil)
-      |> push_event("isolate-cluster", %{
-        cluster: selected,
-        clusterColors: socket.assigns.analysis.cluster_colors
-      })
       |> push_gap_data_for_cluster(selected)
 
     {:noreply, socket}
@@ -129,23 +133,15 @@ defmodule FugueWeb.MoodLive do
   def handle_event("brush_changed", %{"start" => start, "end" => end_date}, socket)
       when is_binary(start) and start != "" and is_binary(end_date) and end_date != "" do
     range = {start, end_date}
-
-    socket =
-      socket
-      |> assign(date_range: range, highlighted_dates: [], selected_gap: nil)
-      |> push_event("highlight-calendar", %{dates: dates_in_range(socket.assigns.entries, range)})
-
-    {:noreply, socket}
+    dates = dates_in_range(socket.assigns.entries, range)
+    {:noreply, assign(socket, date_range: range, highlighted_dates: dates, selected_gap: nil)}
   end
 
   def handle_event("brush_changed", _params, socket) do
-    socket =
-      socket
-      |> assign(date_range: nil, highlighted_dates: [])
-      |> push_event("highlight-calendar", %{dates: []})
-      |> push_event("clear-brush", %{})
-
-    {:noreply, socket}
+    {:noreply,
+     socket
+     |> assign(date_range: nil, highlighted_dates: [])
+     |> push_event("clear-brush", %{})}
   end
 
   # --- Push helpers ---
@@ -182,8 +178,6 @@ defmodule FugueWeb.MoodLive do
     |> push_seasonality_data()
     |> push_ambiguity_data()
     |> push_drift_data()
-    |> push_event("highlight-calendar", %{dates: []})
-    |> push_event("isolate-cluster", %{cluster: nil})
   end
 
   defp assign_narrative_stats(socket) do
@@ -203,39 +197,23 @@ defmodule FugueWeb.MoodLive do
       |> Enum.filter(fn [a, b] -> a.cluster != b.cluster end)
       |> Enum.map(fn [_a, b] -> b.date end)
 
-    push_event(socket, "update-calendar", %{
-      days: Enum.map(days, &CalendarDay.to_event/1),
-      clusterColors: analysis.cluster_colors,
-      clusterNames: analysis.cluster_names,
-      transitionDates: transition_dates
-    })
+    assign(socket, calendar_days: days, transition_dates: transition_dates)
   end
 
   defp push_gap_data(socket) do
-    %{analysis: analysis, gaps: gaps} = socket.assigns
-
-    case gaps do
+    case socket.assigns.gaps do
       nil ->
         socket
 
       %GapData{} = g ->
-        push_event(socket, "update-gaps", %{
-          transitions: g.transitions,
-          lengthDistribution: g.length_distribution,
-          imputedMemberships: g.imputed_memberships,
-          dateRange: socket.assigns.full_date_range,
-          clusterColors: analysis.cluster_colors,
-          clusterNames: analysis.cluster_names
-        })
+        assign(socket, gap_transitions: g.transitions, imputed_memberships: g.imputed_memberships)
     end
   end
 
   defp push_gap_data_for_cluster(socket, nil), do: push_gap_data(socket)
 
   defp push_gap_data_for_cluster(socket, cluster) do
-    %{analysis: analysis, gaps: gaps} = socket.assigns
-
-    case gaps do
+    case socket.assigns.gaps do
       nil ->
         socket
 
@@ -247,14 +225,7 @@ defmodule FugueWeb.MoodLive do
             Map.get(before, cluster, 0) >= 0.3 or Map.get(after_m, cluster, 0) >= 0.3
           end)
 
-        push_event(socket, "update-gaps", %{
-          transitions: filtered,
-          lengthDistribution: g.length_distribution,
-          imputedMemberships: g.imputed_memberships,
-          dateRange: socket.assigns.full_date_range,
-          clusterColors: analysis.cluster_colors,
-          clusterNames: analysis.cluster_names
-        })
+        assign(socket, gap_transitions: filtered, imputed_memberships: g.imputed_memberships)
     end
   end
 
@@ -264,14 +235,8 @@ defmodule FugueWeb.MoodLive do
   end
 
   defp push_radar_data(socket) do
-    %{analysis: analysis} = socket.assigns
-    centroids = DataTransforms.build_centroids(analysis)
-
-    push_event(socket, "update-radar", %{
-      centroids: centroids,
-      clusterColors: analysis.cluster_colors,
-      dimensions: DataTransforms.dimensions()
-    })
+    centroids = DataTransforms.build_centroids(socket.assigns.analysis)
+    assign(socket, radar_centroids: centroids, radar_dimensions: DataTransforms.dimensions())
   end
 
   defp push_stream_data(socket) do
@@ -287,36 +252,23 @@ defmodule FugueWeb.MoodLive do
         %{date: entry["date"], memberships: mems}
       end)
 
-    push_event(socket, "update-stream", %{
-      series: series,
-      clusterColors: analysis.cluster_colors,
-      clusterIds: analysis.cluster_ids,
-      clusterNames: analysis.cluster_names
-    })
+    assign(socket, stream_series: series)
   end
 
   defp push_mood_flowers(socket) do
-    %{entries: entries, analysis: analysis, smoothed_daily: daily} = socket.assigns
+    %{entries: entries, smoothed_daily: daily} = socket.assigns
     flowers = DataTransforms.build_mood_flowers(entries, daily)
-
-    push_event(socket, "update-flowers", %{
-      flowers: flowers,
-      dimensions: DataTransforms.dimensions(),
-      clusterColors: analysis.cluster_colors,
-      clusterNames: analysis.cluster_names
-    })
+    assign(socket, mood_flowers_list: flowers, flower_dimensions: DataTransforms.dimensions())
   end
 
   defp push_mood_trajectory(socket) do
-    %{entries: entries, analysis: analysis, smoothed_daily: daily} = socket.assigns
+    %{entries: entries, smoothed_daily: daily} = socket.assigns
     points = DataTransforms.build_trajectory(entries, daily)
 
-    push_event(socket, "update-trajectory", %{
-      points: points,
-      annotations: Annotations.all(),
-      clusterColors: analysis.cluster_colors,
-      clusterNames: analysis.cluster_names
-    })
+    assign(socket,
+      trajectory_points: points,
+      trajectory_annotations: Annotations.all()
+    )
   end
 
   defp push_distribution_data(socket) do
@@ -340,82 +292,35 @@ defmodule FugueWeb.MoodLive do
         }
       end)
 
-    push_event(socket, "update-distributions", %{
-      points: points,
-      dimensions: DataTransforms.dimensions(),
-      clusters: clusters
-    })
+    assign(socket, distribution_points: points, distribution_clusters: clusters)
   end
 
   defp push_mood_transitions(socket) do
-    %{analysis: analysis, smoothed_daily: daily} = socket.assigns
+    daily = socket.assigns.smoothed_daily
 
-    # Find transition points (where dominant cluster changes)
     transitions =
       daily
       |> Enum.chunk_every(2, 1, :discard)
       |> Enum.filter(fn [a, b] -> a.cluster != b.cluster end)
       |> Enum.map(fn [a, b] -> %{date: b.date, from: a.cluster, to: b.cluster} end)
 
-    # Build segments (runs of the same cluster)
     segments = DataTransforms.build_segments(daily)
 
-    # Sankey data: monthly transition flows
-    monthly_flows =
-      transitions
-      |> Enum.group_by(fn t -> String.slice(t.date, 0, 7) end)
-      |> Enum.sort_by(fn {month, _} -> month end)
-      |> Enum.map(fn {month, ts} ->
-        flows =
-          Enum.reduce(ts, %{}, fn t, acc ->
-            key = "#{t.from}->#{t.to}"
-            Map.update(acc, key, 1, &(&1 + 1))
-          end)
-
-        %{month: month, flows: flows}
-      end)
-
-    socket
-    |> assign(mood_transitions: transitions)
-    |> push_event("update-mood-transitions", %{
-      transitions: transitions,
-      segments: segments,
-      monthlyFlows: monthly_flows,
-      clusterIds: analysis.cluster_ids,
-      clusterNames: analysis.cluster_names,
-      clusterColors: analysis.cluster_colors
-    })
+    assign(socket, mood_transitions: transitions, timeline_segments: segments)
   end
 
   defp push_seasonality_data(socket) do
-    %{analysis: analysis, smoothed_daily: daily} = socket.assigns
-    seasonality = DataTransforms.build_seasonality(daily)
-
-    push_event(socket, "update-seasonality", %{
-      months: seasonality,
-      clusterColors: analysis.cluster_colors,
-      clusterNames: analysis.cluster_names,
-      clusterIds: analysis.cluster_ids
-    })
+    assign(socket, season_months: DataTransforms.build_seasonality(socket.assigns.smoothed_daily))
   end
 
   defp push_ambiguity_data(socket) do
     %{entries: entries, analysis: analysis} = socket.assigns
     bins = DataTransforms.build_ambiguity_histogram(entries, analysis)
-
-    push_event(socket, "update-ambiguity", %{
-      bins: bins,
-      threshold: 0.45
-    })
+    assign(socket, ambiguity_bins: bins, ambiguity_threshold: 0.45)
   end
 
   defp push_drift_data(socket) do
-    %{entries: entries} = socket.assigns
-    drift = DataTransforms.build_drift(entries)
-
-    push_event(socket, "update-drift", %{
-      dimensions: drift
-    })
+    assign(socket, drift_dimensions: DataTransforms.build_drift(socket.assigns.entries))
   end
 
   # --- Helpers ---
@@ -430,7 +335,13 @@ defmodule FugueWeb.MoodLive do
 
   def render(assigns) do
     ~H"""
-    <div id="mood-experience" phx-hook="MoodExperience" class="mood-explorer p-4 max-w-6xl mx-auto">
+    <div id="mood-experience" class="mood-explorer p-4 max-w-6xl mx-auto">
+      <ExperiencePanel.ambient
+        selected_day={@selected_day}
+        selected_cluster={@selected_cluster}
+        cluster_colors={@analysis.cluster_colors}
+      />
+      <ExperiencePanel.panel selected_day={@selected_day} />
       <%= if @error do %>
         <div class="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-4">
           {@error}
@@ -444,7 +355,13 @@ defmodule FugueWeb.MoodLive do
       <% end %>
 
       <%= if @stats do %>
-        <Sections.hero stats={@stats} />
+        <Sections.hero
+          stats={@stats}
+          trajectory_points={@trajectory_points}
+          trajectory_annotations={@trajectory_annotations}
+          analysis={@analysis}
+          selected_day={@selected_day}
+        />
         <Sections.sticky_legend analysis={@analysis} selected_cluster={@selected_cluster} />
         <Sections.intro stats={@stats} />
 
@@ -454,6 +371,10 @@ defmodule FugueWeb.MoodLive do
           stats={@stats}
           analysis={@analysis}
           selected_cluster={@selected_cluster}
+          radar_centroids={@radar_centroids}
+          radar_dimensions={@radar_dimensions}
+          ambiguity_bins={@ambiguity_bins}
+          ambiguity_threshold={@ambiguity_threshold}
         />
         <Sections.chapter_day_by_day
           stats={@stats}
@@ -461,6 +382,12 @@ defmodule FugueWeb.MoodLive do
           date_range={@date_range}
           highlighted_dates={@highlighted_dates}
           selected_gap={@selected_gap}
+          selected_cluster={@selected_cluster}
+          selected_day={@selected_day}
+          calendar_days={@calendar_days}
+          transition_dates={@transition_dates}
+          stream_series={@stream_series}
+          season_months={@season_months}
         />
         <Sections.chapter_shifts
           stats={@stats}
@@ -469,14 +396,25 @@ defmodule FugueWeb.MoodLive do
           selected_cluster={@selected_cluster}
           highlighted_dates={@highlighted_dates}
           cluster_names={@cluster_names}
+          timeline_segments={@timeline_segments}
         />
-        <Sections.chapter_under_hood stats={@stats} />
+        <Sections.chapter_under_hood
+          stats={@stats}
+          drift_dimensions={@drift_dimensions}
+          analysis={@analysis}
+          mood_flowers_list={@mood_flowers_list}
+          flower_dimensions={@flower_dimensions}
+          selected_day={@selected_day}
+          distribution_points={@distribution_points}
+          distribution_clusters={@distribution_clusters}
+        />
         <Sections.chapter_gaps
           stats={@stats}
-          gaps={@gaps}
           analysis={@analysis}
-          selected_cluster={@selected_cluster}
           cluster_names={@cluster_names}
+          gap_transitions={@gap_transitions}
+          imputed_memberships={@imputed_memberships}
+          full_date_range={@full_date_range}
         />
         <Sections.afterword />
       <% end %>

@@ -8,23 +8,40 @@ defmodule FugueWeb.MoodLive.Sections do
 
   use Phoenix.Component
 
-  alias FugueWeb.MoodLive.{Calendar, GapAnalysis, MoodTransitions}
+  alias FugueWeb.MoodLive.{
+    AmbiguityHistogram,
+    Calendar,
+    ClusterRadar,
+    DimensionDistributions,
+    DimensionDrift,
+    GapAnalysis,
+    MoodFlowers,
+    MoodTrajectory,
+    MoodTransitions,
+    SeasonRing,
+    StreamGraph,
+    TransitionSankey,
+    TransitionTimeline
+  }
 
   attr :stats, :map, required: true
+  attr :trajectory_points, :list, default: []
+  attr :trajectory_annotations, :list, default: []
+  attr :analysis, :map, required: true
+  attr :selected_day, :any, default: nil
 
   def hero(assigns) do
     ~H"""
     <section class="mb-20 -mx-4 md:-mx-8">
       <div class="bg-black/40 border-y border-white/5 py-10 px-4 md:px-8">
         <div class="max-w-5xl mx-auto">
-          <div
-            id="mood-trajectory"
-            phx-hook="MoodTrajectory"
-            phx-update="ignore"
-            class="w-full"
-            style="min-height: 520px;"
-          >
-          </div>
+          <MoodTrajectory.trajectory
+            points={@trajectory_points}
+            annotations={@trajectory_annotations}
+            cluster_colors={@analysis.cluster_colors}
+            cluster_names={@analysis.cluster_names}
+            selected_day={@selected_day}
+          />
 
           <div class="mt-8 max-w-xl ml-auto border-t border-white/10 pt-5 text-[11px] leading-relaxed text-gray-400 font-serif">
             <div class="uppercase tracking-[0.2em] text-[10px] text-gray-500 mb-1">
@@ -165,6 +182,10 @@ defmodule FugueWeb.MoodLive.Sections do
   attr :stats, :map, required: true
   attr :analysis, :map, required: true
   attr :selected_cluster, :any, default: nil
+  attr :radar_centroids, :list, default: []
+  attr :radar_dimensions, :list, default: []
+  attr :ambiguity_bins, :list, default: []
+  attr :ambiguity_threshold, :float, default: 0.45
 
   def chapter_states(assigns) do
     ~H"""
@@ -254,14 +275,13 @@ defmodule FugueWeb.MoodLive.Sections do
         </div>
       <% end %>
 
-      <div class="bg-base-200 rounded-lg p-4 mt-4">
-        <div
-          id="cluster-radar"
-          phx-hook="ClusterRadar"
-          phx-update="ignore"
-          style="min-height: 180px;"
-        >
-        </div>
+      <div class="bg-base-200 rounded-lg p-4 mt-4" style="min-height: 180px;">
+        <ClusterRadar.radars
+          centroids={@radar_centroids}
+          dimensions={@radar_dimensions}
+          cluster_colors={@analysis.cluster_colors}
+          selected_cluster={@selected_cluster}
+        />
       </div>
 
       <div class="bg-base-200 rounded-lg p-4 mt-4">
@@ -269,13 +289,7 @@ defmodule FugueWeb.MoodLive.Sections do
         <p class="text-xs text-gray-500 mb-3 max-w-3xl">
           Most days lean clearly toward one state. But {@stats.ambiguity.count} days ({@stats.ambiguity.pct}%) refused to settle — no single state owned more than 45% of the day. These are the entries where fuzzy clustering earns its keep: a hard model would force each into a box, but these days genuinely lived between states.
         </p>
-        <div
-          id="ambiguity-histogram"
-          phx-hook="AmbiguityHistogram"
-          phx-update="ignore"
-          style="min-height: 140px;"
-        >
-        </div>
+        <AmbiguityHistogram.histogram bins={@ambiguity_bins} threshold={@ambiguity_threshold} />
       </div>
     </section>
     """
@@ -286,6 +300,12 @@ defmodule FugueWeb.MoodLive.Sections do
   attr :date_range, :any, default: nil
   attr :highlighted_dates, :list, default: []
   attr :selected_gap, :any, default: nil
+  attr :selected_cluster, :any, default: nil
+  attr :selected_day, :any, default: nil
+  attr :calendar_days, :list, default: []
+  attr :transition_dates, :list, default: []
+  attr :stream_series, :list, default: []
+  attr :season_months, :list, default: []
 
   def chapter_day_by_day(assigns) do
     ~H"""
@@ -338,20 +358,26 @@ defmodule FugueWeb.MoodLive.Sections do
         <.live_component
           module={Calendar}
           id="calendar"
+          days={@calendar_days}
+          cluster_colors={@analysis.cluster_colors}
+          cluster_names={@analysis.cluster_names}
+          transition_dates={@transition_dates}
           highlighted_dates={@highlighted_dates}
           selected_gap={@selected_gap}
+          selected_cluster={@selected_cluster}
         />
       </div>
 
       <div class="bg-base-200 rounded-lg p-4 mt-4">
         <h3 class="text-sm font-semibold text-gray-400 mb-2">How my states ebb and flow</h3>
-        <div
-          id="cluster-stream"
-          phx-hook="ClusterStream"
-          phx-update="ignore"
-          style="min-height: 210px;"
-        >
-        </div>
+        <StreamGraph.stream
+          series={@stream_series}
+          cluster_ids={@analysis.cluster_ids}
+          cluster_colors={@analysis.cluster_colors}
+          cluster_names={@analysis.cluster_names}
+          selected_cluster={@selected_cluster}
+          selected_day={@selected_day}
+        />
       </div>
 
       <div class="bg-base-200 rounded-lg p-4 mt-4">
@@ -359,13 +385,13 @@ defmodule FugueWeb.MoodLive.Sections do
         <p class="text-xs text-gray-500 mb-3 max-w-3xl">
           The stream above shows what happened; this collapses it across years to ask whether it <em>repeats</em>. Each wedge is a calendar month — January at twelve o'clock, clockwise through December. The fill shows how days split across states for that month, pooled over every year tracked. If there's an annual rhythm, certain months will consistently lean toward one color.
         </p>
-        <div
-          id="season-ring"
-          phx-hook="SeasonRing"
-          phx-update="ignore"
-          style="min-height: 420px;"
-        >
-        </div>
+        <SeasonRing.ring
+          months={@season_months}
+          cluster_ids={@analysis.cluster_ids}
+          cluster_names={@analysis.cluster_names}
+          cluster_colors={@analysis.cluster_colors}
+          selected_cluster={@selected_cluster}
+        />
       </div>
     </section>
     """
@@ -377,6 +403,7 @@ defmodule FugueWeb.MoodLive.Sections do
   attr :selected_cluster, :any, default: nil
   attr :highlighted_dates, :list, default: []
   attr :cluster_names, :map, required: true
+  attr :timeline_segments, :list, default: []
 
   def chapter_shifts(assigns) do
     ~H"""
@@ -409,13 +436,12 @@ defmodule FugueWeb.MoodLive.Sections do
       </p>
 
       <div class="bg-base-200 rounded-lg p-4">
-        <div
-          id="transition-timeline"
-          phx-hook="TransitionTimeline"
-          phx-update="ignore"
-          style="min-height: 50px;"
-        >
-        </div>
+        <TransitionTimeline.timeline
+          segments={@timeline_segments}
+          transitions={@mood_transitions}
+          cluster_colors={@analysis.cluster_colors}
+          selected_cluster={@selected_cluster}
+        />
       </div>
 
       <div class="bg-base-200 rounded-lg p-4 mt-4">
@@ -423,13 +449,13 @@ defmodule FugueWeb.MoodLive.Sections do
         <p class="text-xs text-gray-500 mb-3">
           Once I'm in a state, where does it tend to drop me next? Thicker bands mean a well-trodden path.
         </p>
-        <div
-          id="transition-sankey"
-          phx-hook="TransitionSankey"
-          phx-update="ignore"
-          style="min-height: 320px;"
-        >
-        </div>
+        <TransitionSankey.sankey
+          transitions={@mood_transitions}
+          cluster_ids={@analysis.cluster_ids}
+          cluster_names={@analysis.cluster_names}
+          cluster_colors={@analysis.cluster_colors}
+          selected_cluster={@selected_cluster}
+        />
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 items-stretch">
@@ -463,6 +489,13 @@ defmodule FugueWeb.MoodLive.Sections do
   end
 
   attr :stats, :map, required: true
+  attr :drift_dimensions, :list, default: []
+  attr :analysis, :map, required: true
+  attr :mood_flowers_list, :list, default: []
+  attr :flower_dimensions, :list, default: []
+  attr :selected_day, :any, default: nil
+  attr :distribution_points, :list, default: []
+  attr :distribution_clusters, :list, default: []
 
   def chapter_under_hood(assigns) do
     ~H"""
@@ -483,13 +516,13 @@ defmodule FugueWeb.MoodLive.Sections do
         <p class="text-xs text-gray-500 mb-3">
           Each flower is one month. The shape is the average of those five raw inputs over the month — long spokes are dimensions that ran high, short ones ran low. The fill color is whichever cluster came out on top once the same numbers went through the model. Same data, two readings: the inputs you'd recognize and the output they add up to.
         </p>
-        <div
-          id="mood-flowers"
-          phx-hook="MoodFlowers"
-          phx-update="ignore"
-          style="min-height: 460px;"
-        >
-        </div>
+        <MoodFlowers.flowers
+          flowers={@mood_flowers_list}
+          dimensions={@flower_dimensions}
+          cluster_colors={@analysis.cluster_colors}
+          cluster_names={@analysis.cluster_names}
+          selected_day={@selected_day}
+        />
       </div>
 
       <div class="bg-base-200 rounded-lg p-4 mt-4">
@@ -497,13 +530,7 @@ defmodule FugueWeb.MoodLive.Sections do
         <p class="text-xs text-gray-500 mb-3 max-w-3xl">
           A 90-day rolling average for each of the five raw inputs. If a line tilts over the years, my baseline for that dimension has shifted — the kind of slow change that's invisible from inside but shows up when you zoom out far enough.
         </p>
-        <div
-          id="dimension-drift"
-          phx-hook="DimensionDrift"
-          phx-update="ignore"
-          style="min-height: 280px;"
-        >
-        </div>
+        <DimensionDrift.drift dimensions={@drift_dimensions} />
       </div>
 
       <div class="bg-base-200 rounded-lg p-4 mt-4">
@@ -512,23 +539,22 @@ defmodule FugueWeb.MoodLive.Sections do
           For each of the five inputs: where it usually lands <em>overall</em>
           (the dashed outline), and where it lands once you split by cluster (the filled shapes). Each row uses its own scale because the five inputs aren't all rated on the same range. A dimension whose shape barely shifts between states is pulling less weight; a dimension whose shape slides across the range is doing a lot of the work.
         </p>
-        <div
-          id="dimension-distributions"
-          phx-hook="DimensionDistributions"
-          phx-update="ignore"
-          style="min-height: 500px;"
-        >
-        </div>
+        <DimensionDistributions.distributions
+          points={@distribution_points}
+          dimensions={@flower_dimensions}
+          clusters={@distribution_clusters}
+        />
       </div>
     </section>
     """
   end
 
   attr :stats, :map, required: true
-  attr :gaps, :any, default: nil
   attr :analysis, :map, required: true
-  attr :selected_cluster, :any, default: nil
   attr :cluster_names, :map, required: true
+  attr :gap_transitions, :list, default: []
+  attr :imputed_memberships, :map, default: %{}
+  attr :full_date_range, :any, default: nil
 
   def chapter_gaps(assigns) do
     ~H"""
@@ -550,10 +576,11 @@ defmodule FugueWeb.MoodLive.Sections do
       <.live_component
         module={GapAnalysis}
         id="gaps"
-        gaps={@gaps}
+        gap_transitions={@gap_transitions}
+        imputed_memberships={@imputed_memberships}
+        date_range={@full_date_range}
         cluster_colors={@analysis.cluster_colors}
         cluster_names={@cluster_names}
-        selected_cluster={@selected_cluster}
       />
     </section>
     """

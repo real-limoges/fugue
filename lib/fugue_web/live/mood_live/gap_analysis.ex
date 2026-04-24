@@ -3,6 +3,8 @@ defmodule FugueWeb.MoodLive.GapAnalysis do
 
   use FugueWeb, :live_component
 
+  alias FugueWeb.MoodLive.GapBreathTimeline
+
   def render(assigns) do
     ~H"""
     <div class="bg-base-200 rounded-lg p-4">
@@ -16,13 +18,13 @@ defmodule FugueWeb.MoodLive.GapAnalysis do
         Each shape is a stretch I went quiet. Taller means the model was more sure what state I was in while the page was dark.
       </p>
 
-      <div
-        id="gap-breath-timeline"
-        phx-hook="GapBreathTimeline"
-        phx-update="ignore"
-        style="min-height: 170px;"
-      >
-      </div>
+      <GapBreathTimeline.timeline
+        transitions={@gap_transitions}
+        imputed_memberships={@imputed_memberships}
+        date_range={@date_range}
+        cluster_colors={@cluster_colors}
+        cluster_names={@cluster_names}
+      />
     </div>
     """
   end

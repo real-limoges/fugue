@@ -60,7 +60,8 @@ defmodule Fugue.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:earmark, "~> 1.4"},
-      {:req, "~> 0.5"}
+      {:req, "~> 0.5"},
+      {:stream_data, "~> 1.0", only: :test}
     ]
   end
 

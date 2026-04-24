@@ -35,7 +35,7 @@ defmodule FugueWeb.MenagerieLiveTest do
       assert html =~ "mild"
       assert html =~ "warm"
       assert html =~ "hot"
-      assert html =~ ~s(phx-hook="TemperatureBands")
+      assert html =~ ~s(phx-hook="BandsHover")
       refute html =~ "Fuzzy clustering"
       refute html =~ "Mamdani fan controller"
     end
@@ -55,6 +55,39 @@ defmodule FugueWeb.MenagerieLiveTest do
 
       assert html =~ "Melbourne Airport"
       assert html =~ ~r/20\d\d-\d\d-\d\d/
+    end
+
+    test "server-renders the bands SVG with per-day JSON for the hover hook", %{conn: conn} do
+      {:ok, _view, html} = live(conn, "/menagerie/fuzzy")
+
+      # Shapes panel (MF triangle outlines).
+      assert html =~ ~s(class="stream-svg) or html =~ ~s(id="temperature-bands")
+      # Stacked band paths — one per fuzzy set.
+      assert html =~ ~s(class="band")
+      # Crosshair line carrying the bands-crosshair class.
+      assert html =~ "bands-crosshair"
+      # data-series is the per-day JSON payload BandsHover uses on hover.
+      assert html =~ "data-series="
+      # Should contain a date from the bundled CSV range.
+      # data-series is an attribute value, so quotes are HTML-escaped.
+      assert html =~ ~r/date&quot;:&quot;20\d\d-\d\d-\d\d&quot;/
+    end
+
+    test "changing spread re-renders bands with an updated series", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/menagerie/fuzzy")
+
+      before_html = render(view)
+
+      view
+      |> element("form[phx-change=update_fuzzy_params]")
+      |> render_change(%{"center_offset" => "0.0", "spread" => "1.8"})
+
+      after_html = render(view)
+      refute before_html == after_html
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.bands_series != []
+      assert length(assigns.bands_shapes) == 5
     end
   end
 
