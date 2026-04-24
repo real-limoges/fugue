@@ -28,6 +28,14 @@ defmodule FugueWeb.Endpoint do
       only: ~w(bloom.js bloom_bg.wasm bloom.d.ts)
   end
 
+  if code_reloading? do
+    plug Plug.Static,
+      at: "/vendor/glissando",
+      from: Path.expand("../../assets/vendor/glissando", __DIR__),
+      gzip: false,
+      only: ~w(glissando.js glissando_bg.wasm)
+  end
+
   # Serve at "/" the static files from "priv/static" directory.
   #
   # When code reloading is disabled (e.g., in production),

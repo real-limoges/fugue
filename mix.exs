@@ -78,17 +78,20 @@ defmodule Fugue.MixProject do
         "tailwind.install --if-missing",
         "esbuild.install --if-missing",
         "cmd sh -c 'mkdir -p priv/static/vendor/petri/wasm && cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/'",
-        "cmd sh -c 'mkdir -p priv/static/vendor/bloom && cp assets/vendor/bloom/pkg/bloom_bg.wasm assets/vendor/bloom/pkg/bloom.js priv/static/vendor/bloom/'"
+        "cmd sh -c 'mkdir -p priv/static/vendor/bloom && cp assets/vendor/bloom/pkg/bloom_bg.wasm assets/vendor/bloom/pkg/bloom.js priv/static/vendor/bloom/'",
+        "cmd sh -c 'mkdir -p priv/static/vendor/glissando && cp assets/vendor/glissando/glissando_bg.wasm assets/vendor/glissando/glissando.js priv/static/vendor/glissando/'"
       ],
       "assets.build": [
         "compile",
         "cmd sh -c 'mkdir -p priv/static/vendor/petri/wasm && cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/'",
+        "cmd sh -c 'mkdir -p priv/static/vendor/glissando && cp assets/vendor/glissando/glissando_bg.wasm assets/vendor/glissando/glissando.js priv/static/vendor/glissando/'",
         "tailwind fugue",
         "esbuild fugue"
       ],
       "assets.deploy": [
         "cmd sh -c 'mkdir -p priv/static/vendor/petri/wasm && cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/'",
         "cmd sh -c 'mkdir -p priv/static/vendor/bloom && cp assets/vendor/bloom/pkg/bloom_bg.wasm assets/vendor/bloom/pkg/bloom.js priv/static/vendor/bloom/'",
+        "cmd sh -c 'mkdir -p priv/static/vendor/glissando && cp assets/vendor/glissando/glissando_bg.wasm assets/vendor/glissando/glissando.js priv/static/vendor/glissando/'",
         "tailwind fugue --minify",
         "esbuild fugue --minify",
         "phx.digest"
