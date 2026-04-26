@@ -2,7 +2,6 @@
    https://tailwindcss.com/docs/configuration */
 
 @import "tailwindcss" source(none);
-@import "./graph.css";
 @source "../css";
 @source "../js";
 @source "../../lib/fugue_web";

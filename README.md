@@ -6,13 +6,6 @@ Fugue is a Phoenix/Elixir application that serves the website and coordinates si
 
 ## Services
 
-### Bloom — Wikipedia Graph Visualizer
-Explore Wikipedia's link structure as an interactive force-directed graph.
-
-- **Stack:** Rust + WASM (data extraction via [Dedalus](https://github.com/real-limoges/dedalus)), Cosmograph (WebGL graph rendering)
-- **Data flow:** Wikipedia XML → Dedalus (Rust extraction) → SQLite → Fugue (Elixir/BFS) → WebSocket → Cosmograph
-- **Status:** ~50% complete
-
 ### Funktor — Algorithmic Jazz
 Generative jazz composition with Launchpad Mini hardware integration.
 
@@ -31,7 +24,7 @@ The gravitational center of the system. A mood tracking microservice that uses f
 A Haskell Servant wrapper that exposes Chompsky (NLP parser) and Hazy (fuzzy logic) as HTTP endpoints.
 
 - **Stack:** Haskell (Servant), Chompsky (Lua-configured parser), Hazy
-- **Status:** Not started (blocked on Bloom/Funktor completion)
+- **Status:** In progress
 
 ### Chirplet — Birdsong Dialect Analysis
 DSP analysis of bird vocalizations using xeno-canto field recording data.
@@ -54,24 +47,24 @@ Lua-configured natural language parser, exposed through Garçon.
 ```
 ┌─────────────────────────────────────────────────────┐
 │              Fugue — Phoenix/Elixir                  │
-│   (Routing, LiveView UI, API Gateway, SQLite)        │
-└──────────┬────────┬────────┬────────┬────────┬──────┘
-           │        │        │        │        │
-           ▼        ▼        ▼        ▼        ▼
-        ┌──────┐ ┌───────┐ ┌────┐ ┌───────┐ ┌────────┐
-        │Bloom │ │Funktor│ │Ish │ │Garçon │ │Chirplet│
-        │Rust  │ │Haskell│ │HSK │ │Haskell│ │Julia   │
-        │+WASM │ │+Tone  │ │    │ │       │ │        │
-        └──────┘ └───────┘ └──┬─┘ └──┬────┘ └────────┘
-                               │      │
-                               ▼      ▼
-                            ┌──────────────┐
-                            │  Hazy        │
-                            │  (fuzzy logic)│
-                            └──────────────┘
+│         (Routing, LiveView UI, API Gateway)          │
+└────────────────┬────────┬────────┬─────────┬────────┘
+                 │        │        │         │
+                 ▼        ▼        ▼         ▼
+              ┌───────┐ ┌────┐ ┌───────┐ ┌────────┐
+              │Funktor│ │Ish │ │Garçon │ │Chirplet│
+              │Haskell│ │HSK │ │Haskell│ │Julia   │
+              │+Tone  │ │    │ │       │ │        │
+              └───────┘ └──┬─┘ └──┬────┘ └────────┘
+                            │      │
+                            ▼      ▼
+                         ┌──────────────┐
+                         │  Hazy        │
+                         │  (fuzzy logic)│
+                         └──────────────┘
 ```
 
-Each service is isolated — developed and deployed independently. Cross-service connections (Ish mood state shaping Funktor's jazz parameters, Chompsky parsing queries routed to Bloom, etc.) are aspirational and expected to emerge from use rather than upfront design.
+Each service is isolated — developed and deployed independently. Cross-service connections (Ish mood state shaping Funktor's jazz parameters, etc.) are aspirational and expected to emerge from use rather than upfront design.
 
 ## Tech Stack
 
@@ -79,9 +72,6 @@ Each service is isolated — developed and deployed independently. Cross-service
 |-------|-----------|
 | Web framework | Phoenix 1.8 / Elixir, LiveView |
 | HTTP server | Bandit |
-| Database | SQLite (ecto_sqlite3), WAL mode, FTS5 |
-| Graph visualization | Cosmograph (@cosmograph/graph) |
-| Graph data pipeline | Dedalus (Rust), Wikipedia XML |
 | Jazz generation | Funktor (Haskell), Tone.js, Launchpad Mini |
 | Mood tracking | Ish (Haskell), Hazy (fuzzy logic) |
 | NLP | Chompsky (Lua-configured parser), Garçon (Haskell Servant) |
@@ -105,46 +95,28 @@ iex -S mix phx.server
 
 Visit [`localhost:4000`](http://localhost:4000).
 
-### Bloom / Graph Visualization
-
-After cloning, install the JS dependency:
-
-```bash
-cd assets && npm install
-```
-
-Graph data lives in SQLite at `priv/graph_data/fugue.db`. The Dedalus pipeline (separate repo) extracts Wikipedia XML into this database.
-
 ## Project Structure
 
 ```
 fugue/
 ├── lib/
-│   ├── fugue/
-│   │   ├── graph/           # SQLite queries, BFS, search
-│   │   └── repo.ex          # Ecto.Repo (ecto_sqlite3)
+│   ├── fugue/               # Service clients (Ish, etc.)
 │   └── fugue_web/
 │       ├── live/            # LiveView modules
 │       ├── components/      # Shared UI components
 │       └── router.ex
 ├── assets/
-│   ├── js/
-│   │   ├── app.js           # Entry point
-│   │   └── hooks/
-│   │       └── graph_viz.js  # Cosmograph LiveView hook
+│   ├── js/                  # app.js entry + hooks
 │   ├── css/
 │   └── vendor/
 ├── config/
 ├── priv/
-│   ├── graph_data/          # SQLite database
-│   └── repo/migrations/
 └── docs/                    # Architecture & planning docs
 ```
 
 ## Related Repositories
 
-- [Dedalus](https://github.com/real-limoges/dedalus) — Rust pipeline: Wikipedia XML → SQLite graph data
-- Bloom, Funktor, Ish, Garçon, Chirplet, Hazy, Chompsky — sibling repos in the realcomplex.systems family
+- Funktor, Ish, Garçon, Chirplet, Hazy, Chompsky — sibling repos in the realcomplex.systems family
 
 ## Development
 

@@ -1,4 +1,3 @@
-import { GraphViz } from "./graph_viz"
 import { CalendarTooltip } from "./calendar_tooltip"
 import { HoverTooltip } from "./hover_tooltip"
 import { TemporalBrush } from "./temporal_brush"
@@ -15,7 +14,7 @@ import { SandpileCanvas } from "./sandpile_canvas"
 import { GamDemo } from "./gam_demo"
 
 export default {
-  GraphViz, CalendarTooltip, HoverTooltip, TemporalBrush,
+  CalendarTooltip, HoverTooltip, TemporalBrush,
   MoodTourSandbox, MoodIntroGate, MoodTour,
   ClusterAttractor, BandsHover, MamdaniPlayground, BoidsCanvas,
   QuantumWalk, QuantumStats, SandpileCanvas, GamDemo

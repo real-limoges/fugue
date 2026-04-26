@@ -33,12 +33,8 @@ if config_env() == :dev and System.get_env("PHX_SERVER") do
 end
 
 # Service URLs are honored in every environment so the dev docker-compose
-# stack can point at the sibling containers (cozodb, ish) instead of the
+# stack can point at the sibling containers (ish) instead of the
 # compile-time localhost defaults in config/config.exs.
-if url = System.get_env("COZODB_URL") do
-  config :fugue, Fugue.Db, url: url, auth_token: System.get_env("COZODB_AUTH_TOKEN")
-end
-
 if url = System.get_env("ISH_URL") do
   config :fugue, Fugue.Ish,
     url: url,
@@ -61,10 +57,6 @@ if config_env() == :prod do
   host = System.get_env("PHX_HOST") || "example.com"
 
   config :fugue, :dns_cluster_query, System.get_env("DNS_CLUSTER_QUERY")
-
-  config :fugue, Fugue.Db,
-    url: System.get_env("COZODB_URL", "http://localhost:3000"),
-    auth_token: System.get_env("COZODB_AUTH_TOKEN")
 
   config :fugue, Fugue.Ish,
     url: System.get_env("ISH_URL", "http://localhost:7333"),
