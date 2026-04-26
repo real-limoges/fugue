@@ -16,8 +16,6 @@ WORKDIR /app
 
 RUN mix local.hex --force && mix local.rebar --force
 
-ENV MIX_ENV=dev
-
 EXPOSE 4000
 
 CMD ["sh", "-c", "mix deps.get && npm install --prefix assets && mix setup && mix phx.server"]

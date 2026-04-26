@@ -6,7 +6,7 @@ defmodule Fugue.Blog do
 
   alias Fugue.Blog.{Post, Parser}
 
-  @blog_dir "priv/blog"
+  @blog_dir Application.compile_env(:fugue, :blog_dir, "priv/blog")
 
   blog_paths =
     @blog_dir
@@ -18,7 +18,7 @@ defmodule Fugue.Blog do
     for path <- blog_paths do
       @external_resource path
 
-      slug = path |> Path.basename() |> Path.rootname() |> String.replace(~r/^\d+_/, "")
+      slug = path |> Path.basename() |> Path.rootname() |> String.replace(~r/^\d+-/, "")
       raw = File.read!(path)
 
       {frontmatter, body} = Parser.split_frontmatter(raw)
