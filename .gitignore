@@ -46,3 +46,5 @@ Dockerfile.cozodb
 .env.local
 
 node-compile-cache/
+
+priv/blog/TEMPLATE.md
