@@ -25,7 +25,6 @@ defmodule FugueWeb.Router do
     live "/menagerie/quantum-walk", MenagerieLive.QuantumWalk
     live "/menagerie/quantum-stats", MenagerieLive.QuantumStats
     live "/menagerie/sandpile", MenagerieLive.Sandpile
-    live "/graph", GraphLive
     live "/lab/gam", GamLive
   end
 end
