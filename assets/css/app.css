@@ -101,3 +101,30 @@
   height: 2px;
   background: oklch(72% 0.25 330);
 }
+
+/* Blog typography — Space Grotesk scoped to /blog pages */
+.blog-page,
+.blog-page .prose {
+  font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+}
+
+.blog-page .prose {
+  font-size: 1.125rem;
+  line-height: 1.75;
+}
+
+.blog-page .prose h1,
+.blog-page .prose h2,
+.blog-page .prose h3 {
+  letter-spacing: -0.02em;
+}
+
+.blog-page .prose > p:first-of-type::first-letter {
+  float: left;
+  font-family: 'Space Grotesk', ui-sans-serif, sans-serif;
+  font-size: 3.75rem;
+  line-height: 0.85;
+  font-weight: 700;
+  padding: 0.35rem 0.6rem 0 0;
+  color: oklch(72% 0.25 330);
+}
