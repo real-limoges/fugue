@@ -63,7 +63,10 @@ defmodule FugueWeb.ColorLive do
       </.section>
 
       <.section number="5" id="language" title="Language carves it up">
-        <:splash label="§5a — WCS chip grids (Berinmo + English baseline + 2–3 more)" aspect="aspect-[16/9]" />
+        <:splash
+          label="§5a — WCS chip grids (Berinmo + English baseline + 2–3 more)"
+          aspect="aspect-[16/9]"
+        />
         <:splash label="§5b — Russian / Hungarian / Welsh illustrations" aspect="aspect-[16/9]" />
         <.stub_note>
           Two registers kept visibly distinct: WCS data with consensus opacity
@@ -74,7 +77,10 @@ defmodule FugueWeb.ColorLive do
       </.section>
 
       <.section number="6" id="remainder" title="The remainder">
-        <:splash label="§6 — protanope toggle returned (the splash deliberately fails)" aspect="aspect-[16/9]" />
+        <:splash
+          label="§6 — protanope toggle returned (the splash deliberately fails)"
+          aspect="aspect-[16/9]"
+        />
         <.stub_note>
           Hardest writing problem in the chapter — budget more drafting passes
           than the other six combined. The chain is public; the having is not.
@@ -98,10 +104,12 @@ defmodule FugueWeb.ColorLive do
   attr :number, :string, required: true
   attr :id, :string, required: true
   attr :title, :string, required: true
+
   slot :splash do
     attr :label, :string, required: true
     attr :aspect, :string, required: true
   end
+
   slot :inner_block, required: true
 
   defp section(assigns) do
@@ -112,7 +120,13 @@ defmodule FugueWeb.ColorLive do
         <h2 class="text-2xl font-semibold text-white tracking-tight">{@title}</h2>
       </div>
 
-      <div :for={s <- @splash} class={["w-full rounded border-2 border-dashed border-base-content/20 bg-base-200/30 flex items-center justify-center", s.aspect]}>
+      <div
+        :for={s <- @splash}
+        class={[
+          "w-full rounded border-2 border-dashed border-base-content/20 bg-base-200/30 flex items-center justify-center",
+          s.aspect
+        ]}
+      >
         <span class="font-mono text-xs text-base-content/40 tracking-wider px-4 text-center">
           {s.label}
         </span>
