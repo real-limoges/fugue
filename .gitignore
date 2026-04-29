@@ -48,3 +48,6 @@ Dockerfile.cozodb
 node-compile-cache/
 
 priv/blog/TEMPLATE.md
+
+CLAUDE.md
+**/CLAUDE.md
