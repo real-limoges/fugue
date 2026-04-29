@@ -24,41 +24,37 @@ defmodule Fugue.Ish do
     |> parse_response()
   end
 
-  def data do
-    IshCache.fetch(:data, fn ->
-      Req.get("#{base_url()}/data", req_opts()) |> parse_response()
+  def data(from \\ nil, to \\ nil) do
+    IshCache.fetch({:data, from, to}, fn ->
+      get("/data", date_params(from, to)) |> parse_response()
     end)
   end
 
   def entries(from \\ nil, to \\ nil) do
-    params =
-      [from: from, to: to]
-      |> Enum.reject(fn {_k, v} -> is_nil(v) end)
-
-    Req.get("#{base_url()}/entries", Keyword.merge(req_opts(), params: params))
-    |> parse_response()
+    get("/entries", date_params(from, to)) |> parse_response()
   end
 
-  def analysis do
-    Req.get("#{base_url()}/analysis", req_opts())
-    |> parse_response()
+  def analysis(from \\ nil, to \\ nil) do
+    get("/analysis", date_params(from, to)) |> parse_response()
   end
 
-  def clusters do
-    Req.get("#{base_url()}/analysis/clusters", req_opts())
-    |> parse_response()
+  def clusters(from \\ nil, to \\ nil) do
+    get("/analysis/clusters", date_params(from, to)) |> parse_response()
   end
 
-  def cluster(k, m) do
-    IshCache.fetch({:cluster, k, m}, fn ->
-      Req.post("#{base_url()}/cluster", Keyword.merge(req_opts(), json: %{k: k, m: m}))
+  def cluster(k, m, from \\ nil, to \\ nil) do
+    IshCache.fetch({:cluster, k, m, from, to}, fn ->
+      Req.post(
+        "#{base_url()}/cluster",
+        Keyword.merge(req_opts(), json: %{k: k, m: m}, params: date_params(from, to))
+      )
       |> parse_response()
     end)
   end
 
-  def gaps do
-    IshCache.fetch(:gaps, fn ->
-      Req.get("#{base_url()}/gaps", req_opts()) |> parse_response()
+  def gaps(from \\ nil, to \\ nil) do
+    IshCache.fetch({:gaps, from, to}, fn ->
+      get("/gaps", date_params(from, to)) |> parse_response()
     end)
   end
 
@@ -111,4 +107,12 @@ defmodule Fugue.Ish do
   end
 
   defp parse_response({:error, _} = err), do: err
+
+  defp get(path, params) do
+    Req.get("#{base_url()}#{path}", Keyword.merge(req_opts(), params: params))
+  end
+
+  defp date_params(from, to) do
+    [from: from, to: to] |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+  end
 end

@@ -10,6 +10,10 @@ defmodule FugueWeb.MoodLive do
   @default_k 3
   @default_m 1.5
 
+  # Pinned so clusters stay stable as new entries land. Bump when promoting an epilogue.
+  @from ~D[2022-04-01]
+  @to ~D[2026-03-30]
+
   def mount(_params, _session, socket) do
     socket =
       assign(socket,
@@ -62,9 +66,9 @@ defmodule FugueWeb.MoodLive do
 
   def handle_info(:load_data, socket) do
     tasks = %{
-      data: Task.async(fn -> Ish.data() end),
-      analysis: Task.async(fn -> Ish.cluster(@default_k, @default_m) end),
-      gaps: Task.async(fn -> Ish.gaps() end)
+      data: Task.async(fn -> Ish.data(@from, @to) end),
+      analysis: Task.async(fn -> Ish.cluster(@default_k, @default_m, @from, @to) end),
+      gaps: Task.async(fn -> Ish.gaps(@from, @to) end)
     }
 
     results = Map.new(tasks, fn {key, task} -> {key, Task.await(task, 15_000)} end)
