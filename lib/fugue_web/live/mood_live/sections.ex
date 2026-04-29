@@ -55,10 +55,10 @@ defmodule FugueWeb.MoodLive.Sections do
                 elem(@stats.date_range, 1)} &middot; PCA projection on daily self-ratings &middot; real limoges
             </div>
             <p class="mb-2">
-              Every evening before bed for the past four years I wrote down five numbers about how I was doing. This is all of them, squashed onto a flat plane by a little math that tries to preserve the shape of the whole thing while throwing the rest away.
+              Every night before bed for four years; five numbers about how the day went. This is all of them, flattened onto 2D by PCA. Most of the variance is preserved; the rest is gone.
             </p>
             <p>
-              One dot per day. The line is the order I lived them in — start to wherever I am now. The colors are the mood states the clustering found later, painted back onto the path after the fact. I didn't pick where any of it went, and watching it loop back through the same regions never gets old.
+              One dot per day, connected in the order they happened. Colors come from clustering, painted back onto the path after the fact. I didn't pick the shape. I can't tell you where it goes next.
             </p>
           </div>
         </div>
@@ -122,17 +122,17 @@ defmodule FugueWeb.MoodLive.Sections do
         </p>
 
         <p class="text-sm text-gray-300 mb-5 leading-relaxed">
-          I have bipolar disorder. The cartoon version is two poles — manic, depressed — but the inside of it is way more interesting than that. Most days aren't either. Most days are <em>something</em>, and that something is too textured to name with two words.
+          I have bipolar disorder. The cartoon version is two poles; manic, depressed. Most of my days are neither. Some mix; two words don't carry enough information.
         </p>
         <p class="text-sm text-gray-300 mb-5 leading-relaxed">
-          The language I was handed didn't have enough resolution for what I was actually experiencing, so I started writing down numbers instead. A handful, every night, about how the day had felt. After a few hundred days I had enough to ask the data what
-          <em>it</em>
-          thought my states were, instead of what a diagnostic manual said they should be. I ran it through an algorithm that lets a day belong
+          My doctor put me on a mood chart. Five numbers a night; how the day went. I did it because I was told to. It turns out compliance, sustained long enough, becomes a dataset. After a few hundred days there was enough to ask what
+          <em>the data</em>
+          thought my states were, instead of trusting what a diagnostic manual said they should be. The algorithm I ended up using lets a day belong
           <em>partly</em>
-          to more than one state instead of forcing it into one — because that's how the days actually arrive.
+          to more than one state. Closer to how the days actually arrive.
         </p>
         <p class="text-sm text-gray-300 leading-relaxed">
-          If "fuzzy clustering" doesn't click yet, that's okay — drag the dot below and watch what happens.
+          If "fuzzy clustering" doesn't mean anything yet, drag the dot below.
         </p>
       </header>
 
@@ -141,13 +141,13 @@ defmodule FugueWeb.MoodLive.Sections do
           Try it first
         </h2>
         <p class="text-sm text-gray-400 mb-6 max-w-2xl leading-relaxed">
-          Three fake clusters on an axis with no units. Drag the dot. Drag the sliders. The bar shows how much the dot belongs to each cluster — at high fuzziness it belongs to
+          Three fake clusters on an axis with no units. Drag the dot; drag the sliders. The bar shows how much the dot belongs to each cluster. Crank fuzziness all the way up and it belongs to
           <em>all</em>
-          of them, a little. If you want more than a toy, there's a
+          of them at once. There's a
           <a href="/menagerie" class="underline decoration-dotted hover:text-gray-200">
             bigger menagerie
           </a>
-          where you can reshape the membership curves themselves.
+          if you want to reshape the membership curves themselves.
         </p>
 
         <div
@@ -204,7 +204,7 @@ defmodule FugueWeb.MoodLive.Sections do
       </h2>
 
       <p class="text-sm text-gray-400 mb-4 leading-relaxed">
-        Same idea as the toy above, now with four years of real days behind it. These aren't categories I picked off a list — they're shapes the data found on its own, and I named them once I could see what they looked like. The clustering doesn't care about diagnostic labels; it just notices when days look like other days. Naming them after the fact felt like meeting parts of myself I'd been living with but never introduced.
+        Same idea, four years of real days behind it. I didn't pick the categories off a list; the clustering found them, and I named them once I could see them. The algorithm doesn't know anything about bipolar. It just notices when days resemble other days. Some of the names took a while to settle.
         <.link
           navigate="/menagerie"
           class="text-amber-300 hover:text-amber-200 underline decoration-dotted underline-offset-4"
@@ -214,7 +214,7 @@ defmodule FugueWeb.MoodLive.Sections do
       </p>
 
       <p class="text-sm text-gray-400 mb-6 leading-relaxed">
-        Run {@stats.entry_count} days through fuzzy c-means clustering and my moods fall into {@stats.cluster_count} rough shapes — not boxes, more like gravity wells a day can lean toward.
+        Run {@stats.entry_count} days through fuzzy c-means and my moods land in {@stats.cluster_count} rough shapes. Not boxes; a day can lean partly into more than one.
         <%= if @stats.most_common do %>
           The one I live in most is
           <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.most_common.id, "#aaa")}"}>
@@ -229,7 +229,7 @@ defmodule FugueWeb.MoodLive.Sections do
           My longest uninterrupted stretch was {@stats.longest_run.days} days of <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.longest_run.id, "#aaa")}"}>
             {@stats.longest_run.name}</span>.
         <% end %>
-        Click any state to dim everything else across the page — click it again to let everything back in.
+        Click any state to dim everything else; click again to let it back in.
       </p>
 
       <div class="text-[10px] uppercase tracking-widest text-amber-300/80 mb-1.5">
@@ -287,7 +287,7 @@ defmodule FugueWeb.MoodLive.Sections do
       <div class="bg-base-200 rounded-lg p-4 mt-4">
         <h3 class="text-sm font-semibold text-gray-400 mb-2">Days in-between</h3>
         <p class="text-xs text-gray-500 mb-3 max-w-3xl">
-          Most days lean clearly toward one state. But {@stats.ambiguity.count} days ({@stats.ambiguity.pct}%) refused to settle — no single state owned more than 45% of the day. These are the entries where fuzzy clustering earns its keep: a hard model would force each into a box, but these days genuinely lived between states.
+          Most days lean clearly toward one state. {@stats.ambiguity.count} of them ({@stats.ambiguity.pct}%) didn't; no single state owned more than 45%. A hard clustering model would shove each into a box. Fuzzy doesn't have to.
         </p>
         <AmbiguityHistogram.histogram bins={@ambiguity_bins} threshold={@ambiguity_threshold} />
       </div>
@@ -314,10 +314,10 @@ defmodule FugueWeb.MoodLive.Sections do
         Day by day
       </h2>
       <p class="text-sm text-gray-400 mb-4 leading-relaxed">
-        From the inside, four years of mood is just <em>now</em>, over and over — you can't feel a season of yourself while you're in it. Pulling back this far is its own pleasure: stripes, runs, pockets where one state pooled for weeks before something tipped it over. I can point to whole stretches and say <em>oh, right, that's where I was</em>, and the recognition is fun every time.
+        Lived through, four years of mood is just <em>now</em>, over and over; you can't feel a season of yourself while you're in it. From outside it's something else. Stripes, runs, pockets where one state pooled for weeks before something tipped.
       </p>
       <p class="text-sm text-gray-400 mb-6 leading-relaxed">
-        Every square is a day. Color is the dominant mood state; brightness is how hard it pulled. White-bordered squares are the days when the dominant state actually changed — the meaningful hand-offs, not the day-to-day jitter.
+        Every square is a day. Color is the dominant state; brightness is how hard it pulled. White borders mark days where the dominant state actually changed — not every wobble, just the ones that stuck.
         <%= if @stats.first_state && @stats.last_state do %>
           I started in
           <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.first_state.id, "#aaa")}"}>
@@ -383,7 +383,7 @@ defmodule FugueWeb.MoodLive.Sections do
       <div class="bg-base-200 rounded-lg p-4 mt-4">
         <h3 class="text-sm font-semibold text-gray-400 mb-2">Same months, every year</h3>
         <p class="text-xs text-gray-500 mb-3 max-w-3xl">
-          The stream above shows what happened; this collapses it across years to ask whether it <em>repeats</em>. Each wedge is a calendar month — January at twelve o'clock, clockwise through December. The fill shows how days split across states for that month, pooled over every year tracked. If there's an annual rhythm, certain months will consistently lean toward one color.
+          The stream above shows what happened; this one collapses it across years to ask whether anything <em>repeats</em>. Each wedge is a calendar month — January at twelve o'clock, clockwise through December — pooled across every year tracked. If there's an annual rhythm, certain months will lean the same color year over year.
         </p>
         <SeasonRing.ring
           months={@season_months}
@@ -412,15 +412,13 @@ defmodule FugueWeb.MoodLive.Sections do
         How my moods shift
       </h2>
       <p class="text-sm text-gray-400 mb-4 leading-relaxed">
-        The interesting question isn't which state I'm in — it's the verbs. The hand-offs. What does a day tend to
-        <em>become</em>
-        the next morning? Some pairs are well-worn paths and some almost never happen, and the shape of those preferences says something about me I couldn't have named on my own. The motion is what bipolar actually is, from the inside; the states are just where the motion pauses to catch its breath.
+        The interesting question isn't which state. It's the transitions. What does a day usually turn into the next morning? Some hand-offs are well-worn paths; others basically never happen. Bipolar, from the inside, is mostly motion; the states are just where the motion idles.
       </p>
       <p class="text-sm text-gray-400 mb-6 leading-relaxed">
-        The dominant state flipped {@stats.transition_count} times across {@stats.entry_count} days — roughly once every {div(
+        The dominant state flipped {@stats.transition_count} times across {@stats.entry_count} days, about once every {div(
           @stats.entry_count,
           max(@stats.transition_count, 1)
-        )} days on average. I'm only counting a hand-off when the new state holds for at least five days; anything shorter is the model arguing with itself, not me actually moving.
+        )} days. I only count a flip when the new state holds for at least five days; anything shorter is noise.
         <%= if @stats.biggest_flow && @stats.biggest_flow.from && @stats.biggest_flow.to do %>
           The most-worn path was
           <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.biggest_flow.from.id, "#aaa")}"}>
@@ -432,7 +430,7 @@ defmodule FugueWeb.MoodLive.Sections do
           </span>
           ({@stats.biggest_flow.count}×).
         <% end %>
-        The timeline below turns every reign of a mood state into a colored block, with white markers at every handoff.
+        The timeline below turns each run of a state into a colored block, with white markers at the hand-offs.
       </p>
 
       <div class="bg-base-200 rounded-lg p-4">
@@ -447,7 +445,7 @@ defmodule FugueWeb.MoodLive.Sections do
       <div class="bg-base-200 rounded-lg p-4 mt-4">
         <h3 class="text-sm font-semibold text-gray-400 mb-2">Where do I go from here?</h3>
         <p class="text-xs text-gray-500 mb-3">
-          Once I'm in a state, where does it tend to drop me next? Thicker bands mean a well-trodden path.
+          Once I'm in a state, where does it usually go next? Thicker bands are the well-worn paths.
         </p>
         <TransitionSankey.sankey
           transitions={@mood_transitions}
@@ -462,7 +460,7 @@ defmodule FugueWeb.MoodLive.Sections do
         <div class="bg-base-200 rounded-lg p-4 flex flex-col h-full">
           <h3 class="text-sm font-semibold text-gray-200 mb-1">Phase space, without the diary</h3>
           <p class="text-xs text-gray-500 mb-3 leading-snug">
-            A Thomas strange attractor in the palette above. Three coupled equations looping a bounded region forever without repeating — states as gravity wells, living as a path that can't quite settle into any of them.
+            A Thomas attractor in the palette above; three coupled equations looping a bounded region forever, never quite repeating. States as gravity wells; the path doesn't settle into any of them. The math doesn't know it's a metaphor.
           </p>
           <div
             id="cluster-attractor"
@@ -504,17 +502,17 @@ defmodule FugueWeb.MoodLive.Sections do
         Under the hood
       </h2>
       <p class="text-sm text-gray-400 mb-4 leading-relaxed">
-        Up to here it's been the <em>output</em>
-        of the model — the named states, how they ebb, how they hand off. This section is the <em>input</em>: the five numbers I jot down every night before bed, before anything fancy happens to them. Sleep, anxiety, sensitivity, outlook, and speed, each on 0–10. The whole picture above is built out of that one tiny daily habit.
+        So far you've been seeing the <em>output</em>
+        of the model: the named states, how they ebb, how they hand off. This section is the <em>input</em>. Five numbers a night, before anything else happens to them. Sleep, anxiety, sensitivity, outlook, speed; each on its own scale. The whole picture above is built out of that one habit.
       </p>
       <p class="text-sm text-gray-400 mb-6 leading-relaxed">
-        They're the only thing the clustering knows about me — every shape further up the page is downstream of them. Here's what the five actually do on their own: how they drift over time across all {@stats.entry_count} days, and how their shape shifts once the model splits the days into states. Some of it I expected. A couple of dimensions genuinely surprised me, and that's been my favorite part of doing this.
+        The clustering doesn't see anything else about me; every shape further up the page is downstream of these five. Here's what they each do on their own: how they drift across {@stats.entry_count} days; how the distributions shift once the model splits the days into states. Some of it I expected. The rest is why the model was worth the trouble.
       </p>
 
       <div class="bg-base-200 rounded-lg p-4">
         <h3 class="text-sm font-semibold text-gray-400 mb-2">A flower for every month</h3>
         <p class="text-xs text-gray-500 mb-3">
-          Each flower is one month. The shape is the average of those five raw inputs over the month — long spokes are dimensions that ran high, short ones ran low. The fill color is whichever cluster came out on top once the same numbers went through the model. Same data, two readings: the inputs you'd recognize and the output they add up to.
+          Each flower is one month. Spokes are the average of the five raw inputs over that month; long means high, short means low. The fill color is whichever cluster ran the month, once the numbers went through the model. Inputs and output, side by side.
         </p>
         <MoodFlowers.flowers
           flowers={@mood_flowers_list}
@@ -528,7 +526,7 @@ defmodule FugueWeb.MoodLive.Sections do
       <div class="bg-base-200 rounded-lg p-4 mt-4">
         <h3 class="text-sm font-semibold text-gray-400 mb-2">Has anything drifted?</h3>
         <p class="text-xs text-gray-500 mb-3 max-w-3xl">
-          A 90-day rolling average for each of the five raw inputs. If a line tilts over the years, my baseline for that dimension has shifted — the kind of slow change that's invisible from inside but shows up when you zoom out far enough.
+          A 90-day rolling average for each of the five raw inputs. If a line tilts, my baseline shifted. Slow changes like that are basically invisible while you're in them.
         </p>
         <DimensionDrift.drift dimensions={@drift_dimensions} />
       </div>
@@ -536,8 +534,8 @@ defmodule FugueWeb.MoodLive.Sections do
       <div class="bg-base-200 rounded-lg p-4 mt-4">
         <h3 class="text-sm font-semibold text-gray-400 mb-2">Distributions, by state</h3>
         <p class="text-xs text-gray-500 mb-3 max-w-3xl">
-          For each of the five inputs: where it usually lands <em>overall</em>
-          (the dashed outline), and where it lands once you split by cluster (the filled shapes). Each row uses its own scale because the five inputs aren't all rated on the same range. A dimension whose shape barely shifts between states is pulling less weight; a dimension whose shape slides across the range is doing a lot of the work.
+          For each input: where it usually lands <em>overall</em>
+          (the dashed outline) versus where it lands inside each cluster (the filled shapes). Each row has its own scale — the inputs aren't on the same range. A dimension whose shape barely shifts between states is pulling less weight in the model; one that slides hard across the range is doing most of the work.
         </p>
         <DimensionDistributions.distributions
           points={@distribution_points}
@@ -561,15 +559,13 @@ defmodule FugueWeb.MoodLive.Sections do
     <section id="mood-chapter-5" class="mb-24">
       <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">The gaps</h2>
       <p class="text-sm text-gray-400 mb-4 leading-relaxed">
-        The days I didn't track are also data. Tracking is the first thing to drop when a state gets loud enough to crowd out the form — so when the page goes quiet, it's almost never because nothing was happening. The gaps aren't holes in the record so much as a different kind of entry: <em>whatever this was, it was bigger than the form</em>.
+        The days I didn't track are also data. Tracking is the first thing to fall off when a state gets loud — so when the form goes quiet, it's rarely because nothing was happening. The gaps are their own kind of entry.
       </p>
       <p class="text-sm text-gray-400 mb-6 leading-relaxed">
         <%= if @stats.gap_count > 0 do %>
-          I'm not perfect at this — I missed some days. There are {@stats.gap_count} stretches where I went quiet, and a lot of the time the state I came back in wasn't the state I left in. The shape of
-          <em>that</em>
-          turned out to be its own interesting pattern. Click a mood state above to see which gaps touched it.
+          I miss days. There are {@stats.gap_count} stretches where I went quiet; most of the time the state I came back in wasn't the state I left. That asymmetry was its own surprise. Click a state above to see which gaps touched it.
         <% else %>
-          No gaps — every day in the window is accounted for.
+          No gaps; every day in the window is accounted for.
         <% end %>
       </p>
 
@@ -591,13 +587,13 @@ defmodule FugueWeb.MoodLive.Sections do
     <section class="mb-16 max-w-2xl">
       <h2 class="text-sm font-semibold uppercase tracking-widest text-gray-200 mb-4">After</h2>
       <p class="text-sm text-gray-300 mb-5 leading-relaxed">
-        That's the shape of it, for now. Tonight I'll write down five more numbers, and the picture will be a little different. Come back in a few months and it'll be different in ways neither of us can predict yet — that's part of the fun.
+        That's the shape of it, for now. Tonight I'll add five more numbers; the picture will move. Come back in a few months and it'll be somewhere I can't predict from here.
       </p>
       <p class="text-sm text-gray-300 mb-5 leading-relaxed">
-        None of this is a recommendation, a method, or a diagnosis. It's just me looking at myself with a little more resolution than the language I was handed, because being bipolar is genuinely interesting from the inside and I wanted a way to share that. The numbers don't replace the words — they sit next to them, and sometimes they catch something the words miss.
+        None of this is a recommendation, a method, or a diagnosis. Just higher resolution than two words allow; being bipolar is more interesting than two words let on. The numbers don't replace the words; they sit alongside them, and sometimes catch something words miss.
       </p>
       <p class="text-sm text-gray-300 leading-relaxed">
-        If you read this far, thank you. If something in here landed for you — or if you've built something like it for your own data — I'd genuinely like to hear about it.
+        If you read this far, thanks. If anything landed, or you've made something like this from your own data, I'd like to hear about it.
       </p>
     </section>
     """
