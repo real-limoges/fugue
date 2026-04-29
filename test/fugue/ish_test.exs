@@ -74,6 +74,54 @@ defmodule Fugue.IshTest do
     end
   end
 
+  describe "date params" do
+    test "data/2 forwards from/to as ISO query params" do
+      stub_ish(fn conn ->
+        assert conn.query_string == "from=2026-01-01&to=2026-02-01"
+        Req.Test.json(conn, IshFixtures.entries())
+      end)
+
+      assert {:ok, _} = Ish.data(~D[2026-01-01], ~D[2026-02-01])
+    end
+
+    test "data/0 omits the query string when bounds are nil" do
+      stub_ish(fn conn ->
+        assert conn.query_string == ""
+        Req.Test.json(conn, IshFixtures.entries())
+      end)
+
+      assert {:ok, _} = Ish.data()
+    end
+
+    test "data/2 caches per (from, to)" do
+      counter = :counters.new(1, [])
+
+      stub_ish(fn conn ->
+        :counters.add(counter, 1, 1)
+        Req.Test.json(conn, IshFixtures.entries())
+      end)
+
+      assert {:ok, _} = Ish.data()
+      assert {:ok, _} = Ish.data(~D[2026-01-01], nil)
+      assert {:ok, _} = Ish.data(~D[2026-01-01], nil)
+      assert :counters.get(counter, 1) == 2
+    end
+
+    test "cluster/4 caches per (k, m, from, to)" do
+      counter = :counters.new(1, [])
+
+      stub_ish(fn conn ->
+        :counters.add(counter, 1, 1)
+        Req.Test.json(conn, IshFixtures.cluster_response(3))
+      end)
+
+      assert {:ok, _} = Ish.cluster(3, 1.5)
+      assert {:ok, _} = Ish.cluster(3, 1.5, ~D[2026-01-01], nil)
+      assert {:ok, _} = Ish.cluster(3, 1.5, ~D[2026-01-01], nil)
+      assert :counters.get(counter, 1) == 2
+    end
+  end
+
   describe "membership_functions/0" do
     test "returns parsed definitions" do
       stub_ish(fn conn ->
