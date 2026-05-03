@@ -10,7 +10,8 @@ defmodule FugueWeb.ColorLive do
        "Color is a transaction between light, eye, screen, and word."
      )
      |> assign(:protanope, false)
-     |> assign(:lambda, 540.0)}
+     |> assign(:lambda, 540.0)
+     |> assign(:wcs_language, :english)}
   end
 
   def handle_event("toggle_protanope", _params, socket) do
@@ -19,6 +20,13 @@ defmodule FugueWeb.ColorLive do
 
   def handle_event("set_lambda", %{"lambda" => v}, socket) do
     {:noreply, assign(socket, :lambda, String.to_integer(v) * 1.0)}
+  end
+
+  def handle_event("cycle_wcs_language", _params, socket) do
+    langs = Fugue.Color.WCSMock.languages()
+    current = socket.assigns.wcs_language
+    next = Enum.at(langs, rem(Enum.find_index(langs, &(&1 == current)) + 1, length(langs)))
+    {:noreply, assign(socket, :wcs_language, next)}
   end
 
   def render(assigns) do
@@ -31,19 +39,11 @@ defmodule FugueWeb.ColorLive do
         <h1 class="text-4xl sm:text-5xl font-semibold tracking-tight text-white">
           Color is a transaction.
         </h1>
-        <p class="font-mono text-xs text-base-content/40">
-          [stub: framing tagline only — full intro deferred]
-        </p>
       </header>
 
       <.section number="1" id="prism" title="The prism">
-        <:splash label="hero splash TBD (prism parked — see docs)" aspect="aspect-[16/9]" />
+        <.hero_splash />
         <p class="text-lg leading-relaxed">This is where color begins.</p>
-        <.stub_note>
-          Hero splash deferred. Prism was the original plan but feels like worn
-          ground; revisit later or replace with a different opener.
-          No author yet, no qualifications. The reader is allowed the easy story.
-        </.stub_note>
       </.section>
 
       <.section number="2" id="eye" title="The eye's guesses">
@@ -65,25 +65,10 @@ defmodule FugueWeb.ColorLive do
         <p class="leading-relaxed text-base-content/70">
           Three isn't fundamental. Some people have four. Mantis shrimp have sixteen.
         </p>
-
-        <.stub_note>
-          [draft prose — fuzzy-frame sentence and personal beat are starter copy from the plan,
-          rework as needed. Wavelength slider deferred (cones.wasm vendored; ship/skip TBD).
-          Toggle is local to section 2 today; will be lifted to a shared assign once sections 3 and 6 hook in.]
-        </.stub_note>
       </.section>
 
       <.section number="3" id="metamerism" title="Two colors, same color">
         <.metamer_splash protanope={@protanope} />
-        <.stub_note>
-          [v1: two patches that match for protanope (no L) but differ for a normal
-          trichromat. Toggle is shared with section 2 — once a reader is in
-          protanope mode, the patches collapse. v2 should add the anomalous-trichromat
-          midpoint (damaged L cone) and hover-revealed spectral bars; design plan's
-          "matches for trichromat / differs for protanope" direction is mathematically
-          impossible (a trichromat metamer is automatically a dichromat metamer), so
-          we use the achievable inverse direction.]
-        </.stub_note>
       </.section>
 
       <.section number="4" id="gamut" title="Where the screen can't reach">
@@ -98,11 +83,6 @@ defmodule FugueWeb.ColorLive do
         <p class="leading-relaxed">
           Each layer drops something on the way through; none of it gets put back.
         </p>
-
-        <.stub_note>
-          [v1 throw-up. Mock prose. Cut candidate if chapter runs long; if cut,
-          fold the "each layer compresses" beat into section 3.]
-        </.stub_note>
       </.section>
 
       <.section number="5" id="language" title="Language carves it up">
@@ -111,7 +91,7 @@ defmodule FugueWeb.ColorLive do
           partition differently, and where they do, the line's real to whoever drew it.
         </p>
 
-        <.placeholder_splash label="WCS chip grids (Berinmo + English baseline + 2-3 more) — Timbre data pending" />
+        <.wcs_splash language={@wcs_language} />
 
         <p class="leading-relaxed">
           Berinmo cuts the green-yellow region in a place English doesn't. Berinmo
@@ -119,11 +99,14 @@ defmodule FugueWeb.ColorLive do
           side. The line's doing work.
         </p>
 
-        <.placeholder_splash label="Russian / Hungarian / Welsh illustrations — secondary literature" />
+        <.langs_splash />
 
         <p class="leading-relaxed">
-          Russian splits blue: siniy, goluboy. Hungarian splits red. Welsh has glas,
-          which covers green and bits of blue and gray. None of these are translation
+          Russian splits blue: синий, голубой. Mongolian splits it on a different
+          line: хөх, the deep blue of winter ice, against цэнхэр, summer sky.
+          Hungarian splits red. Vietnamese xanh covers green and blue; Japanese 青
+          (ao) did the same until 緑 (midori) carved off a piece; Kazakh көк still
+          covers both, with жасыл a newer green. None of these are translation
           problems; they're different partitions of the same continuum.
         </p>
 
@@ -137,20 +120,9 @@ defmodule FugueWeb.ColorLive do
           I learned "red" before I understood I wasn't seeing it the way the word
           implied. Some of those lines are real to their speakers and invisible to me.
         </p>
-
-        <.stub_note>
-          [v1 throw-up. Mock prose, all lines drafty. Splash 5a (WCS chip grids) blocked
-          on Timbre repo bootstrapping; splash 5b (Russian / Hungarian / Welsh) is
-          hand-curated — design pass not started. Decide later: drop one personal beat
-          if both crowd; ship 5b as a separate splash or fold into 5a.]
-        </.stub_note>
       </.section>
 
-      <.section
-        number="6"
-        id="remainder"
-        title={Phoenix.HTML.raw(~s|What I <span class="text-red-500">X</span> show you|)}
-      >
+      <.section number="6" id="remainder" title="What I can't show you">
         <p class="leading-relaxed">
           Five sections so far. Light, eye, screen, word — chains that can be pinned
           down.
@@ -169,17 +141,11 @@ defmodule FugueWeb.ColorLive do
           There's a thought experiment about a scientist who learns everything about
           red and then sees it. This is the inverse.
         </p>
-
-        <.stub_note>
-          [v1 throw-up. Hardest writing problem in the chapter — budget more drafting
-          passes than the other six combined. Chain-is-public / having-is-not is the
-          load-bearing beat; Mary's Room inversion lands AFTER. No Nagel, no Jackson
-          by name. Splash here reuses section 3's metamer pair locked to protanope sim;
-          the failure caption is the argument.]
-        </.stub_note>
       </.section>
 
       <.section number="7" id="closer" title="After">
+        <.closer_splash />
+
         <p class="leading-relaxed">
           Light, eye, screen, word. Four parties, all of them in the open.
         </p>
@@ -187,13 +153,6 @@ defmodule FugueWeb.ColorLive do
         <p class="text-lg leading-relaxed">
           Color is a transaction.
         </p>
-
-        <.stub_note>
-          [v1 throw-up. The fifth party — the having — is deliberately left off the
-          list. Splash here originally reused the section 1 prism; that's parked, so
-          §7 is text-only for now. May want a tiny callback image or just keep it
-          short and silent.]
-        </.stub_note>
       </.section>
     </article>
     """
@@ -202,11 +161,6 @@ defmodule FugueWeb.ColorLive do
   attr :number, :string, required: true
   attr :id, :string, required: true
   attr :title, :any, required: true
-
-  slot :splash do
-    attr :label, :string, required: true
-    attr :aspect, :string, required: true
-  end
 
   slot :inner_block, required: true
 
@@ -218,18 +172,6 @@ defmodule FugueWeb.ColorLive do
         <h2 class="text-2xl font-semibold text-white tracking-tight">{@title}</h2>
       </div>
 
-      <div
-        :for={s <- @splash}
-        class={[
-          "w-full rounded border-2 border-dashed border-base-content/20 bg-base-200/30 flex items-center justify-center",
-          s.aspect
-        ]}
-      >
-        <span class="font-mono text-xs text-base-content/40 tracking-wider px-4 text-center">
-          {s.label}
-        </span>
-      </div>
-
       <div class="prose prose-invert max-w-none space-y-4">
         {render_slot(@inner_block)}
       </div>
@@ -237,30 +179,371 @@ defmodule FugueWeb.ColorLive do
     """
   end
 
-  slot :inner_block, required: true
+  # ----- Section 1 hero splash: visible-spectrum strip -----
 
-  defp stub_note(assigns) do
+  @hero_lambda_step 2
+  @hero_strips for l <- 380..700//@hero_lambda_step,
+                   do: {l, Fugue.Color.Spectrum.hex(l)}
+
+  defp hero_splash(assigns) do
+    strip_count = div(700 - 380, @hero_lambda_step) + 1
+
+    assigns =
+      assigns
+      |> assign(:strips, @hero_strips)
+      |> assign(:strip_w, 1000.0 / strip_count)
+
     ~H"""
-    <p class="font-mono text-xs text-base-content/40 border-l-2 border-base-content/20 pl-3 italic">
-      [stub] {render_slot(@inner_block)}
-    </p>
+    <figure class="space-y-3">
+      <div class="w-full rounded border border-base-content/10 bg-base-200/30 p-4">
+        <svg
+          viewBox="0 0 1000 220"
+          class="w-full h-auto"
+          role="img"
+          aria-label="Visible spectrum from 380 to 700 nanometers, rendered as continuous color."
+        >
+          <g>
+            <rect
+              :for={{{lambda, hex}, i} <- Enum.with_index(@strips)}
+              x={Float.round(i * @strip_w, 2)}
+              y="20"
+              width={Float.round(@strip_w + 0.5, 2)}
+              height="140"
+              fill={hex}
+            >
+              <title>{lambda} nm</title>
+            </rect>
+          </g>
+
+          <g
+            stroke="currentColor"
+            stroke-opacity="0.4"
+            stroke-width="1"
+            font-family="ui-monospace, monospace"
+            font-size="11"
+            fill="currentColor"
+            fill-opacity="0.55"
+            text-anchor="middle"
+          >
+            <line x1="0" y1="160" x2="1000" y2="160" stroke-opacity="0.18" />
+            <g :for={l <- [400, 450, 500, 550, 600, 650, 700]}>
+              <line x1={(l - 380) / 320 * 1000} y1="160" x2={(l - 380) / 320 * 1000} y2="170" />
+              <text x={(l - 380) / 320 * 1000} y="184">{l}</text>
+            </g>
+            <text x="500" y="206" fill-opacity="0.45" font-size="10">wavelength (nm)</text>
+          </g>
+        </svg>
+      </div>
+      <figcaption class="font-mono text-xs uppercase tracking-widest text-base-content/50">
+        Light.
+      </figcaption>
+    </figure>
     """
   end
 
-  attr :label, :string, required: true
-  attr :aspect, :string, default: "aspect-[16/9]"
+  defp closer_splash(assigns) do
+    strip_count = div(700 - 380, @hero_lambda_step) + 1
 
-  defp placeholder_splash(assigns) do
+    assigns =
+      assigns
+      |> assign(:strips, @hero_strips)
+      |> assign(:strip_w, 1000.0 / strip_count)
+
     ~H"""
-    <div class={[
-      "w-full rounded border-2 border-dashed border-base-content/20 bg-base-200/30 flex items-center justify-center",
-      @aspect
-    ]}>
-      <span class="font-mono text-xs text-base-content/40 tracking-wider px-4 text-center">
-        {@label}
-      </span>
+    <figure class="space-y-2">
+      <div class="w-full rounded border border-base-content/10 bg-base-200/30 p-3">
+        <svg
+          viewBox="0 0 1000 60"
+          class="w-full h-auto"
+          role="img"
+          aria-label="The same spectrum, returned. Nothing on the screen has changed."
+        >
+          <rect
+            :for={{{_l, hex}, i} <- Enum.with_index(@strips)}
+            x={Float.round(i * @strip_w, 2)}
+            y="0"
+            width={Float.round(@strip_w + 0.5, 2)}
+            height="60"
+            fill={hex}
+          />
+        </svg>
+      </div>
+    </figure>
+    """
+  end
+
+  # ----- Section 5a: WCS chip grid -----
+
+  attr :language, :atom, required: true
+
+  defp wcs_splash(assigns) do
+    h_count = Fugue.Color.WCSMock.hue_count()
+    l_count = Fugue.Color.WCSMock.lightness_count()
+
+    chips =
+      for l <- 0..(l_count - 1), h <- 0..(h_count - 1) do
+        {term, consensus} = Fugue.Color.WCSMock.modal(assigns.language, h, l)
+
+        %{
+          h: h,
+          l: l,
+          base: Fugue.Color.WCSMock.chip_color(h, l),
+          term: term,
+          term_color: Fugue.Color.WCSMock.term_color(term),
+          consensus: consensus
+        }
+      end
+
+    legend = Fugue.Color.WCSMock.terms(assigns.language)
+
+    assigns =
+      assigns
+      |> assign(:h_count, h_count)
+      |> assign(:l_count, l_count)
+      |> assign(:chips, chips)
+      |> assign(:legend, legend)
+
+    ~H"""
+    <figure class="space-y-3">
+      <div class="w-full rounded border border-base-content/10 bg-base-200/30 p-3">
+        <div
+          class="grid gap-px"
+          style={"grid-template-columns: repeat(#{@h_count}, minmax(0, 1fr));"}
+        >
+          <div
+            :for={c <- @chips}
+            class="aspect-square relative"
+            style={"background: #{c.base};"}
+            title={"#{c.term} (consensus #{Float.round(c.consensus, 2)})"}
+          >
+            <div
+              class="absolute inset-0"
+              style={"background: #{c.term_color}; opacity: #{Float.round(c.consensus * 0.55, 3)};"}
+            >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between gap-4 flex-wrap">
+        <ul class="flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-base-content/65">
+          <li :for={t <- @legend} class="flex items-center gap-1.5">
+            <span
+              class="inline-block w-3 h-3 rounded-sm"
+              style={"background: #{Fugue.Color.WCSMock.term_color(t)};"}
+            >
+            </span>
+            <span>{t}</span>
+          </li>
+        </ul>
+
+        <button
+          type="button"
+          phx-click="cycle_wcs_language"
+          class="font-mono text-xs uppercase tracking-widest px-3 py-1.5 rounded border border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 transition-colors whitespace-nowrap"
+        >
+          {Fugue.Color.WCSMock.language_label(@language)} / next
+        </button>
+      </div>
+
+      <figcaption class="font-mono text-xs text-base-content/45 leading-relaxed not-italic">
+        Each chip painted with the name most speakers gave it. Faded means
+        they didn't agree.
+      </figcaption>
+    </figure>
+    """
+  end
+
+  # ----- Section 5b: hand-curated language boundary strips -----
+
+  @langs_groups [
+    %{
+      title: "splits of blue",
+      anchor_hue_start: 450,
+      anchor_hue_end: 510,
+      rows: [
+        %{language: "English", baseline: true, bounds: [{1.0, "blue"}]},
+        %{language: "Russian", bounds: [{0.40, "синий"}, {1.0, "голубой"}]},
+        %{language: "Mongolian", bounds: [{0.45, "хөх"}, {1.0, "цэнхэр"}]},
+        %{language: "Turkish", bounds: [{0.35, "lacivert"}, {1.0, "mavi"}]},
+        %{language: "Italian", bounds: [{0.35, "blu"}, {0.70, "azzurro"}, {1.0, "celeste"}]}
+      ]
+    },
+    %{
+      title: "splits of red",
+      anchor_hue_start: 600,
+      anchor_hue_end: 700,
+      rows: [
+        %{language: "English", baseline: true, bounds: [{1.0, "red"}]},
+        %{language: "Hungarian", bounds: [{0.45, "piros"}, {1.0, "vörös"}]},
+        %{language: "Czech", bounds: [{0.50, "červený"}, {1.0, "rudý"}]}
+      ]
+    },
+    %{
+      title: "where green and blue meet",
+      anchor_hue_start: 470,
+      anchor_hue_end: 560,
+      rows: [
+        %{language: "English", baseline: true, bounds: [{0.22, "blue"}, {1.0, "green"}]},
+        %{language: "Vietnamese", bounds: [{1.0, "xanh"}]},
+        %{language: "Japanese", bounds: [{0.55, "青 (ao)"}, {1.0, "緑 (midori)"}]},
+        %{language: "Kazakh", bounds: [{0.50, "көк"}, {1.0, "жасыл"}]},
+        %{language: "Navajo", bounds: [{1.0, "dootłʼizh"}]},
+        %{language: "Himba", bounds: [{0.65, "burou"}, {1.0, "grine"}]}
+      ]
+    },
+    %{
+      title: "where the lines don't match",
+      anchor_hue_start: 510,
+      anchor_hue_end: 580,
+      rows: [
+        %{language: "English", baseline: true, bounds: [{0.64, "green"}, {1.0, "yellow"}]},
+        %{language: "Berinmo", bounds: [{0.29, "nol"}, {1.0, "wor"}]}
+      ]
+    },
+    %{
+      title: "the warm side",
+      anchor_hue_start: 560,
+      anchor_hue_end: 700,
+      rows: [
+        %{
+          language: "English",
+          baseline: true,
+          bounds: [{0.18, "yellow"}, {0.46, "orange"}, {1.0, "red"}]
+        },
+        %{language: "Himba", bounds: [{0.14, "dumbu"}, {1.0, "serandu"}]}
+      ]
+    }
+  ]
+
+  defp langs_splash(assigns) do
+    assigns = assign(assigns, :groups, @langs_groups)
+
+    ~H"""
+    <figure class="space-y-3">
+      <div class="w-full rounded border border-base-content/10 bg-base-200/30 p-4 space-y-7">
+        <div :for={group <- @groups} class="space-y-2">
+          <div class="flex items-baseline justify-between gap-3">
+            <span class="font-mono text-xs uppercase tracking-widest text-base-content/70">
+              {group.title}
+            </span>
+            <span class="font-mono text-xs text-base-content/40 tabular-nums">
+              {group.anchor_hue_start}-{group.anchor_hue_end} nm
+            </span>
+          </div>
+
+          <.hue_strip a={group.anchor_hue_start} b={group.anchor_hue_end} />
+
+          <div class="space-y-1">
+            <.partition_row
+              :for={row <- group.rows}
+              language={row.language}
+              bounds={row.bounds}
+              baseline={Map.get(row, :baseline, false)}
+            />
+          </div>
+        </div>
+      </div>
+      <figcaption class="font-mono text-xs text-base-content/45 leading-relaxed not-italic">
+        Each group is one spectrum, cut different ways. English rows are
+        baselines. Placements are approximate; the splits themselves are real.
+      </figcaption>
+    </figure>
+    """
+  end
+
+  attr :a, :integer, required: true
+  attr :b, :integer, required: true
+
+  defp hue_strip(assigns) do
+    strips =
+      for i <- 0..63 do
+        t = i / 63
+        lambda = assigns.a + (assigns.b - assigns.a) * t
+        {t, Fugue.Color.Spectrum.hex(lambda)}
+      end
+
+    assigns = assign(assigns, :strips, strips)
+
+    ~H"""
+    <div class="grid grid-cols-[5rem_1fr] items-center gap-3">
+      <span></span>
+      <svg
+        viewBox="0 0 1000 28"
+        class="w-full h-auto"
+        preserveAspectRatio="none"
+        role="img"
+        aria-label={"hue strip from #{@a} to #{@b} nm"}
+      >
+        <rect
+          :for={{{t, hex}, _i} <- Enum.with_index(@strips)}
+          x={Float.round(t * 1000, 2)}
+          y="0"
+          width="18"
+          height="28"
+          fill={hex}
+        />
+      </svg>
     </div>
     """
+  end
+
+  attr :language, :string, required: true
+  attr :bounds, :list, required: true
+  attr :baseline, :boolean, default: false
+
+  defp partition_row(assigns) do
+    segments = lang_segments(assigns.bounds)
+    ticks = assigns.bounds |> Enum.drop(-1) |> Enum.map(fn {f, _} -> f end)
+
+    assigns =
+      assigns
+      |> assign(:segments, segments)
+      |> assign(:ticks, ticks)
+
+    ~H"""
+    <div class="grid grid-cols-[5rem_1fr] items-center gap-3">
+      <span class={[
+        "font-mono text-xs text-right",
+        if(@baseline, do: "text-base-content/45 italic", else: "text-base-content/70")
+      ]}>
+        {@language}
+      </span>
+      <div class={[
+        "relative h-6 border-y",
+        if(@baseline, do: "border-base-content/10", else: "border-base-content/15")
+      ]}>
+        <div
+          :for={tick <- @ticks}
+          class={[
+            "absolute top-0 bottom-0 w-px",
+            if(@baseline, do: "bg-base-content/30", else: "bg-base-content/65")
+          ]}
+          style={"left: #{tick * 100}%;"}
+        >
+        </div>
+        <span
+          :for={seg <- @segments}
+          class={[
+            "absolute font-mono text-xs",
+            if(@baseline, do: "text-base-content/55 italic", else: "text-base-content/85")
+          ]}
+          style={"left: #{(seg.start + seg.end) / 2 * 100}%; top: 50%; transform: translate(-50%, -50%);"}
+        >
+          {seg.term}
+        </span>
+      </div>
+    </div>
+    """
+  end
+
+  defp lang_segments(bounds) do
+    {segs, _prev} =
+      Enum.map_reduce(bounds, 0.0, fn {frac, term}, prev ->
+        {%{start: prev, end: frac, term: term}, frac}
+      end)
+
+    segs
   end
 
   attr :protanope, :boolean, required: true
@@ -289,14 +572,28 @@ defmodule FugueWeb.ColorLive do
     ~H"""
     <figure class="space-y-3">
       <div class="w-full rounded border border-base-content/10 bg-base-200/30 p-4">
-        <svg viewBox="0 0 800 320" class="w-full h-auto" role="img"
-             aria-label={if @protanope, do: "Two cone curves: M and S. The L curve is absent.", else: "Three cone curves: L, M, and S, with L shifted toward M."}>
+        <svg
+          viewBox="0 0 800 320"
+          class="w-full h-auto"
+          role="img"
+          aria-label={
+            if @protanope,
+              do: "Two cone curves: M and S. The L curve is absent.",
+              else: "Three cone curves: L, M, and S, with L shifted toward M."
+          }
+        >
           <g stroke="currentColor" stroke-opacity="0.18" stroke-width="1">
             <line x1="60" y1="270" x2="770" y2="270" />
-            <line x1="60" y1="30"  x2="60"  y2="270" />
+            <line x1="60" y1="30" x2="60" y2="270" />
           </g>
 
-          <g font-family="ui-monospace, monospace" font-size="11" fill="currentColor" fill-opacity="0.45" text-anchor="middle">
+          <g
+            font-family="ui-monospace, monospace"
+            font-size="11"
+            fill="currentColor"
+            fill-opacity="0.45"
+            text-anchor="middle"
+          >
             <text x={cone_x_of(400)} y="288">400</text>
             <text x={cone_x_of(500)} y="288">500</text>
             <text x={cone_x_of(600)} y="288">600</text>
@@ -321,7 +618,9 @@ defmodule FugueWeb.ColorLive do
               font-family="ui-monospace, monospace"
               font-size="12"
               fill={color}
-            >μ_{cone_label(cone)}(λ)</text>
+            >
+              μ_{cone_label(cone)}(λ)
+            </text>
           </g>
 
           <line
@@ -373,7 +672,8 @@ defmodule FugueWeb.ColorLive do
             <span
               class="block h-full rounded"
               style={"width: #{Float.round(a.response * 100, 1)}%; background: #{a.color};"}
-            ></span>
+            >
+            </span>
           </span>
           <span class="w-12 text-right text-base-content/70 tabular-nums">
             {Float.round(a.response, 2)}
@@ -401,24 +701,46 @@ defmodule FugueWeb.ColorLive do
   # CIE 1931 2-deg spectral locus (x, y) at 10 nm spacing, 380-700 nm.
   # Source: standard CIE tables.
   @spectral_locus [
-    {380, 0.1741, 0.0050}, {390, 0.1738, 0.0049}, {400, 0.1733, 0.0048},
-    {410, 0.1726, 0.0048}, {420, 0.1714, 0.0051}, {430, 0.1689, 0.0069},
-    {440, 0.1644, 0.0109}, {450, 0.1566, 0.0177}, {460, 0.1440, 0.0297},
-    {470, 0.1241, 0.0578}, {480, 0.0913, 0.1327}, {490, 0.0454, 0.2950},
-    {500, 0.0082, 0.5384}, {510, 0.0139, 0.7502}, {520, 0.0743, 0.8338},
-    {530, 0.1547, 0.8059}, {540, 0.2296, 0.7543}, {550, 0.3016, 0.6923},
-    {560, 0.3731, 0.6245}, {570, 0.4441, 0.5547}, {580, 0.5125, 0.4866},
-    {590, 0.5752, 0.4242}, {600, 0.6270, 0.3725}, {610, 0.6658, 0.3340},
-    {620, 0.6915, 0.3083}, {630, 0.7079, 0.2920}, {640, 0.7190, 0.2809},
-    {650, 0.7260, 0.2740}, {660, 0.7300, 0.2700}, {670, 0.7320, 0.2680},
-    {680, 0.7334, 0.2666}, {690, 0.7344, 0.2656}, {700, 0.7347, 0.2653}
+    {380, 0.1741, 0.0050},
+    {390, 0.1738, 0.0049},
+    {400, 0.1733, 0.0048},
+    {410, 0.1726, 0.0048},
+    {420, 0.1714, 0.0051},
+    {430, 0.1689, 0.0069},
+    {440, 0.1644, 0.0109},
+    {450, 0.1566, 0.0177},
+    {460, 0.1440, 0.0297},
+    {470, 0.1241, 0.0578},
+    {480, 0.0913, 0.1327},
+    {490, 0.0454, 0.2950},
+    {500, 0.0082, 0.5384},
+    {510, 0.0139, 0.7502},
+    {520, 0.0743, 0.8338},
+    {530, 0.1547, 0.8059},
+    {540, 0.2296, 0.7543},
+    {550, 0.3016, 0.6923},
+    {560, 0.3731, 0.6245},
+    {570, 0.4441, 0.5547},
+    {580, 0.5125, 0.4866},
+    {590, 0.5752, 0.4242},
+    {600, 0.6270, 0.3725},
+    {610, 0.6658, 0.3340},
+    {620, 0.6915, 0.3083},
+    {630, 0.7079, 0.2920},
+    {640, 0.7190, 0.2809},
+    {650, 0.7260, 0.2740},
+    {660, 0.7300, 0.2700},
+    {670, 0.7320, 0.2680},
+    {680, 0.7334, 0.2666},
+    {690, 0.7344, 0.2656},
+    {700, 0.7347, 0.2653}
   ]
 
   # Display gamut primaries in CIE xy. White points (D65 ≈ 0.3127, 0.3290) ignored
   # for now; we are drawing the closed triangle of the primaries only.
-  @gamut_srgb     [{0.640, 0.330}, {0.300, 0.600}, {0.150, 0.060}]
-  @gamut_dci_p3   [{0.680, 0.320}, {0.265, 0.690}, {0.150, 0.060}]
-  @gamut_rec2020  [{0.708, 0.292}, {0.170, 0.797}, {0.131, 0.046}]
+  @gamut_srgb [{0.640, 0.330}, {0.300, 0.600}, {0.150, 0.060}]
+  @gamut_dci_p3 [{0.680, 0.320}, {0.265, 0.690}, {0.150, 0.060}]
+  @gamut_rec2020 [{0.708, 0.292}, {0.170, 0.797}, {0.131, 0.046}]
 
   # Chromaticity (x, y) -> SVG (x, y) inside an 80 x 90 viewBox, with y flipped
   # so chromaticity-y grows upward. 100x scale factor -> chromaticity 0.5
@@ -450,11 +772,15 @@ defmodule FugueWeb.ColorLive do
     ~H"""
     <figure class="space-y-3">
       <div class="w-full rounded border border-base-content/10 bg-base-200/30 p-4">
-        <svg viewBox="0 0 85 90" class="w-full h-auto" role="img"
-             aria-label="CIE 1931 chromaticity diagram with sRGB, DCI-P3, and Rec. 2020 gamut triangles overlaid on the spectral locus.">
+        <svg
+          viewBox="0 0 85 90"
+          class="w-full h-auto"
+          role="img"
+          aria-label="CIE 1931 chromaticity diagram with sRGB, DCI-P3, and Rec. 2020 gamut triangles overlaid on the spectral locus."
+        >
           <g stroke="currentColor" stroke-opacity="0.18" stroke-width="0.2" fill="none">
             <line x1="3" y1="85" x2="83" y2="85" />
-            <line x1="3" y1="5"  x2="3"  y2="85" />
+            <line x1="3" y1="5" x2="3" y2="85" />
           </g>
 
           <polygon
@@ -491,13 +817,40 @@ defmodule FugueWeb.ColorLive do
             stroke-dasharray="0.5 0.5"
           />
 
-          <g font-family="ui-monospace, monospace" font-size="2.6" fill="currentColor" fill-opacity="0.7">
+          <g
+            font-family="ui-monospace, monospace"
+            font-size="2.6"
+            fill="currentColor"
+            fill-opacity="0.7"
+          >
             <text x="74" y="64" fill="#fbbf24">Rec.2020</text>
             <text x="68" y="68" fill="#86efac">DCI-P3</text>
             <text x="62" y="72" fill="#a78bfa">sRGB</text>
           </g>
 
-          <g font-family="ui-monospace, monospace" font-size="2.2" fill="currentColor" fill-opacity="0.45">
+          <g
+            font-family="ui-monospace, monospace"
+            font-size="3.2"
+            font-weight="bold"
+            text-anchor="middle"
+            dominant-baseline="middle"
+          >
+            <text
+              x={chrom_x(0.726)}
+              y={chrom_y(0.274)}
+              fill="#ef4444"
+              style="fill: color(rec2020 1 0 0);"
+            >
+              X
+            </text>
+          </g>
+
+          <g
+            font-family="ui-monospace, monospace"
+            font-size="2.2"
+            fill="currentColor"
+            fill-opacity="0.45"
+          >
             <text x="3" y="89">x</text>
             <text x="0.5" y="6">y</text>
             <text x="44" y="3">spectral locus</text>
