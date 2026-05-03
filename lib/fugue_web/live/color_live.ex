@@ -7,7 +7,7 @@ defmodule FugueWeb.ColorLive do
      |> assign(:page_title, "Color")
      |> assign(
        :meta_description,
-       "Color is a transaction between light, eye, screen, and word."
+       "A chapter about color, written by someone who only sees most of it."
      )
      |> assign(:protanope, false)
      |> assign(:lambda, 540.0)
@@ -31,134 +31,351 @@ defmodule FugueWeb.ColorLive do
 
   def render(assigns) do
     ~H"""
-    <article class="px-4 py-8 max-w-3xl mx-auto text-base-content/90 space-y-24">
-      <header class="space-y-4">
-        <p class="font-mono text-xs tracking-widest uppercase text-primary/70">
-          A chapter
-        </p>
-        <h1 class="text-4xl sm:text-5xl font-semibold tracking-tight text-white">
-          Color is a transaction.
+    <article class="px-4 py-8 max-w-3xl mx-auto">
+      <header class="mb-16">
+        <h1 class="text-3xl font-bold tracking-tight text-base-content">
+          Color.
         </h1>
       </header>
 
       <.section number="1" id="prism" title="The prism">
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          I'm colorblind. Two cones; the standard issue is three. I mix
+          up my socks. I can't play Lite Brite. Avocado ripeness is a
+          matter of faith.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          What follows is the tour.
+        </p>
+
         <.hero_splash />
-        <p class="text-lg leading-relaxed">This is where color begins.</p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Light, sorted by wavelength. A narrow window the eye accepts;
+          longer than this is heat, shorter than this is the kind of
+          light that gives you cancer. The range in between counts as
+          visible because we're the ones counting.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Bees see ultraviolet. Snakes see infrared. We get the strip in
+          the middle. Most of what's flying around the room right now
+          isn't on the chart; the chart is whatever your eyes happen to
+          listen to.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Easy story. Six sections of ways it isn't.
+        </p>
       </.section>
 
       <.section number="2" id="eye" title="The eye's guesses">
         <.cone_splash protanope={@protanope} lambda={@lambda} />
 
-        <p class="leading-relaxed">
-          The eye has three cones, each tuned a little differently. Light comes in,
-          three numbers come out.
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          The eye has three cones. Each one's a sensor that gets excited
+          about a different range of wavelengths. Light comes in, three
+          numbers come out, and that is everything your brain ever has
+          to work with.
         </p>
 
-        <p class="text-lg leading-relaxed">
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Three numbers can't tell you what's actually there. The world
+          has thousands of distinguishable wavelengths and your retina
+          crushes them down to a triple. The triple is your color.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
           Cones are membership functions. Color is the result.
         </p>
 
-        <p class="leading-relaxed">
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          The curves overlap on purpose. A wavelength near the seam
+          between two cones triggers both, partly; the brain reads the
+          ratio and calls it something. Yellow is a ratio. Pink is a
+          ratio. So is the green you're sure of, and the one you're not.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Drag the slider above. The dots tell you how loud each cone is
+          at that wavelength. The brain never sees the wavelength
+          itself; it sees the loudness.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
           Most people make three guesses. I make two.
         </p>
 
-        <p class="leading-relaxed text-base-content/70">
-          Three isn't fundamental. Some people have four. Mantis shrimp have sixteen.
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          I'm missing the L cone — the long one, the cone responsible for
+          red being a different flavor than green. Without it, my brain
+          has two channels arguing with each other and the argument
+          always lands in roughly the same place. Christmas trees look
+          fine from across the room. Up close, the ornaments and the
+          needles agree about the color in a way they're not supposed
+          to.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Three isn't fundamental either. Some women have four cones —
+          there are studies, those people exist, and they apparently see
+          differences in beige paint the rest of us can't. Mantis shrimp
+          have sixteen and presumably think the rest of us are barely
+          seeing. Bees have three, but their middle cone is in the
+          ultraviolet, and flowers have patterns on them we don't know
+          are there. Snakes have a separate organ entirely for infrared,
+          which is to say snakes can see warm.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Three is a number that comes out of one branch of evolution
+          deciding three was good enough. The number isn't about color.
+          The number is about us.
         </p>
       </.section>
 
       <.section number="3" id="metamerism" title="Two colors, same color">
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Two patches. They look like two colors. Underneath, the spectra
+          disagree wildly — different physical light, almost no shared
+          wavelengths. The eye averages each spectrum down to three cone
+          numbers; the cones produce different ratios; the brain reports
+          two colors.
+        </p>
+
         <.metamer_splash protanope={@protanope} />
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          This is a magic trick the eye does to itself. There's nothing
+          fancy in the math; the trick is just that two completely
+          different physical things can hit your three sensors the same
+          way. The cones can't tell, so the brain doesn't know there
+          was anything to tell.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Your screen depends on this. Every color it shows you is a
+          fake. The yellow on this page isn't yellow light — it's red
+          and green pixels next to each other in a ratio the eye
+          averages into yellow. There is no actual yellow involved. The
+          eye never notices.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          It's also why clothes look one color in the store and a
+          different one at home. The lights in the store and the lights
+          in your kitchen are different spectra hitting the same shirt;
+          the cones run different averages over different inputs; the
+          answer changes even though the shirt didn't. (Buy clothes
+          outdoors.)
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Toggle the protanope view in the cone splash above. The
+          patches were two colors; now they're one color. The patches
+          haven't moved. My cones run the average; the average lands
+          in the same place for both. To a trichromat: two clearly
+          different patches. To me: one patch, twice.
+        </p>
       </.section>
 
       <.section number="4" id="gamut" title="Where the screen can't reach">
         <.gamut_splash />
 
-        <p class="leading-relaxed">
-          The eye gives the screen three numbers; the screen answers with fewer. The
-          diagram itself is in trichromat coordinates — a map of what the screen can't
-          reach, made by the screen.
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          The filled triangle is your screen — every color it knows how
+          to mix. The rings around it are colors only fancier screens
+          can mix. The whole horseshoe is what an eye can have. The
+          screen reaches in and grabs a triangle.
         </p>
 
-        <p class="leading-relaxed">
-          Each layer drops something on the way through; none of it gets put back.
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Three primaries means a triangle. The screen has a red pixel,
+          a green pixel, and a blue pixel; everything it shows is a
+          weighted mix. Anything outside the triangle is a color a real
+          eye can have but the screen can't manufacture from those
+          three.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          sRGB is what most monitors do. DCI-P3 is what new phones and
+          recent Apple laptops do. Rec.2020 is what high-end TV
+          manufacturers gesture at and almost nobody owns. The fancier
+          the screen, the bigger the triangle — but it's always a
+          triangle, always inside the eye's full shape, always missing
+          the edges.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          The X is at a real wavelength of light, a deep spectral red
+          around 700 nanometers. You can see it. A sunset is partly
+          made of it. No screen in your life is going to render it
+          accurately. The X is rendered with a wide-gamut color request:
+          on a wide-gamut display it might look slightly more saturated
+          than the surrounding sRGB; on a normal display it gets
+          clamped to the closest available red. Either way, what you're
+          seeing is the closest the screen could come.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          The diagram itself is trichromat. The map of what your screen
+          can't reach was drawn so your screen could draw it. The
+          chicken-and-egg here is on purpose; it's the same chicken and
+          the same egg the rest of the chapter is about.
         </p>
       </.section>
 
       <.section number="5" id="language" title="Language carves it up">
-        <p class="leading-relaxed">
-          Cones partition wavelength; language partitions cones. Different languages
-          partition differently, and where they do, the line's real to whoever drew it.
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Cones partition wavelength; language partitions cones.
+          Different languages partition differently, and where they do,
+          the line's real to whoever drew it.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          How many color words a language needs is also up to the
+          language. English has eleven basic ones — red, orange, yellow,
+          green, blue, purple, pink, brown, black, white, grey. Some
+          languages have only two basic terms: one for the warm half of
+          the spectrum, one for the cool. Both languages work fine; both
+          speakers see the same wavelengths; each thinks its own
+          partition is the obvious one.
         </p>
 
         <.wcs_splash language={@wcs_language} />
 
-        <p class="leading-relaxed">
-          Berinmo cuts the green-yellow region in a place English doesn't. Berinmo
-          speakers tell colors across that line apart faster than colors on the same
-          side. The line's doing work.
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Each chip is colored by the term most speakers used; the
+          opacity is how often they agreed. Faded squares are chips the
+          speakers argued about. The arguments are also data.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Berinmo cuts the green-yellow region in a place English
+          doesn't. Berinmo speakers tell colors across that line apart
+          faster than colors on the same side. English speakers do the
+          same trick across the green-blue line. The line in your
+          language did some work in your brain. The chip on the chart
+          didn't change; the speaker did.
         </p>
 
         <.langs_splash />
 
-        <p class="leading-relaxed">
-          Russian splits blue: синий, голубой. Mongolian splits it on a different
-          line: хөх, the deep blue of winter ice, against цэнхэр, summer sky.
-          Hungarian splits red. Vietnamese xanh covers green and blue; Japanese 青
-          (ao) did the same until 緑 (midori) carved off a piece; Kazakh көк still
-          covers both, with жасыл a newer green. None of these are translation
-          problems; they're different partitions of the same continuum.
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Russian splits blue: синий, голубой. Mongolian splits it on a
+          different line: хөх, the deep blue of winter ice, against
+          цэнхэр, summer sky. Hungarian splits red. Vietnamese xanh
+          covers green and blue at once; Japanese 青 (ao) did the same
+          until 緑 (midori) carved off a piece a thousand years ago;
+          Kazakh көк still covers both, with жасыл a newer green
+          settling in. None of these are translation problems. They're
+          different partitions of the same continuous thing.
         </p>
 
-        <p class="leading-relaxed">
-          Some languages skip abstract color words. Yélî Dnye, on Rossel Island,
-          describes a color by what it's like — the night sky, ripe pandanus, burned
-          wood. The category "color word" is a habit.
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Across hundreds of languages, basic color terms emerge in a
+          roughly predictable order. A three-term language always uses
+          black, white, and red. Add a fourth and you get green or
+          yellow. Add a fifth and you get the other. Blue shows up late,
+          possibly because blue is genuinely uncommon in nature outside
+          the sky.
         </p>
 
-        <p class="leading-relaxed">
-          I learned "red" before I understood I wasn't seeing it the way the word
-          implied. Some of those lines are real to their speakers and invisible to me.
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Some languages skip abstract color words altogether. Yélî
+          Dnye, on Rossel Island, describes a color by what it's like —
+          the night sky, ripe pandanus, burned wood, water at dusk. The
+          comparison is doing the work an abstract color word would,
+          and arguably doing it better; "burned wood" tells you more
+          than "brown" if you've ever seen burned wood. The category
+          "color word" is a habit.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          And new color words are still being made. Crayola named
+          Macaroni and Cheese, Razzmatazz, Outer Space. Pantone named
+          Living Coral Color of the Year for 2019. Categories are
+          getting invented as we speak; they take when enough people
+          use them and don't when not enough do. The chart of basic
+          terms above isn't done.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          I learned "red" before I understood I wasn't seeing whatever
+          the word pointed at. The word still works fine — I can buy
+          red sweaters, mostly, on the second try. Some of those lines
+          on the chart above are real to their speakers and invisible
+          to me. I'm trusting the chart.
         </p>
       </.section>
 
       <.section number="6" id="remainder" title="What I can't show you">
-        <p class="leading-relaxed">
-          Five sections so far. Light, eye, screen, word — chains that can be pinned
-          down.
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Five sections, four parties: light, eye, screen, word. Each
+          one with a number against it.
         </p>
 
-        <p class="leading-relaxed">This isn't that.</p>
+        <p class="text-sm text-base-content/65 leading-relaxed">This is the part that doesn't.</p>
 
         <.remainder_splash />
 
-        <p class="leading-relaxed">
-          The light is measurable. So are the cones, the screen's primaries, the
-          categories language draws. One thing isn't — what it's like, on the inside.
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Look at the patches above. To a trichromat: two patches in
+          two slightly different shades. To me, looking at the same
+          patches: nothing in particular. (To me, this is a paragraph
+          about two grey patches.) The simulation is a trichromat's
+          guess at a dichromat's experience, written in trichromat math
+          and rendered on a trichromat-calibrated screen. It can't be
+          right; it's the closest the chain knows how to come.
         </p>
 
-        <p class="leading-relaxed">
-          There's a thought experiment about a scientist who learns everything about
-          red and then sees it. This is the inverse.
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          You can measure the wavelength. You can measure the cones, the
+          primaries, the categories language draws. The seeing, while
+          you're in it, you can't.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          And it's the bigger problem under the obvious one. The
+          obvious problem is that the simulation can't show you what
+          I see. The bigger problem is that nothing on this page can
+          show you what you're seeing — your having of the experience,
+          right now, looking at this — is happening somewhere the page
+          doesn't reach. The chain ends at the cone activation. The
+          rest is on you.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          There's a thought experiment about a scientist who learns
+          everything about red and then sees it. This is the inverse.
         </p>
       </.section>
 
       <.section number="7" id="closer" title="After">
         <.closer_splash />
 
-        <p class="leading-relaxed">
-          Light, eye, screen, word. Four parties, all of them in the open.
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Light, eye, screen, word. Four parties, in the open. The
+          chapter's been about them.
         </p>
 
-        <p class="text-lg leading-relaxed">
-          Color is a transaction.
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          You can probably play Lite Brite. You can probably tell when
+          an avocado is ripe. Those things land in you differently than
+          they would in me; either way, what they're like to land at
+          all — your having of any of this — isn't on the page.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Never was. Couldn't be.
         </p>
       </.section>
     </article>
     """
   end
 
-  attr :number, :string, required: true
+  attr :number, :string, default: nil
   attr :id, :string, required: true
   attr :title, :any, required: true
 
@@ -166,13 +383,12 @@ defmodule FugueWeb.ColorLive do
 
   defp section(assigns) do
     ~H"""
-    <section id={@id} class="space-y-6">
-      <div class="flex items-baseline gap-4 border-b border-base-content/10 pb-2">
-        <span class="font-mono text-xs text-primary/60 tracking-widest">{@number}</span>
-        <h2 class="text-2xl font-semibold text-white tracking-tight">{@title}</h2>
-      </div>
+    <section id={@id} class="mb-24">
+      <h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/85 mb-4">
+        {@title}
+      </h2>
 
-      <div class="prose prose-invert max-w-none space-y-4">
+      <div class="space-y-5">
         {render_slot(@inner_block)}
       </div>
     </section>
@@ -612,7 +828,7 @@ defmodule FugueWeb.ColorLive do
               opacity="0.92"
             />
             <text
-              x={cone_x_of(cone_peak(cone) + cone_shift(cone))}
+              x={cone_x_of(cone_peak(cone) + cone_shift(cone) + cone_label_dx(cone))}
               y={cone_y_of(1.0) - 8}
               text-anchor="middle"
               font-family="ui-monospace, monospace"
@@ -762,12 +978,16 @@ defmodule FugueWeb.ColorLive do
   end
 
   defp gamut_splash(assigns) do
+    cell_size = Fugue.Color.SrgbGamut.step() * 100 * 2.5
+
     assigns =
       assigns
       |> assign(:locus_points, locus_polyline_points())
       |> assign(:srgb_points, gamut_polygon_points(@gamut_srgb))
       |> assign(:p3_points, gamut_polygon_points(@gamut_dci_p3))
       |> assign(:rec2020_points, gamut_polygon_points(@gamut_rec2020))
+      |> assign(:gamut_cells, Fugue.Color.SrgbGamut.cells())
+      |> assign(:gamut_cell_size, cell_size)
 
     ~H"""
     <figure class="space-y-3">
@@ -783,15 +1003,29 @@ defmodule FugueWeb.ColorLive do
             <line x1="3" y1="5" x2="3" y2="85" />
           </g>
 
+          <defs>
+            <clipPath id="srgb-clip">
+              <polygon points={@srgb_points} />
+            </clipPath>
+          </defs>
+
           <polygon
             points={@locus_points}
             fill="currentColor"
-            fill-opacity="0.06"
-            stroke="currentColor"
-            stroke-opacity="0.6"
-            stroke-width="0.4"
-            stroke-linejoin="round"
+            fill-opacity="0.05"
+            stroke="none"
           />
+
+          <g clip-path="url(#srgb-clip)">
+            <rect
+              :for={{cx, cy, hex} <- @gamut_cells}
+              x={Float.round((cx - Fugue.Color.SrgbGamut.step() / 2) * 100, 3)}
+              y={Float.round(85 - (cy + Fugue.Color.SrgbGamut.step() / 2) * 100, 3)}
+              width={@gamut_cell_size}
+              height={@gamut_cell_size}
+              fill={hex}
+            />
+          </g>
 
           <polygon
             points={@rec2020_points}
@@ -812,32 +1046,63 @@ defmodule FugueWeb.ColorLive do
             points={@srgb_points}
             fill="none"
             stroke="#a78bfa"
-            stroke-width="0.5"
+            stroke-opacity="0.7"
+            stroke-width="0.3"
             stroke-linejoin="round"
-            stroke-dasharray="0.5 0.5"
           />
+
+          <line
+            x1={chrom_x(0.1741)}
+            y1={chrom_y(0.005)}
+            x2={chrom_x(0.7347)}
+            y2={chrom_y(0.2653)}
+            stroke="currentColor"
+            stroke-opacity="0.5"
+            stroke-width="0.3"
+            stroke-dasharray="0.8 0.6"
+          />
+          <polyline
+            points={@locus_points}
+            fill="none"
+            stroke="currentColor"
+            stroke-opacity="0.65"
+            stroke-width="0.4"
+            stroke-linejoin="round"
+          />
+          <text
+            x="44"
+            y="74"
+            font-family="ui-monospace, monospace"
+            font-size="2.0"
+            fill="currentColor"
+            fill-opacity="0.55"
+            text-anchor="middle"
+          >
+            line of purples
+          </text>
 
           <g
             font-family="ui-monospace, monospace"
             font-size="2.6"
             fill="currentColor"
             fill-opacity="0.7"
+            text-anchor="end"
           >
-            <text x="74" y="64" fill="#fbbf24">Rec.2020</text>
-            <text x="68" y="68" fill="#86efac">DCI-P3</text>
-            <text x="62" y="72" fill="#a78bfa">sRGB</text>
+            <text x="83" y="9" fill="#fbbf24">Rec.2020</text>
+            <text x="83" y="14" fill="#86efac">DCI-P3</text>
+            <text x="83" y="19" fill="#a78bfa">sRGB</text>
           </g>
 
           <g
             font-family="ui-monospace, monospace"
-            font-size="3.2"
+            font-size="2.0"
             font-weight="bold"
             text-anchor="middle"
             dominant-baseline="middle"
           >
             <text
-              x={chrom_x(0.726)}
-              y={chrom_y(0.274)}
+              x="74.2"
+              y="59.2"
               fill="#ef4444"
               style="fill: color(rec2020 1 0 0);"
             >
@@ -845,20 +1110,32 @@ defmodule FugueWeb.ColorLive do
             </text>
           </g>
 
+          <line
+            x1="74.2"
+            y1="60.7"
+            x2="74.2"
+            y2="68"
+            stroke="currentColor"
+            stroke-opacity="0.4"
+            stroke-width="0.2"
+          />
+
           <g
             font-family="ui-monospace, monospace"
-            font-size="2.2"
+            font-size="2.0"
             fill="currentColor"
-            fill-opacity="0.45"
+            fill-opacity="0.8"
+            text-anchor="middle"
           >
-            <text x="3" y="89">x</text>
-            <text x="0.5" y="6">y</text>
-            <text x="44" y="3">spectral locus</text>
+            <text x="74.2" y="70.5">you can see this.</text>
+            <text x="74.2" y="73.5">no screen can.</text>
           </g>
+
         </svg>
       </div>
-      <figcaption class="font-mono text-xs uppercase tracking-widest text-base-content/50">
-        You can see this. No screen can.
+      <figcaption class="font-mono text-xs text-base-content/55 leading-relaxed not-italic">
+        Filled: your screen. Rings beyond: what fancier ones reach. The
+        whole shell: an eye.
       </figcaption>
     </figure>
     """
@@ -976,6 +1253,12 @@ defmodule FugueWeb.ColorLive do
   defp cone_label(:l), do: "L"
   defp cone_label(:m), do: "M"
   defp cone_label(:s), do: "S"
+
+  # Horizontal nudge (in nm) for label placement so the L and M labels
+  # don't sit on top of each other when their peaks are close.
+  defp cone_label_dx(:l), do: 12
+  defp cone_label_dx(:m), do: -4
+  defp cone_label_dx(_), do: 0
 
   defp cone_curve_points(cone) do
     shift = @cone_shift[cone]
