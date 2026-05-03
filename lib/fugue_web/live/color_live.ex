@@ -49,7 +49,7 @@ defmodule FugueWeb.ColorLive do
           What follows is the tour.
         </p>
 
-        <.hero_splash />
+        <.placecard label="hero splash — TBD" />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           Light, sorted by wavelength. A narrow window the eye accepts;
@@ -375,6 +375,18 @@ defmodule FugueWeb.ColorLive do
     """
   end
 
+  attr :label, :string, required: true
+
+  defp placecard(assigns) do
+    ~H"""
+    <div class="w-full rounded border border-dashed border-base-content/20 bg-base-200/20 px-6 py-20 flex items-center justify-center">
+      <span class="font-mono text-xs uppercase tracking-widest text-base-content/35">
+        {@label}
+      </span>
+    </div>
+    """
+  end
+
   attr :number, :string, default: nil
   attr :id, :string, required: true
   attr :title, :any, required: true
@@ -396,6 +408,9 @@ defmodule FugueWeb.ColorLive do
   end
 
   # ----- Section 1 hero splash: visible-spectrum strip -----
+  # Currently swapped out for a placecard in §1; kept for when it returns.
+
+  @compile {:nowarn_unused_functions, [hero_splash: 1]}
 
   @hero_lambda_step 2
   @hero_strips for l <- 380..700//@hero_lambda_step,
@@ -1051,17 +1066,7 @@ defmodule FugueWeb.ColorLive do
             stroke-linejoin="round"
           />
 
-          <line
-            x1={chrom_x(0.1741)}
-            y1={chrom_y(0.005)}
-            x2={chrom_x(0.7347)}
-            y2={chrom_y(0.2653)}
-            stroke="currentColor"
-            stroke-opacity="0.5"
-            stroke-width="0.3"
-            stroke-dasharray="0.8 0.6"
-          />
-          <polyline
+          <polygon
             points={@locus_points}
             fill="none"
             stroke="currentColor"
@@ -1069,17 +1074,6 @@ defmodule FugueWeb.ColorLive do
             stroke-width="0.4"
             stroke-linejoin="round"
           />
-          <text
-            x="44"
-            y="74"
-            font-family="ui-monospace, monospace"
-            font-size="2.0"
-            fill="currentColor"
-            fill-opacity="0.55"
-            text-anchor="middle"
-          >
-            line of purples
-          </text>
 
           <g
             font-family="ui-monospace, monospace"
