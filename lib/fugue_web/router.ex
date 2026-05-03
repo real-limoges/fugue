@@ -27,5 +27,6 @@ defmodule FugueWeb.Router do
     live "/menagerie/sandpile", MenagerieLive.Sandpile
     live "/clouds", CloudsLive
     live "/lab/gam", GamLive
+    live "/color", ColorLive
   end
 end
