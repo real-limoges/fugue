@@ -409,14 +409,15 @@ defmodule FugueWeb.ColorLive do
 
   # ----- Section 1 hero splash: visible-spectrum strip -----
   # Currently swapped out for a placecard in §1; kept for when it returns.
-
-  @compile {:nowarn_unused_functions, [hero_splash: 1]}
+  # Public (rather than defp) to dodge the unused-function warning while
+  # the splash is on ice -- @compile :nowarn_unused_functions doesn't
+  # silence Elixir's own version of this warning.
 
   @hero_lambda_step 2
   @hero_strips for l <- 380..700//@hero_lambda_step,
                    do: {l, Fugue.Color.Spectrum.hex(l)}
 
-  defp hero_splash(assigns) do
+  def hero_splash(assigns) do
     strip_count = div(700 - 380, @hero_lambda_step) + 1
 
     assigns =
@@ -1124,7 +1125,6 @@ defmodule FugueWeb.ColorLive do
             <text x="74.2" y="70.5">you can see this.</text>
             <text x="74.2" y="73.5">no screen can.</text>
           </g>
-
         </svg>
       </div>
       <figcaption class="font-mono text-xs text-base-content/55 leading-relaxed not-italic">
