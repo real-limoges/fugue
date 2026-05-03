@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Run the same checks CI does before allowing a push.
+# Bypass with: git push --no-verify
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+echo "==> mix precommit (compile --warnings-as-errors, deps.unlock --unused, format, test)"
+mix precommit
