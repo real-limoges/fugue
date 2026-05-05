@@ -11,7 +11,9 @@ defmodule FugueWeb.ColorLive do
      )
      |> assign(:protanope, false)
      |> assign(:lambda, 540.0)
-     |> assign(:wcs_language, :english)}
+     |> assign(:wcs_language, :english)
+     |> assign(:focus_creature, :all)
+     |> assign(:hero_pos, 200)}
   end
 
   def handle_event("toggle_protanope", _params, socket) do
@@ -20,6 +22,24 @@ defmodule FugueWeb.ColorLive do
 
   def handle_event("set_lambda", %{"lambda" => v}, socket) do
     {:noreply, assign(socket, :lambda, String.to_integer(v) * 1.0)}
+  end
+
+  def handle_event("set_hero_pos", %{"pos" => v}, socket) do
+    pos = String.to_integer(v) |> max(0) |> min(400)
+    {:noreply, assign(socket, :hero_pos, pos)}
+  end
+
+  def handle_event("focus_creature", %{"creature" => slug}, socket) do
+    creature =
+      case slug do
+        "human" -> :human
+        "bee" -> :bee
+        "snake" -> :snake
+        "mantis" -> :mantis
+        _ -> :all
+      end
+
+    {:noreply, assign(socket, :focus_creature, creature)}
   end
 
   def handle_event("cycle_wcs_language", _params, socket) do
@@ -38,35 +58,27 @@ defmodule FugueWeb.ColorLive do
         </h1>
       </header>
 
-      <.section number="1" id="prism" title="The prism">
+      <.section number="1" id="light" title="The light">
+        <.iridescence_splash />
+
         <p class="text-sm text-base-content/65 leading-relaxed">
-          I'm colorblind. Two cones; the standard issue is three. I mix
-          up my socks. I can't play Lite Brite. Avocado ripeness is a
-          matter of faith.
+          Oil on a puddle. A morpho's wing. A cuttlefish smoothing
+          into the seafloor. No pigments; just thin films catching
+          light and handing back the wavelengths that fit. Color is
+          sometimes a piece of geometry pretending to be a piece of
+          dye.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          What follows is the tour.
-        </p>
-
-        <.placecard label="hero splash — TBD" />
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          Light, sorted by wavelength. A narrow window the eye accepts;
-          longer than this is heat, shorter than this is the kind of
-          light that gives you cancer. The range in between counts as
-          visible because we're the ones counting.
+          I'm colorblind. Two cones instead of three. Reds and
+          greens are talking among themselves; I catch about half.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Bees see ultraviolet. Snakes see infrared. We get the strip in
-          the middle. Most of what's flying around the room right now
-          isn't on the chart; the chart is whatever your eyes happen to
-          listen to.
-        </p>
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          Easy story. Six sections of ways it isn't.
+          Past red, infrared, then heat. Past violet, ultraviolet,
+          then the kind of light that gives you cancer. Bees see the
+          cool end. Snakes see the warm. We catch a strip in the
+          middle.
         </p>
       </.section>
 
@@ -371,19 +383,13 @@ defmodule FugueWeb.ColorLive do
           Never was. Couldn't be.
         </p>
       </.section>
+
+      <.section number="" id="playground" title="Playground">
+        <.em_spectrum_splash focus={@focus_creature} />
+
+        <.illuminant_splash pos={@hero_pos} />
+      </.section>
     </article>
-    """
-  end
-
-  attr :label, :string, required: true
-
-  defp placecard(assigns) do
-    ~H"""
-    <div class="w-full rounded border border-dashed border-base-content/20 bg-base-200/20 px-6 py-20 flex items-center justify-center">
-      <span class="font-mono text-xs uppercase tracking-widest text-base-content/35">
-        {@label}
-      </span>
-    </div>
     """
   end
 
@@ -407,8 +413,30 @@ defmodule FugueWeb.ColorLive do
     """
   end
 
-  # ----- Section 1 hero splash: visible-spectrum strip -----
-  # Currently swapped out for a placecard in §1; kept for when it returns.
+  # ----- Section 1 hero splash: iridescent papillae -----
+  # Cuttlefish-papillae thickness map driven by a Voronoi field, illuminated
+  # by thin-film interference math. Cursor proximity sets the effective
+  # viewing angle so the rainbow shifts as the reader hovers. Fragment
+  # shader lives in assets/js/hooks/iridescence.js. The canvas is the hook
+  # element directly (matches CloudsCanvas convention); phx-update="ignore"
+  # keeps LiveView from clobbering it on re-render.
+
+  defp iridescence_splash(assigns) do
+    ~H"""
+    <figure class="space-y-3">
+      <canvas
+        id="iridescence-canvas"
+        phx-hook="IridescenceCanvas"
+        phx-update="ignore"
+        class="block w-full rounded border border-base-content/10 bg-base-200/30"
+        style="aspect-ratio: 5 / 3;"
+      >
+      </canvas>
+    </figure>
+    """
+  end
+
+  # ----- Section 1 spectrum strip: parked, kept for when it returns -----
   # Public (rather than defp) to dodge the unused-function warning while
   # the splash is on ice -- @compile :nowarn_unused_functions doesn't
   # silence Elixir's own version of this warning.
@@ -468,6 +496,612 @@ defmodule FugueWeb.ColorLive do
       </div>
       <figcaption class="font-mono text-xs uppercase tracking-widest text-base-content/50">
         Light.
+      </figcaption>
+    </figure>
+    """
+  end
+
+  # ----- Section 1 hero splash: illuminants as spectral power distributions -----
+  # Five stops on the slider: candle, tungsten, daylight, fluorescent, warm
+  # LED. The x axis is the visible band (380-700 nm); the y axis is relative
+  # spectral power. Each stop has its own SPD and adjacent stops crossfade
+  # linearly, summing to 1.0, so the curve smoothly morphs between them as
+  # the slider moves.
+  #
+  # Blackbody curves (candle, tungsten, daylight) come from Planck's law.
+  # Fluorescent is a continuous base plus three Gaussian spikes at the
+  # mercury vapor lines (436, 546, 611 nm). Warm LED is a blue-diode peak
+  # near 450 nm plus a broad phosphor hump centered near 590 nm.
+
+  @illuminant_stops [:candle, :tungsten, :daylight, :fluorescent, :led]
+
+  @illuminant_meta %{
+    candle: %{
+      pos: 0,
+      label: "candle",
+      caption:
+        "Candle flame, near 1900 kelvin. Almost no blue. The curve climbs through the visible band toward the red and keeps going into the infrared you can't see."
+    },
+    tungsten: %{
+      pos: 100,
+      label: "tungsten",
+      caption:
+        "An old incandescent bulb, around 2900 kelvin. A hot wire glowing. Red carries most of the energy; blue is faint. This is why old kitchens look amber."
+    },
+    daylight: %{
+      pos: 200,
+      label: "daylight",
+      caption:
+        "Noon daylight, around 6500 kelvin. Broad and almost flat across the whole visible band. This is the light eyes evolved under."
+    },
+    fluorescent: %{
+      pos: 300,
+      label: "fluorescent",
+      caption:
+        "A fluorescent tube. A continuous base plus three sharp spikes from mercury vapor -- blue, green, orange. The eye smears them into 'white'."
+    },
+    led: %{
+      pos: 400,
+      label: "warm LED",
+      caption:
+        "A warm-white LED. A blue diode near 450 nanometers excites a yellow phosphor that fluoresces broadly across green and red. Two humps masquerading as one light."
+    }
+  }
+
+  @vis_lambda_min 380
+  @vis_lambda_max 700
+  @vis_lambda_step 5
+  @vis_lambdas Enum.to_list(@vis_lambda_min..@vis_lambda_max//@vis_lambda_step)
+
+  defp planck(lambda_nm, temp_k) do
+    l = lambda_nm * 1.0e-9
+    x = 0.014387 / (l * temp_k)
+    1.0 / (:math.pow(l, 5) * (:math.exp(x) - 1.0))
+  end
+
+  defp gauss(x, mu, sigma) do
+    z = (x - mu) / sigma
+    :math.exp(-0.5 * z * z)
+  end
+
+  defp normalize_peak(values) do
+    peak = Enum.max(values)
+    Enum.map(values, fn v -> v / peak end)
+  end
+
+  defp planck_samples(temp_k) do
+    @vis_lambdas
+    |> Enum.map(&planck(&1, temp_k))
+    |> normalize_peak()
+  end
+
+  defp fluorescent_samples do
+    @vis_lambdas
+    |> Enum.map(fn l ->
+      base = 0.18 + 0.10 * gauss(l, 540, 80)
+      base + 0.95 * gauss(l, 436, 6) + 1.0 * gauss(l, 546, 6) + 0.75 * gauss(l, 611, 6)
+    end)
+    |> normalize_peak()
+  end
+
+  defp led_samples do
+    @vis_lambdas
+    |> Enum.map(fn l ->
+      0.95 * gauss(l, 452, 14) + 0.85 * gauss(l, 590, 60)
+    end)
+    |> normalize_peak()
+  end
+
+  defp spd_samples(:candle), do: planck_samples(1900)
+  defp spd_samples(:tungsten), do: planck_samples(2900)
+  defp spd_samples(:daylight), do: planck_samples(6500)
+  defp spd_samples(:fluorescent), do: fluorescent_samples()
+  defp spd_samples(:led), do: led_samples()
+
+  defp illuminant_opacities(pos) do
+    Map.new(@illuminant_stops, fn slug ->
+      o = max(0.0, 1.0 - abs(pos - @illuminant_meta[slug].pos) / 100)
+      {slug, o}
+    end)
+  end
+
+  defp dominant_illuminant(pos) do
+    Enum.min_by(@illuminant_stops, fn slug ->
+      abs(pos - @illuminant_meta[slug].pos)
+    end)
+  end
+
+  defp blended_spd(pos) do
+    weights = illuminant_opacities(pos)
+    zero = List.duplicate(0.0, length(@vis_lambdas))
+
+    Enum.reduce(@illuminant_stops, zero, fn slug, acc ->
+      w = weights[slug]
+
+      if w == 0.0 do
+        acc
+      else
+        Enum.zip_with(acc, spd_samples(slug), fn a, s -> a + s * w end)
+      end
+    end)
+  end
+
+  defp spd_path_d(samples, x_left, x_right, y_top, y_bottom) do
+    span = @vis_lambda_max - @vis_lambda_min
+    width = x_right - x_left
+    height = y_bottom - y_top
+
+    pts =
+      @vis_lambdas
+      |> Enum.zip(samples)
+      |> Enum.map(fn {l, v} ->
+        x = x_left + (l - @vis_lambda_min) / span * width
+        y = y_bottom - v * height
+        "#{Float.round(x, 1)},#{Float.round(y, 1)}"
+      end)
+
+    "M " <> Enum.join(pts, " L ")
+  end
+
+  defp visible_gradient_stops do
+    for offset <- 0..10 do
+      lambda = 380 + offset / 10 * (700 - 380)
+      {offset * 10, Fugue.Color.Spectrum.hex(lambda)}
+    end
+  end
+
+  attr :pos, :integer, required: true
+
+  defp illuminant_splash(assigns) do
+    pos = assigns.pos
+    samples = blended_spd(pos)
+    dom = dominant_illuminant(pos)
+
+    assigns =
+      assigns
+      |> assign(:caption, @illuminant_meta[dom].caption)
+      |> assign(:dominant, dom)
+      |> assign(:stops, @illuminant_stops)
+      |> assign(:meta, @illuminant_meta)
+      |> assign(:curve_d, spd_path_d(samples, 60.0, 760.0, 30.0, 240.0))
+      |> assign(:gradient_stops, visible_gradient_stops())
+
+    ~H"""
+    <figure class="space-y-3">
+      <div class="w-full rounded border border-base-content/10 overflow-hidden bg-zinc-950">
+        <svg
+          viewBox="0 0 800 290"
+          class="w-full h-auto text-zinc-100"
+          role="img"
+          aria-label="Spectral power distribution of the selected illuminant across the visible band."
+        >
+          <defs>
+            <linearGradient id="visband" x1="0" x2="1" y1="0" y2="0">
+              <stop
+                :for={{offset, color} <- @gradient_stops}
+                offset={"#{offset}%"}
+                stop-color={color}
+              />
+            </linearGradient>
+          </defs>
+
+          <line
+            x1="60"
+            y1="240"
+            x2="760"
+            y2="240"
+            stroke="currentColor"
+            stroke-opacity="0.25"
+            stroke-width="1"
+          />
+          <rect x="60" y="244" width="700" height="14" fill="url(#visband)" opacity="0.85" />
+
+          <g
+            font-family="ui-monospace, monospace"
+            font-size="10"
+            fill="currentColor"
+            fill-opacity="0.5"
+          >
+            <text
+              :for={l <- [400, 500, 600, 700]}
+              x={60 + (l - 380) / 320 * 700}
+              y="274"
+              text-anchor="middle"
+            >
+              {l}
+            </text>
+            <text x="60" y="22" fill-opacity="0.45">spectral power (relative)</text>
+            <text x="760" y="274" text-anchor="end" fill-opacity="0.45">wavelength (nm)</text>
+          </g>
+
+          <path d={"#{@curve_d} L 760 240 L 60 240 Z"} fill="currentColor" fill-opacity="0.08" />
+          <path
+            d={@curve_d}
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </div>
+
+      <form phx-change="set_hero_pos" class="space-y-2">
+        <div class="relative h-5 font-mono text-xs uppercase tracking-widest">
+          <span
+            :for={slug <- @stops}
+            class={[
+              "absolute -translate-x-1/2 transition-colors",
+              if(@dominant == slug, do: "text-base-content", else: "text-base-content/45")
+            ]}
+            style={"left: #{@meta[slug].pos / 4}%;"}
+          >
+            {@meta[slug].label}
+          </span>
+        </div>
+
+        <input
+          type="range"
+          name="pos"
+          min="0"
+          max="400"
+          step="1"
+          value={@pos}
+          phx-throttle="30"
+          class="w-full accent-base-content/60"
+          aria-label="illuminant, from candle to warm LED"
+        />
+      </form>
+
+      <p class="font-mono text-xs text-base-content/70 leading-relaxed not-italic min-h-[3rem]">
+        {@caption}
+      </p>
+    </figure>
+    """
+  end
+
+  # ----- Section 1 hero splash: EM spectrum + who-sees-what -----
+  # Top strip: full electromagnetic spectrum on a log axis from gamma to radio,
+  # with the visible band rendered as the actual rainbow. A trapezoidal "zoom"
+  # connects the visible sliver up top to a wider axis below (UV through
+  # thermal infrared) where four creatures' sensitivity ranges are stacked:
+  # human, bee, snake (pit-organ thermal IR), mantis shrimp. Click a creature
+  # to spotlight its strip.
+
+  @em_creatures [
+    %{
+      slug: :human,
+      label: "human",
+      lo: 380,
+      hi: 700,
+      note: "Three cones. Our strip."
+    },
+    %{
+      slug: :bee,
+      label: "bee",
+      lo: 300,
+      hi: 650,
+      note: "Shifted into the ultraviolet. Flowers have markings on them only bees see."
+    },
+    %{
+      slug: :snake,
+      label: "snake",
+      lo: 5_000,
+      hi: 30_000,
+      note:
+        "Pit organs on a viper's face read thermal infrared. Not the eyes; a separate channel into the same brain."
+    },
+    %{
+      slug: :mantis,
+      label: "mantis shrimp",
+      lo: 300,
+      hi: 720,
+      note:
+        "Twelve to sixteen photoreceptor types across about the same band as ours, plus deep ultraviolet."
+    }
+  ]
+
+  @em_bands [
+    %{label: "gamma", lo: 1.0e-3, hi: 1.0e-2, fill: "#1e1b4b"},
+    %{label: "X-ray", lo: 1.0e-2, hi: 10.0, fill: "#312e81"},
+    %{label: "UV", lo: 10.0, hi: 380.0, fill: "#5b21b6"},
+    %{label: "IR", lo: 700.0, hi: 1.0e6, fill: "#7f1d1d"},
+    %{label: "microwave", lo: 1.0e6, hi: 1.0e8, fill: "#78350f"},
+    %{label: "radio", lo: 1.0e8, hi: 1.0e10, fill: "#374151"}
+  ]
+
+  # Top axis: 1pm (1e-3 nm) to 10m (1e10 nm). Bottom axis: 100 nm to 100,000 nm.
+  @em_top_lo_log -3.0
+  @em_top_hi_log 10.0
+  @em_bot_lo_log 2.0
+  @em_bot_hi_log 5.0
+  @em_x_left 50
+  @em_x_right 950
+
+  defp em_top_x(lambda) do
+    log = :math.log10(lambda)
+
+    @em_x_left +
+      (log - @em_top_lo_log) / (@em_top_hi_log - @em_top_lo_log) *
+        (@em_x_right - @em_x_left)
+  end
+
+  defp em_bot_x(lambda) do
+    log = :math.log10(lambda)
+
+    @em_x_left +
+      (log - @em_bot_lo_log) / (@em_bot_hi_log - @em_bot_lo_log) *
+        (@em_x_right - @em_x_left)
+  end
+
+  defp em_band_color(lambda) when lambda < 380.0, do: "#5b21b6"
+  defp em_band_color(lambda) when lambda <= 700.0, do: Fugue.Color.Spectrum.hex(lambda)
+  defp em_band_color(lambda) when lambda < 1500.0, do: "#9b1c1c"
+  defp em_band_color(lambda) when lambda < 30_000.0, do: "#7f1d1d"
+  defp em_band_color(_), do: "#451a1a"
+
+  defp em_creature_strips(lo, hi, x_fn) do
+    log_lo = :math.log10(lo)
+    log_hi = :math.log10(hi)
+    n = 80
+    step = (log_hi - log_lo) / n
+
+    for i <- 0..(n - 1) do
+      log_a = log_lo + i * step
+      lambda_mid = :math.pow(10, log_a + step / 2)
+      x_a = x_fn.(:math.pow(10, log_a))
+      x_b = x_fn.(:math.pow(10, log_a + step))
+      %{x: Float.round(x_a, 2), w: Float.round(x_b - x_a + 0.4, 2), color: em_band_color(lambda_mid)}
+    end
+  end
+
+  defp em_top_visible_strips do
+    log_lo = :math.log10(380)
+    log_hi = :math.log10(700)
+    n = 24
+    step = (log_hi - log_lo) / n
+
+    for i <- 0..(n - 1) do
+      log_a = log_lo + i * step
+      lambda_mid = :math.pow(10, log_a + step / 2)
+      x_a = em_top_x(:math.pow(10, log_a))
+      x_b = em_top_x(:math.pow(10, log_a + step))
+
+      %{
+        x: Float.round(x_a, 2),
+        w: Float.round(x_b - x_a + 0.4, 2),
+        color: Fugue.Color.Spectrum.hex(lambda_mid)
+      }
+    end
+  end
+
+  attr :focus, :atom, required: true
+
+  defp em_spectrum_splash(assigns) do
+    creature_rows =
+      @em_creatures
+      |> Enum.with_index()
+      |> Enum.map(fn {c, i} ->
+        Map.merge(c, %{
+          row_y: 170 + i * 36,
+          strips: em_creature_strips(c.lo, c.hi, &em_bot_x/1),
+          x_lo: em_bot_x(c.lo),
+          x_hi: em_bot_x(c.hi)
+        })
+      end)
+
+    bands =
+      Enum.map(@em_bands, fn b ->
+        Map.merge(b, %{x_lo: em_top_x(b.lo), x_hi: em_top_x(b.hi)})
+      end)
+
+    note =
+      case Enum.find(@em_creatures, &(&1.slug == assigns.focus)) do
+        nil -> nil
+        c -> c.note
+      end
+
+    assigns =
+      assigns
+      |> assign(:bands, bands)
+      |> assign(:top_visible_strips, em_top_visible_strips())
+      |> assign(:visible_top_lo, em_top_x(380))
+      |> assign(:visible_top_hi, em_top_x(700))
+      |> assign(:visible_bot_lo, em_bot_x(380))
+      |> assign(:visible_bot_hi, em_bot_x(700))
+      |> assign(:bot_ticks, [
+        {100, "100 nm"},
+        {1_000, "1,000 nm"},
+        {10_000, "10,000 nm"},
+        {100_000, "100,000 nm"}
+      ])
+      |> assign(:creature_rows, creature_rows)
+      |> assign(:note, note)
+      |> assign(:x_left, @em_x_left)
+      |> assign(:x_right, @em_x_right)
+
+    ~H"""
+    <figure class="space-y-3">
+      <div class="w-full rounded border border-base-content/10 bg-base-200/30 p-4">
+        <svg
+          viewBox="0 0 1000 320"
+          class="w-full h-auto"
+          role="img"
+          aria-label="The full electromagnetic spectrum on a log scale, with the visible band marked. Below, the sensitivity ranges of human, bee, snake, and mantis shrimp on a wider zoomed axis."
+        >
+          <g
+            font-family="ui-monospace, monospace"
+            font-size="10"
+            fill="currentColor"
+            fill-opacity="0.55"
+            text-anchor="middle"
+          >
+            <text x="500" y="14">all electromagnetic radiation</text>
+          </g>
+
+          <g>
+            <rect
+              :for={b <- @bands}
+              x={Float.round(b.x_lo, 2)}
+              y="22"
+              width={Float.round(b.x_hi - b.x_lo, 2)}
+              height="36"
+              fill={b.fill}
+            />
+            <rect
+              :for={s <- @top_visible_strips}
+              x={s.x}
+              y="22"
+              width={s.w}
+              height="36"
+              fill={s.color}
+            />
+          </g>
+
+          <g
+            font-family="ui-monospace, monospace"
+            font-size="10"
+            fill="currentColor"
+            fill-opacity="0.85"
+            text-anchor="middle"
+          >
+            <text :for={b <- @bands} x={Float.round((b.x_lo + b.x_hi) / 2, 2)} y="44">
+              {b.label}
+            </text>
+          </g>
+
+          <polygon
+            points={
+              "#{Float.round(@visible_top_lo, 2)},58 " <>
+                "#{Float.round(@visible_top_hi, 2)},58 " <>
+                "#{Float.round(@visible_bot_hi, 2)},120 " <>
+                "#{Float.round(@visible_bot_lo, 2)},120"
+            }
+            fill="currentColor"
+            fill-opacity="0.06"
+            stroke="currentColor"
+            stroke-opacity="0.35"
+            stroke-width="0.5"
+          />
+
+          <g
+            font-family="ui-monospace, monospace"
+            font-size="9"
+            fill="currentColor"
+            fill-opacity="0.55"
+            text-anchor="middle"
+          >
+            <text x={Float.round((@visible_top_lo + @visible_top_hi) / 2, 2)} y="71">visible</text>
+          </g>
+
+          <g stroke="currentColor" stroke-opacity="0.2" stroke-width="0.5">
+            <line x1={@x_left} y1="120" x2={@x_right} y2="120" />
+          </g>
+
+          <g
+            font-family="ui-monospace, monospace"
+            font-size="10"
+            fill="currentColor"
+            fill-opacity="0.5"
+            text-anchor="middle"
+          >
+            <%= for {lambda, label} <- @bot_ticks do %>
+              <line
+                x1={Float.round(em_bot_x(lambda), 2)}
+                y1="120"
+                x2={Float.round(em_bot_x(lambda), 2)}
+                y2="126"
+                stroke="currentColor"
+                stroke-opacity="0.4"
+                stroke-width="0.5"
+              />
+              <text x={Float.round(em_bot_x(lambda), 2)} y="138">{label}</text>
+            <% end %>
+          </g>
+
+          <g :for={c <- @creature_rows} opacity={if @focus in [:all, c.slug], do: "1", else: "0.18"}>
+            <text
+              x={@x_left - 8}
+              y={c.row_y + 14}
+              text-anchor="end"
+              font-family="ui-monospace, monospace"
+              font-size="11"
+              fill="currentColor"
+              fill-opacity={if @focus == c.slug, do: "0.95", else: "0.7"}
+            >
+              {c.label}
+            </text>
+
+            <line
+              x1={@x_left}
+              y1={c.row_y + 11}
+              x2={@x_right}
+              y2={c.row_y + 11}
+              stroke="currentColor"
+              stroke-opacity="0.08"
+              stroke-width="0.5"
+            />
+
+            <rect
+              :for={s <- c.strips}
+              x={s.x}
+              y={c.row_y}
+              width={s.w}
+              height="22"
+              fill={s.color}
+            />
+          </g>
+        </svg>
+      </div>
+
+      <div class="flex items-center gap-2 flex-wrap">
+        <button
+          :for={c <- @creature_rows}
+          type="button"
+          phx-click="focus_creature"
+          phx-value-creature={Atom.to_string(c.slug)}
+          aria-pressed={to_string(@focus == c.slug)}
+          class={[
+            "font-mono text-xs uppercase tracking-widest px-3 py-1.5 rounded border transition-colors",
+            if(@focus == c.slug,
+              do: "border-base-content/60 bg-base-200/60 text-base-content",
+              else: "border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 text-base-content/70"
+            )
+          ]}
+        >
+          {c.label}
+        </button>
+
+        <button
+          type="button"
+          phx-click="focus_creature"
+          phx-value-creature="all"
+          aria-pressed={to_string(@focus == :all)}
+          class={[
+            "font-mono text-xs uppercase tracking-widest px-3 py-1.5 rounded border transition-colors ml-auto",
+            if(@focus == :all,
+              do: "border-base-content/60 bg-base-200/60 text-base-content",
+              else: "border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 text-base-content/70"
+            )
+          ]}
+        >
+          all
+        </button>
+      </div>
+
+      <p
+        :if={@note}
+        class="font-mono text-xs text-base-content/65 leading-relaxed not-italic min-h-[2.5rem]"
+      >
+        {@note}
+      </p>
+
+      <figcaption
+        :if={!@note}
+        class="font-mono text-xs text-base-content/45 leading-relaxed not-italic min-h-[2.5rem]"
+      >
+        Top: all electromagnetic radiation, log-spaced. Visible is the
+        sliver in the middle. Bottom: a wider zoom from ultraviolet to
+        thermal infrared, with what each animal samples from it.
       </figcaption>
     </figure>
     """

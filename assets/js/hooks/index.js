@@ -13,10 +13,12 @@ import { QuantumStats } from "./quantum_stats"
 import { SandpileCanvas } from "./sandpile_canvas"
 import { CloudsCanvas } from "./clouds_canvas"
 import { GamDemo } from "./gam_demo"
+import { IridescenceCanvas } from "./iridescence"
 
 export default {
   CalendarTooltip, HoverTooltip, TemporalBrush,
   MoodTourSandbox, MoodIntroGate, MoodTour,
   ClusterAttractor, BandsHover, MamdaniPlayground, BoidsCanvas,
-  QuantumWalk, QuantumStats, SandpileCanvas, CloudsCanvas, GamDemo
+  QuantumWalk, QuantumStats, SandpileCanvas, CloudsCanvas, GamDemo,
+  IridescenceCanvas
 }
