@@ -304,8 +304,8 @@ defmodule FugueWeb.ColorLive do
           apart faster than colors sitting on the same side of it.
           English speakers do the same thing across the green-blue
           line. The line your language drew did some actual work
-          inside your head. The chip on the chart didn't change;
-          <em>you</em> did, when you learned the word for it.
+          inside your head. The chip on the chart didn't change; <em>you</em>
+          did, when you learned the word for it.
         </p>
 
         <.langs_splash />
@@ -397,8 +397,8 @@ defmodule FugueWeb.ColorLive do
         <p class="text-sm text-base-content/65 leading-relaxed">
           There's a smaller problem and a bigger one. The smaller
           one is that the simulation can't show you what I see. The
-          bigger one is that nothing on this page can show you what
-          <em>you</em> see. Your seeing is happening somewhere this page
+          bigger one is that nothing on this page can show you what <em>you</em>
+          see. Your seeing is happening somewhere this page
           doesn't reach, and it's never going to. That's where the
           chapter ends.
         </p>
