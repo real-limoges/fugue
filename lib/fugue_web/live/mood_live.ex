@@ -339,7 +339,7 @@ defmodule FugueWeb.MoodLive do
 
   def render(assigns) do
     ~H"""
-    <div id="mood-experience" class="mood-explorer p-4 max-w-6xl mx-auto">
+    <div id="mood-experience" class="mood-explorer p-4 mx-auto">
       <ExperiencePanel.ambient
         selected_day={@selected_day}
         selected_cluster={@selected_cluster}
@@ -367,60 +367,65 @@ defmodule FugueWeb.MoodLive do
           selected_day={@selected_day}
         />
         <Sections.sticky_legend analysis={@analysis} selected_cluster={@selected_cluster} />
-        <Sections.intro stats={@stats} />
 
-        <div id="mood-tour" phx-hook="MoodTour" phx-update="ignore"></div>
+        <div class="max-w-3xl mx-auto">
+          <Sections.intro stats={@stats} />
 
-        <Sections.chapter_states
-          stats={@stats}
-          analysis={@analysis}
-          selected_cluster={@selected_cluster}
-          radar_centroids={@radar_centroids}
-          radar_dimensions={@radar_dimensions}
-          ambiguity_bins={@ambiguity_bins}
-          ambiguity_threshold={@ambiguity_threshold}
-        />
-        <Sections.chapter_day_by_day
-          stats={@stats}
-          analysis={@analysis}
-          date_range={@date_range}
-          highlighted_dates={@highlighted_dates}
-          selected_gap={@selected_gap}
-          selected_cluster={@selected_cluster}
-          selected_day={@selected_day}
-          calendar_days={@calendar_days}
-          transition_dates={@transition_dates}
-          stream_series={@stream_series}
-          season_months={@season_months}
-        />
-        <Sections.chapter_shifts
-          stats={@stats}
-          analysis={@analysis}
-          mood_transitions={@mood_transitions}
-          selected_cluster={@selected_cluster}
-          highlighted_dates={@highlighted_dates}
-          cluster_names={@cluster_names}
-          timeline_segments={@timeline_segments}
-        />
-        <Sections.chapter_under_hood
-          stats={@stats}
-          drift_dimensions={@drift_dimensions}
-          analysis={@analysis}
-          mood_flowers_list={@mood_flowers_list}
-          flower_dimensions={@flower_dimensions}
-          selected_day={@selected_day}
-          distribution_points={@distribution_points}
-          distribution_clusters={@distribution_clusters}
-        />
-        <Sections.chapter_gaps
-          stats={@stats}
-          analysis={@analysis}
-          cluster_names={@cluster_names}
-          gap_transitions={@gap_transitions}
-          imputed_memberships={@imputed_memberships}
-          full_date_range={@full_date_range}
-        />
-        <Sections.afterword />
+          <div id="mood-tour" phx-hook="MoodTour" phx-update="ignore"></div>
+
+          <Sections.chapter_states
+            stats={@stats}
+            analysis={@analysis}
+            selected_cluster={@selected_cluster}
+            radar_centroids={@radar_centroids}
+            radar_dimensions={@radar_dimensions}
+            ambiguity_bins={@ambiguity_bins}
+            ambiguity_threshold={@ambiguity_threshold}
+          />
+          <Sections.interstitial_after_states />
+          <Sections.chapter_day_by_day
+            stats={@stats}
+            analysis={@analysis}
+            date_range={@date_range}
+            highlighted_dates={@highlighted_dates}
+            selected_gap={@selected_gap}
+            selected_cluster={@selected_cluster}
+            selected_day={@selected_day}
+            calendar_days={@calendar_days}
+            transition_dates={@transition_dates}
+            stream_series={@stream_series}
+            season_months={@season_months}
+          />
+          <Sections.chapter_shifts
+            stats={@stats}
+            analysis={@analysis}
+            mood_transitions={@mood_transitions}
+            selected_cluster={@selected_cluster}
+            highlighted_dates={@highlighted_dates}
+            cluster_names={@cluster_names}
+            timeline_segments={@timeline_segments}
+          />
+          <Sections.chapter_under_hood
+            stats={@stats}
+            drift_dimensions={@drift_dimensions}
+            analysis={@analysis}
+            mood_flowers_list={@mood_flowers_list}
+            flower_dimensions={@flower_dimensions}
+            selected_day={@selected_day}
+            distribution_points={@distribution_points}
+            distribution_clusters={@distribution_clusters}
+          />
+          <Sections.interstitial_before_gaps />
+          <Sections.chapter_gaps
+            stats={@stats}
+            analysis={@analysis}
+            cluster_names={@cluster_names}
+            gap_transitions={@gap_transitions}
+            imputed_memberships={@imputed_memberships}
+            full_date_range={@full_date_range}
+          />
+          <Sections.afterword />
+        </div>
       <% end %>
     </div>
     """

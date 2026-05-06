@@ -1,6 +1,18 @@
 defmodule FugueWeb.ColorLive do
   use FugueWeb, :live_view
 
+  # Protan-metameric pairs for §3 + §6. Each {a, b} has been verified to
+  # collapse to the same color under Machado severity-1.0 protanope
+  # simulation (delta <= 1 RGB unit). Found by stepping along the null
+  # vector of the Machado matrix in linear RGB. First pair is the canonical
+  # red/green; the rest span pink/teal, orange/spring-green, salmon/sage.
+  @metamer_pairs [
+    {"#da3030", "#006632"},
+    {"#da8930", "#00a032"},
+    {"#da306c", "#00666d"},
+    {"#da8989", "#00a089"}
+  ]
+
   def mount(_params, _session, socket) do
     {:ok,
      socket
@@ -11,7 +23,10 @@ defmodule FugueWeb.ColorLive do
      )
      |> assign(:protanope, false)
      |> assign(:lambda, 540.0)
-     |> assign(:wcs_language, :english)}
+     |> assign(:wcs_language, :english)
+     |> assign(:focus_creature, :all)
+     |> assign(:hero_pos, 200)
+     |> assign(:metamer_index, 0)}
   end
 
   def handle_event("toggle_protanope", _params, socket) do
@@ -20,6 +35,38 @@ defmodule FugueWeb.ColorLive do
 
   def handle_event("set_lambda", %{"lambda" => v}, socket) do
     {:noreply, assign(socket, :lambda, String.to_integer(v) * 1.0)}
+  end
+
+  def handle_event("set_hero_pos", %{"pos" => v}, socket) do
+    pos = String.to_integer(v) |> max(0) |> min(400)
+    {:noreply, assign(socket, :hero_pos, pos)}
+  end
+
+  def handle_event("focus_creature", %{"creature" => slug}, socket) do
+    creature =
+      case slug do
+        "human" -> :human
+        "bee" -> :bee
+        "snake" -> :snake
+        "mantis" -> :mantis
+        _ -> :all
+      end
+
+    {:noreply, assign(socket, :focus_creature, creature)}
+  end
+
+  def handle_event("cycle_metamer", %{"dir" => dir}, socket) do
+    n = length(@metamer_pairs)
+    i = socket.assigns.metamer_index
+
+    new_i =
+      case dir do
+        "next" -> rem(i + 1, n)
+        "prev" -> rem(i - 1 + n, n)
+        _ -> i
+      end
+
+    {:noreply, assign(socket, :metamer_index, new_i)}
   end
 
   def handle_event("cycle_wcs_language", _params, socket) do
@@ -32,41 +79,47 @@ defmodule FugueWeb.ColorLive do
   def render(assigns) do
     ~H"""
     <article class="px-4 py-8 max-w-3xl mx-auto">
-      <header class="mb-16">
+      <header class="mb-16 max-w-2xl">
         <h1 class="text-3xl font-bold tracking-tight text-base-content">
           Color.
         </h1>
+        <p class="text-gray-500 mt-2 mb-10">
+          Three cones, mostly.
+        </p>
       </header>
 
-      <.section number="1" id="prism" title="The prism">
+      <.section number="1" id="light">
+        <.iridescence_splash />
+
         <p class="text-sm text-base-content/65 leading-relaxed">
-          I'm colorblind. Two cones; the standard issue is three. I mix
-          up my socks. I can't play Lite Brite. Avocado ripeness is a
-          matter of faith.
+          A cuttlefish presses against gravel and the gravel-color
+          happens in its skin. Not pigment -- geometry. Stacks of
+          crystal layers inside the cells, interfering with whatever
+          light hits them, picking which wavelengths bounce back.
+          The morpho butterfly is doing the same thing from a
+          completely different branch of the animal kingdom. Oil on
+          a puddle, same trick. The color isn't in the thing.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          What follows is the tour.
-        </p>
-
-        <.placecard label="hero splash — TBD" />
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          Light, sorted by wavelength. A narrow window the eye accepts;
-          longer than this is heat, shorter than this is the kind of
-          light that gives you cancer. The range in between counts as
-          visible because we're the ones counting.
-        </p>
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          Bees see ultraviolet. Snakes see infrared. We get the strip in
-          the middle. Most of what's flying around the room right now
-          isn't on the chart; the chart is whatever your eyes happen to
-          listen to.
+          Before we go further: I can't actually see most of the
+          colors I'm about to walk you through. I have two cones
+          where standard issue is three. Christmas trees and their
+          ornaments tend to merge on me; I read stoplights by
+          position. I'm also bipolar and lefthanded, neither of
+          which is relevant, but you're going to be in here a while
+          and may as well know what kind of person you're following
+          around.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Easy story. Six sections of ways it isn't.
+          Past red there's infrared, which is heat. Past violet
+          there's ultraviolet, which is sunburn and skin cancer.
+          Bees see the UV side. Snakes have a separate organ for
+          infrared -- a literal pit in their face that picks up
+          warm bodies in the dark. We get a strip in the middle,
+          narrow, and we built every painting and every screen and
+          every color word inside it.
         </p>
       </.section>
 
@@ -74,109 +127,94 @@ defmodule FugueWeb.ColorLive do
         <.cone_splash protanope={@protanope} lambda={@lambda} />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          The eye has three cones. Each one's a sensor that gets excited
-          about a different range of wavelengths. Light comes in, three
-          numbers come out, and that is everything your brain ever has
-          to work with.
+          OK so. Three cones. Each one is a sensor that gets excited
+          about a stretch of wavelengths and bored about the rest;
+          light hits the retina, three excitement levels come out,
+          and those three numbers are everything your brain is ever
+          going to be told about what's there. Thousands of
+          distinguishable wavelengths in the world, smashed into a
+          triple. That triple is your color. That's all you get.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Three numbers can't tell you what's actually there. The world
-          has thousands of distinguishable wavelengths and your retina
-          crushes them down to a triple. The triple is your color.
+          The cone curves overlap on purpose. A wavelength sitting
+          in the seam between two of them lights both partly; the
+          brain reads the ratio and assigns a name. Yellow is a
+          ratio. Drag the slider above and watch the dots move --
+          what you're seeing is how loud each cone is, which is the
+          only thing the brain ever sees.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Cones are membership functions. Color is the result.
+          Now: I'm missing the L cone. The long one. The cone that's
+          supposed to make "red" feel like a different flavor than
+          "green." Without it my brain is running two channels
+          where it's supposed to be running three, and the two it
+          has are arguing about a problem that needs a third
+          opinion. The argument keeps landing in roughly the same
+          place. Christmas trees from across the room: fine. Up
+          close, the ornaments and the needles agree about the
+          color in a way they're not supposed to.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          The curves overlap on purpose. A wavelength near the seam
-          between two cones triggers both, partly; the brain reads the
-          ratio and calls it something. Yellow is a ratio. Pink is a
-          ratio. So is the green you're sure of, and the one you're not.
-        </p>
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          Drag the slider above. The dots tell you how loud each cone is
-          at that wavelength. The brain never sees the wavelength
-          itself; it sees the loudness.
-        </p>
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          Most people make three guesses. I make two.
-        </p>
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          I'm missing the L cone — the long one, the cone responsible for
-          red being a different flavor than green. Without it, my brain
-          has two channels arguing with each other and the argument
-          always lands in roughly the same place. Christmas trees look
-          fine from across the room. Up close, the ornaments and the
-          needles agree about the color in a way they're not supposed
-          to.
-        </p>
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          Three isn't fundamental either. Some women have four cones —
-          there are studies, those people exist, and they apparently see
-          differences in beige paint the rest of us can't. Mantis shrimp
-          have sixteen and presumably think the rest of us are barely
-          seeing. Bees have three, but their middle cone is in the
-          ultraviolet, and flowers have patterns on them we don't know
-          are there. Snakes have a separate organ entirely for infrared,
-          which is to say snakes can see warm.
-        </p>
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          Three is a number that comes out of one branch of evolution
-          deciding three was good enough. The number isn't about color.
-          The number is about us.
+          And three isn't even fundamental. Some women have <em>four</em>
+          cones -- they exist, there are studies, and they
+          apparently see distinctions in beige paint the rest of us
+          can't. Mantis shrimp have sixteen, which presumably means
+          they think the rest of the ocean is functionally blind.
+          Bees have three but their middle one is in the
+          ultraviolet, and flowers turn out to have whole patterns
+          painted on them in UV that we don't know are there.
+          Snakes have an entirely separate organ for infrared.
+          Snakes can see warm.
         </p>
       </.section>
 
       <.section number="3" id="metamerism" title="Two colors, same color">
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Two patches. They look like two colors. Underneath, the spectra
-          disagree wildly — different physical light, almost no shared
-          wavelengths. The eye averages each spectrum down to three cone
-          numbers; the cones produce different ratios; the brain reports
-          two colors.
+          Two patches, two colors. Look at them. Now: underneath,
+          the actual physical light coming off each patch is wildly
+          different -- different mixes of wavelengths, almost no
+          overlap. Your eye doesn't see the mix. Your eye runs the
+          average through three cones, gets two different triples
+          out, and the brain reports two colors. If two completely
+          different mixes happen to give the same triple, the brain
+          gets one color. Same patches, same eye, same brain --
+          there's just no way for the system to know there was
+          anything to disagree about.
         </p>
 
-        <.metamer_splash protanope={@protanope} />
+        <.metamer_splash protanope={@protanope} index={@metamer_index} />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          This is a magic trick the eye does to itself. There's nothing
-          fancy in the math; the trick is just that two completely
-          different physical things can hit your three sensors the same
-          way. The cones can't tell, so the brain doesn't know there
-          was anything to tell.
-        </p>
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          Your screen depends on this. Every color it shows you is a
-          fake. The yellow on this page isn't yellow light — it's red
-          and green pixels next to each other in a ratio the eye
-          averages into yellow. There is no actual yellow involved. The
-          eye never notices.
+          This is the trick your screen runs on. Every color it
+          shows you is a fake. The yellow on this page isn't yellow
+          light coming off the screen, it's red and green pixels
+          sitting next to each other in a ratio the eye averages
+          into yellow. There is no actual yellow involved anywhere.
+          The eye never notices. Your phone, your TV, every monitor
+          you've ever used -- the entire industry is built on a
+          loophole in your retina.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           It's also why clothes look one color in the store and a
-          different one at home. The lights in the store and the lights
-          in your kitchen are different spectra hitting the same shirt;
-          the cones run different averages over different inputs; the
-          answer changes even though the shirt didn't. (Buy clothes
+          different one at home. The lights in the store and the
+          lights in your kitchen are different spectra, hitting the
+          same shirt, getting averaged through your cones into
+          different triples. The shirt didn't change. The light
+          changed and your eye changed its mind. (Buy clothes
           outdoors.)
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Toggle the protanope view in the cone splash above. The
-          patches were two colors; now they're one color. The patches
-          haven't moved. My cones run the average; the average lands
-          in the same place for both. To a trichromat: two clearly
-          different patches. To me: one patch, twice.
+          Toggle the button above. The patches <em>were</em> two colors --
+          now they're one color, and they haven't moved. My cones
+          run the average and the average lands in the same place
+          for both. To a trichromat looking at this: two clearly
+          different patches. To me looking at this: one patch,
+          twice.
         </p>
       </.section>
 
@@ -184,171 +222,191 @@ defmodule FugueWeb.ColorLive do
         <.gamut_splash />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          The filled triangle is your screen — every color it knows how
-          to mix. The rings around it are colors only fancier screens
-          can mix. The whole horseshoe is what an eye can have. The
-          screen reaches in and grabs a triangle.
+          The filled-in triangle is your screen -- the colors it
+          knows how to mix. The rings around it are fancier screens.
+          The whole horseshoe shape is the set of colors a real eye
+          can actually have. Your screen, your phone, the most
+          expensive display you've ever sat in front of -- they all
+          reach in and grab a triangle. They never get the rest.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Three primaries means a triangle. The screen has a red pixel,
-          a green pixel, and a blue pixel; everything it shows is a
-          weighted mix. Anything outside the triangle is a color a real
-          eye can have but the screen can't manufacture from those
-          three.
+          Three primaries means a triangle, geometrically. The
+          screen has a red pixel, a green pixel, and a blue pixel,
+          and everything it ever shows you is a weighted mix of
+          those three. Anything outside the triangle is a color a
+          real eye is capable of having that the screen literally
+          cannot make.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          sRGB is what most monitors do. DCI-P3 is what new phones and
-          recent Apple laptops do. Rec.2020 is what high-end TV
-          manufacturers gesture at and almost nobody owns. The fancier
-          the screen, the bigger the triangle — but it's always a
-          triangle, always inside the eye's full shape, always missing
-          the edges.
+          sRGB is what most monitors are doing. DCI-P3 is what
+          newer phones and recent Apple laptops do. Rec.2020 is
+          what high-end TV manufacturers gesture at and almost
+          nobody actually owns. Bigger triangle, bigger triangle,
+          bigger triangle -- always a triangle, always strictly
+          inside the eye's full shape, always missing the edges.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          The X is at a real wavelength of light, a deep spectral red
-          around 700 nanometers. You can see it. A sunset is partly
-          made of it. No screen in your life is going to render it
-          accurately. The X is rendered with a wide-gamut color request:
-          on a wide-gamut display it might look slightly more saturated
-          than the surrounding sRGB; on a normal display it gets
-          clamped to the closest available red. Either way, what you're
-          seeing is the closest the screen could come.
+          That X is sitting at a real wavelength -- a deep spectral
+          red, around 700 nanometers. Your eye can see it. A sunset
+          is partly made of it. No screen in your life is going to
+          render it accurately. We marked it with a wide-gamut
+          color request, so on a fancier display it might look a
+          touch more saturated than its surroundings; on a normal
+          display it just gets clamped down to the closest red the
+          monitor has. Either way, what you're looking at is the
+          closest the box could come.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          The diagram itself is trichromat. The map of what your screen
-          can't reach was drawn so your screen could draw it. The
-          chicken-and-egg here is on purpose; it's the same chicken and
-          the same egg the rest of the chapter is about.
+          And the whole diagram is trichromat. The map of what your
+          screen can't reach was drawn so your screen could draw
+          it. The chicken-and-egg there is on purpose -- it's
+          basically the whole rest of the chapter.
         </p>
       </.section>
 
       <.section number="5" id="language" title="Language carves it up">
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Cones partition wavelength; language partitions cones.
-          Different languages partition differently, and where they do,
-          the line's real to whoever drew it.
+          OK so cones cut up the wavelengths. Then language comes
+          in and cuts up the cones. And the kicker -- different
+          languages cut them up in completely different places. The
+          line your language drew is real to you and arguably
+          invisible to someone whose language drew it somewhere
+          else.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          How many color words a language needs is also up to the
-          language. English has eleven basic ones — red, orange, yellow,
-          green, blue, purple, pink, brown, black, white, grey. Some
-          languages have only two basic terms: one for the warm half of
-          the spectrum, one for the cool. Both languages work fine; both
-          speakers see the same wavelengths; each thinks its own
-          partition is the obvious one.
+          How many words does a language need for color? Up to the
+          language. English commits to eleven basic ones -- red,
+          orange, yellow, green, blue, purple, pink, brown, black,
+          white, grey. Some languages get by with two: one warm
+          word, one cool word. Both languages work fine. Both sets
+          of speakers are seeing the same wavelengths. Each one
+          thinks its own partition is the obvious one.
         </p>
 
         <.wcs_splash language={@wcs_language} />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Each chip is colored by the term most speakers used; the
-          opacity is how often they agreed. Faded squares are chips the
-          speakers argued about. The arguments are also data.
+          Each chip up there is painted with whichever term most
+          speakers reached for; the opacity is how often they
+          agreed on it. The faded chips are the ones the speakers
+          argued about, which is itself information about where
+          the language is firm and where it's improvising.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           Berinmo cuts the green-yellow region in a place English
-          doesn't. Berinmo speakers tell colors across that line apart
-          faster than colors on the same side. English speakers do the
-          same trick across the green-blue line. The line in your
-          language did some work in your brain. The chip on the chart
-          didn't change; the speaker did.
+          doesn't. Berinmo speakers tell colors across that line
+          apart faster than colors sitting on the same side of it.
+          English speakers do the same thing across the green-blue
+          line. The line your language drew did some actual work
+          inside your head. The chip on the chart didn't change; <em>you</em>
+          did, when you learned the word for it.
         </p>
 
         <.langs_splash />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Russian splits blue: синий, голубой. Mongolian splits it on a
-          different line: хөх, the deep blue of winter ice, against
-          цэнхэр, summer sky. Hungarian splits red. Vietnamese xanh
-          covers green and blue at once; Japanese 青 (ao) did the same
-          until 緑 (midori) carved off a piece a thousand years ago;
-          Kazakh көк still covers both, with жасыл a newer green
-          settling in. None of these are translation problems. They're
-          different partitions of the same continuous thing.
+          Russian splits blue in two: синий, голубой. Mongolian
+          splits it more dramatically: хөх for winter ice, цэнхэр
+          for summer sky. Hungarian goes the other direction and
+          splits red instead. None of these are translation
+          problems. They're different cuts of the same continuous
+          ribbon, and every cut goes all the way down -- it
+          changes how fast the speaker can tell two chips apart,
+          which is wild if you sit with it.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Across hundreds of languages, basic color terms emerge in a
-          roughly predictable order. A three-term language always uses
-          black, white, and red. Add a fourth and you get green or
-          yellow. Add a fifth and you get the other. Blue shows up late,
-          possibly because blue is genuinely uncommon in nature outside
-          the sky.
+          And then -- across hundreds of languages -- there's a
+          rough order things show up in. A language with three
+          basic color words always uses black, white, and red. Add
+          a fourth and you get green or yellow. Add a fifth and
+          you get the other one. Blue shows up late. Possibly
+          because blue is genuinely uncommon in nature outside the
+          sky and even <em>that</em> took a while for various languages
+          to commit to as a separate thing.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Some languages skip abstract color words altogether. Yélî
-          Dnye, on Rossel Island, describes a color by what it's like —
-          the night sky, ripe pandanus, burned wood, water at dusk. The
-          comparison is doing the work an abstract color word would,
-          and arguably doing it better; "burned wood" tells you more
-          than "brown" if you've ever seen burned wood. The category
-          "color word" is a habit.
+          Some languages skip abstract color words entirely. Yélî
+          Dnye, on Rossel Island, names colors by what they remind
+          you of -- the night sky, ripe pandanus, burned wood,
+          water at dusk. The comparison is doing the work the
+          abstract word would do, and arguably doing it better;
+          "burned wood" tells you more than "brown" if you've
+          actually seen burned wood. Whose system is the weird one,
+          exactly.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          And new color words are still being made. Crayola named
-          Macaroni and Cheese, Razzmatazz, Outer Space. Pantone named
-          Living Coral Color of the Year for 2019. Categories are
-          getting invented as we speak; they take when enough people
-          use them and don't when not enough do. The chart of basic
-          terms above isn't done.
+          And new color words are still being made up, right now.
+          Crayola named Macaroni and Cheese, Razzmatazz, Outer
+          Space. Pantone declared Living Coral the Color of the
+          Year in 2019, like an emperor naming a province. New
+          categories take when enough people use them and don't
+          when they don't. Whatever chart of basic terms exists is
+          still being argued over.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          I learned "red" before I understood I wasn't seeing whatever
-          the word pointed at. The word still works fine — I can buy
-          red sweaters, mostly, on the second try. Some of those lines
-          on the chart above are real to their speakers and invisible
-          to me. I'm trusting the chart.
+          I learned the word "red" before I figured out I wasn't
+          seeing whatever the word was pointing at. The word still
+          works fine for me -- I can buy red sweaters, mostly, on
+          the second try. Some of the lines on that chart above
+          are real to their speakers and invisible to me. I'm
+          trusting the chart.
         </p>
       </.section>
 
       <.section number="6" id="remainder" title="What I can't show you">
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Five sections, four parties: light, eye, screen, word. Each
-          one with a number against it.
+          OK so. Five sections, four parties: light, eye, screen,
+          word. Each one of them you can put a number against. Each
+          one of them I just walked you through.
         </p>
 
-        <p class="text-sm text-base-content/65 leading-relaxed">This is the part that doesn't.</p>
+        <p class="text-sm text-base-content/65 leading-relaxed">This is the part that you can't.</p>
 
-        <.remainder_splash />
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          Look at the patches above. To a trichromat: two patches in
-          two slightly different shades. To me, looking at the same
-          patches: nothing in particular. (To me, this is a paragraph
-          about two grey patches.) The simulation is a trichromat's
-          guess at a dichromat's experience, written in trichromat math
-          and rendered on a trichromat-calibrated screen. It can't be
-          right; it's the closest the chain knows how to come.
-        </p>
+        <.remainder_splash index={@metamer_index} />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          You can measure the wavelength. You can measure the cones, the
-          primaries, the categories language draws. The seeing, while
-          you're in it, you can't.
+          Look at those patches. Two patches, one color, to anyone
+          looking at this page. (To me, this is a paragraph about
+          two grey patches.) That simulation up there is a
+          trichromat's guess at what dichromat experience is like,
+          calculated in trichromat math, rendered on a trichromat
+          screen. It can't actually be right. It's the closest the
+          machinery knows how to come.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          And it's the bigger problem under the obvious one. The
-          obvious problem is that the simulation can't show you what
-          I see. The bigger problem is that nothing on this page can
-          show you what you're seeing — your having of the experience,
-          right now, looking at this — is happening somewhere the page
-          doesn't reach. The chain ends at the cone activation. The
-          rest is on you.
+          And it goes the other direction too. You can measure the
+          wavelength coming off a tomato. You can measure how my
+          two cones respond to it, how your three cones respond to
+          it, what your screen does to approximate it, what
+          category your language drops it into. All of that's on
+          the table. The actual <em>seeing</em> of it, while you're inside
+          your seeing of it, isn't.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          There's a smaller problem and a bigger one. The smaller
+          one is that the simulation can't show you what I see. The
+          bigger one is that nothing on this page can show you what <em>you</em>
+          see. Your seeing is happening somewhere this page
+          doesn't reach, and it's never going to. That's where the
+          chapter ends.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           There's a thought experiment about a scientist who learns
-          everything about red and then sees it. This is the inverse.
+          everything there is to know about red and then sees it
+          for the first time. This is the inverse.
         </p>
       </.section>
 
@@ -356,47 +414,45 @@ defmodule FugueWeb.ColorLive do
         <.closer_splash />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Light, eye, screen, word. Four parties, in the open. The
-          chapter's been about them.
+          Light, eye, screen, word. Four parties, all of them in
+          the open. The whole chapter has been about them.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          You can probably play Lite Brite. You can probably tell when
-          an avocado is ripe. Those things land in you differently than
-          they would in me; either way, what they're like to land at
-          all — your having of any of this — isn't on the page.
+          You can probably play Lite Brite without consulting
+          anyone. You can probably read a stoplight from a block
+          away. Those events are landing inside you differently
+          than they would inside me, and either way, what it's
+          actually like for them to land at all isn't on this page.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           Never was. Couldn't be.
         </p>
       </.section>
+
+      <.section number="" id="playground" title="Playground">
+        <.em_spectrum_splash focus={@focus_creature} />
+
+        <.illuminant_splash pos={@hero_pos} />
+      </.section>
     </article>
-    """
-  end
-
-  attr :label, :string, required: true
-
-  defp placecard(assigns) do
-    ~H"""
-    <div class="w-full rounded border border-dashed border-base-content/20 bg-base-200/20 px-6 py-20 flex items-center justify-center">
-      <span class="font-mono text-xs uppercase tracking-widest text-base-content/35">
-        {@label}
-      </span>
-    </div>
     """
   end
 
   attr :number, :string, default: nil
   attr :id, :string, required: true
-  attr :title, :any, required: true
+  attr :title, :any, default: nil
 
   slot :inner_block, required: true
 
   defp section(assigns) do
     ~H"""
     <section id={@id} class="mb-24">
-      <h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/85 mb-4">
+      <h2
+        :if={@title}
+        class="text-sm font-semibold uppercase tracking-widest text-base-content/85 mb-4"
+      >
         {@title}
       </h2>
 
@@ -407,8 +463,30 @@ defmodule FugueWeb.ColorLive do
     """
   end
 
-  # ----- Section 1 hero splash: visible-spectrum strip -----
-  # Currently swapped out for a placecard in §1; kept for when it returns.
+  # ----- Section 1 hero splash: iridescent papillae -----
+  # Cuttlefish-papillae thickness map driven by a Voronoi field, illuminated
+  # by thin-film interference math. Cursor proximity sets the effective
+  # viewing angle so the rainbow shifts as the reader hovers. Fragment
+  # shader lives in assets/js/hooks/iridescence.js. The canvas is the hook
+  # element directly (matches CloudsCanvas convention); phx-update="ignore"
+  # keeps LiveView from clobbering it on re-render.
+
+  defp iridescence_splash(assigns) do
+    ~H"""
+    <figure class="space-y-3">
+      <canvas
+        id="iridescence-canvas"
+        phx-hook="IridescenceCanvas"
+        phx-update="ignore"
+        class="block w-full rounded border border-base-content/10 bg-base-200/30"
+        style="aspect-ratio: 5 / 3;"
+      >
+      </canvas>
+    </figure>
+    """
+  end
+
+  # ----- Section 1 spectrum strip: parked, kept for when it returns -----
   # Public (rather than defp) to dodge the unused-function warning while
   # the splash is on ice -- @compile :nowarn_unused_functions doesn't
   # silence Elixir's own version of this warning.
@@ -468,6 +546,619 @@ defmodule FugueWeb.ColorLive do
       </div>
       <figcaption class="font-mono text-xs uppercase tracking-widest text-base-content/50">
         Light.
+      </figcaption>
+    </figure>
+    """
+  end
+
+  # ----- Section 1 hero splash: illuminants as spectral power distributions -----
+  # Five stops on the slider: candle, tungsten, daylight, fluorescent, warm
+  # LED. The x axis is the visible band (380-700 nm); the y axis is relative
+  # spectral power. Each stop has its own SPD and adjacent stops crossfade
+  # linearly, summing to 1.0, so the curve smoothly morphs between them as
+  # the slider moves.
+  #
+  # Blackbody curves (candle, tungsten, daylight) come from Planck's law.
+  # Fluorescent is a continuous base plus three Gaussian spikes at the
+  # mercury vapor lines (436, 546, 611 nm). Warm LED is a blue-diode peak
+  # near 450 nm plus a broad phosphor hump centered near 590 nm.
+
+  @illuminant_stops [:candle, :tungsten, :daylight, :fluorescent, :led]
+
+  @illuminant_meta %{
+    candle: %{
+      pos: 0,
+      label: "candle",
+      caption:
+        "Candle flame, near 1900 kelvin. Almost no blue. The curve climbs through the visible band toward the red and keeps going into the infrared you can't see."
+    },
+    tungsten: %{
+      pos: 100,
+      label: "tungsten",
+      caption:
+        "An old incandescent bulb, around 2900 kelvin. A hot wire glowing. Red carries most of the energy; blue is faint. This is why old kitchens look amber."
+    },
+    daylight: %{
+      pos: 200,
+      label: "daylight",
+      caption:
+        "Noon daylight, around 6500 kelvin. Broad and almost flat across the whole visible band. This is the light eyes evolved under."
+    },
+    fluorescent: %{
+      pos: 300,
+      label: "fluorescent",
+      caption:
+        "A fluorescent tube. A continuous base plus three sharp spikes from mercury vapor -- blue, green, orange. The eye smears them into 'white'."
+    },
+    led: %{
+      pos: 400,
+      label: "warm LED",
+      caption:
+        "A warm-white LED. A blue diode near 450 nanometers excites a yellow phosphor that fluoresces broadly across green and red. Two humps masquerading as one light."
+    }
+  }
+
+  @vis_lambda_min 380
+  @vis_lambda_max 700
+  @vis_lambda_step 5
+  @vis_lambdas Enum.to_list(@vis_lambda_min..@vis_lambda_max//@vis_lambda_step)
+
+  defp planck(lambda_nm, temp_k) do
+    l = lambda_nm * 1.0e-9
+    x = 0.014387 / (l * temp_k)
+    1.0 / (:math.pow(l, 5) * (:math.exp(x) - 1.0))
+  end
+
+  defp gauss(x, mu, sigma) do
+    z = (x - mu) / sigma
+    :math.exp(-0.5 * z * z)
+  end
+
+  defp normalize_peak(values) do
+    peak = Enum.max(values)
+    Enum.map(values, fn v -> v / peak end)
+  end
+
+  defp planck_samples(temp_k) do
+    @vis_lambdas
+    |> Enum.map(&planck(&1, temp_k))
+    |> normalize_peak()
+  end
+
+  defp fluorescent_samples do
+    @vis_lambdas
+    |> Enum.map(fn l ->
+      base = 0.18 + 0.10 * gauss(l, 540, 80)
+      base + 0.95 * gauss(l, 436, 6) + 1.0 * gauss(l, 546, 6) + 0.75 * gauss(l, 611, 6)
+    end)
+    |> normalize_peak()
+  end
+
+  defp led_samples do
+    @vis_lambdas
+    |> Enum.map(fn l ->
+      0.95 * gauss(l, 452, 14) + 0.85 * gauss(l, 590, 60)
+    end)
+    |> normalize_peak()
+  end
+
+  defp spd_samples(:candle), do: planck_samples(1900)
+  defp spd_samples(:tungsten), do: planck_samples(2900)
+  defp spd_samples(:daylight), do: planck_samples(6500)
+  defp spd_samples(:fluorescent), do: fluorescent_samples()
+  defp spd_samples(:led), do: led_samples()
+
+  defp illuminant_opacities(pos) do
+    Map.new(@illuminant_stops, fn slug ->
+      o = max(0.0, 1.0 - abs(pos - @illuminant_meta[slug].pos) / 100)
+      {slug, o}
+    end)
+  end
+
+  defp dominant_illuminant(pos) do
+    Enum.min_by(@illuminant_stops, fn slug ->
+      abs(pos - @illuminant_meta[slug].pos)
+    end)
+  end
+
+  defp blended_spd(pos) do
+    weights = illuminant_opacities(pos)
+    zero = List.duplicate(0.0, length(@vis_lambdas))
+
+    Enum.reduce(@illuminant_stops, zero, fn slug, acc ->
+      w = weights[slug]
+
+      if w == 0.0 do
+        acc
+      else
+        Enum.zip_with(acc, spd_samples(slug), fn a, s -> a + s * w end)
+      end
+    end)
+  end
+
+  defp spd_path_d(samples, x_left, x_right, y_top, y_bottom) do
+    span = @vis_lambda_max - @vis_lambda_min
+    width = x_right - x_left
+    height = y_bottom - y_top
+
+    pts =
+      @vis_lambdas
+      |> Enum.zip(samples)
+      |> Enum.map(fn {l, v} ->
+        x = x_left + (l - @vis_lambda_min) / span * width
+        y = y_bottom - v * height
+        "#{Float.round(x, 1)},#{Float.round(y, 1)}"
+      end)
+
+    "M " <> Enum.join(pts, " L ")
+  end
+
+  defp visible_gradient_stops do
+    for offset <- 0..10 do
+      lambda = 380 + offset / 10 * (700 - 380)
+      {offset * 10, Fugue.Color.Spectrum.hex(lambda)}
+    end
+  end
+
+  attr :pos, :integer, required: true
+
+  defp illuminant_splash(assigns) do
+    pos = assigns.pos
+    samples = blended_spd(pos)
+    dom = dominant_illuminant(pos)
+
+    assigns =
+      assigns
+      |> assign(:caption, @illuminant_meta[dom].caption)
+      |> assign(:dominant, dom)
+      |> assign(:stops, @illuminant_stops)
+      |> assign(:meta, @illuminant_meta)
+      |> assign(:curve_d, spd_path_d(samples, 60.0, 760.0, 30.0, 240.0))
+      |> assign(:gradient_stops, visible_gradient_stops())
+
+    ~H"""
+    <figure class="space-y-3">
+      <div class="w-full rounded border border-base-content/10 overflow-hidden bg-zinc-950">
+        <svg
+          viewBox="0 0 800 290"
+          class="w-full h-auto text-zinc-100"
+          role="img"
+          aria-label="Spectral power distribution of the selected illuminant across the visible band."
+        >
+          <defs>
+            <linearGradient id="visband" x1="0" x2="1" y1="0" y2="0">
+              <stop
+                :for={{offset, color} <- @gradient_stops}
+                offset={"#{offset}%"}
+                stop-color={color}
+              />
+            </linearGradient>
+          </defs>
+
+          <line
+            x1="60"
+            y1="240"
+            x2="760"
+            y2="240"
+            stroke="currentColor"
+            stroke-opacity="0.25"
+            stroke-width="1"
+          />
+          <rect x="60" y="244" width="700" height="14" fill="url(#visband)" opacity="0.85" />
+
+          <g
+            font-family="ui-monospace, monospace"
+            font-size="10"
+            fill="currentColor"
+            fill-opacity="0.5"
+          >
+            <text
+              :for={l <- [400, 500, 600, 700]}
+              x={60 + (l - 380) / 320 * 700}
+              y="274"
+              text-anchor="middle"
+            >
+              {l}
+            </text>
+            <text x="60" y="22" fill-opacity="0.45">spectral power (relative)</text>
+            <text x="760" y="274" text-anchor="end" fill-opacity="0.45">wavelength (nm)</text>
+          </g>
+
+          <path d={"#{@curve_d} L 760 240 L 60 240 Z"} fill="currentColor" fill-opacity="0.08" />
+          <path
+            d={@curve_d}
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </div>
+
+      <form phx-change="set_hero_pos" class="space-y-2">
+        <div class="relative h-5 font-mono text-xs uppercase tracking-widest">
+          <span
+            :for={slug <- @stops}
+            class={[
+              "absolute -translate-x-1/2 transition-colors",
+              if(@dominant == slug, do: "text-base-content", else: "text-base-content/45")
+            ]}
+            style={"left: #{@meta[slug].pos / 4}%;"}
+          >
+            {@meta[slug].label}
+          </span>
+        </div>
+
+        <input
+          type="range"
+          name="pos"
+          min="0"
+          max="400"
+          step="1"
+          value={@pos}
+          phx-throttle="30"
+          class="w-full accent-base-content/60"
+          aria-label="illuminant, from candle to warm LED"
+        />
+      </form>
+
+      <p class="font-mono text-xs text-base-content/70 leading-relaxed not-italic min-h-[3rem]">
+        {@caption}
+      </p>
+    </figure>
+    """
+  end
+
+  # ----- Section 1 hero splash: EM spectrum + who-sees-what -----
+  # Top strip: full electromagnetic spectrum on a log axis from gamma to radio,
+  # with the visible band rendered as the actual rainbow. A trapezoidal "zoom"
+  # connects the visible sliver up top to a wider axis below (UV through
+  # thermal infrared) where four creatures' sensitivity ranges are stacked:
+  # human, bee, snake (pit-organ thermal IR), mantis shrimp. Click a creature
+  # to spotlight its strip.
+
+  @em_creatures [
+    %{
+      slug: :human,
+      label: "human",
+      lo: 380,
+      hi: 700,
+      note: "Three cones. Our strip."
+    },
+    %{
+      slug: :bee,
+      label: "bee",
+      lo: 300,
+      hi: 650,
+      note: "Shifted into the ultraviolet. Flowers have markings on them only bees see."
+    },
+    %{
+      slug: :snake,
+      label: "snake",
+      lo: 5_000,
+      hi: 30_000,
+      note:
+        "Pit organs on a viper's face read thermal infrared. Not the eyes; a separate channel into the same brain."
+    },
+    %{
+      slug: :mantis,
+      label: "mantis shrimp",
+      lo: 300,
+      hi: 720,
+      note:
+        "Twelve to sixteen photoreceptor types across about the same band as ours, plus deep ultraviolet."
+    }
+  ]
+
+  @em_bands [
+    %{label: "gamma", lo: 1.0e-3, hi: 1.0e-2, fill: "#1e1b4b"},
+    %{label: "X-ray", lo: 1.0e-2, hi: 10.0, fill: "#312e81"},
+    %{label: "UV", lo: 10.0, hi: 380.0, fill: "#5b21b6"},
+    %{label: "IR", lo: 700.0, hi: 1.0e6, fill: "#7f1d1d"},
+    %{label: "microwave", lo: 1.0e6, hi: 1.0e8, fill: "#78350f"},
+    %{label: "radio", lo: 1.0e8, hi: 1.0e10, fill: "#374151"}
+  ]
+
+  # Top axis: 1pm (1e-3 nm) to 10m (1e10 nm). Bottom axis: 100 nm to 100,000 nm.
+  @em_top_lo_log -3.0
+  @em_top_hi_log 10.0
+  @em_bot_lo_log 2.0
+  @em_bot_hi_log 5.0
+  @em_x_left 50
+  @em_x_right 950
+
+  defp em_top_x(lambda) do
+    log = :math.log10(lambda)
+
+    @em_x_left +
+      (log - @em_top_lo_log) / (@em_top_hi_log - @em_top_lo_log) *
+        (@em_x_right - @em_x_left)
+  end
+
+  defp em_bot_x(lambda) do
+    log = :math.log10(lambda)
+
+    @em_x_left +
+      (log - @em_bot_lo_log) / (@em_bot_hi_log - @em_bot_lo_log) *
+        (@em_x_right - @em_x_left)
+  end
+
+  defp em_band_color(lambda) when lambda < 380.0, do: "#5b21b6"
+  defp em_band_color(lambda) when lambda <= 700.0, do: Fugue.Color.Spectrum.hex(lambda)
+  defp em_band_color(lambda) when lambda < 1500.0, do: "#9b1c1c"
+  defp em_band_color(lambda) when lambda < 30_000.0, do: "#7f1d1d"
+  defp em_band_color(_), do: "#451a1a"
+
+  defp em_creature_strips(lo, hi, x_fn) do
+    log_lo = :math.log10(lo)
+    log_hi = :math.log10(hi)
+    n = 80
+    step = (log_hi - log_lo) / n
+
+    for i <- 0..(n - 1) do
+      log_a = log_lo + i * step
+      lambda_mid = :math.pow(10, log_a + step / 2)
+      x_a = x_fn.(:math.pow(10, log_a))
+      x_b = x_fn.(:math.pow(10, log_a + step))
+
+      %{
+        x: Float.round(x_a, 2),
+        w: Float.round(x_b - x_a + 0.4, 2),
+        color: em_band_color(lambda_mid)
+      }
+    end
+  end
+
+  defp em_top_visible_strips do
+    log_lo = :math.log10(380)
+    log_hi = :math.log10(700)
+    n = 24
+    step = (log_hi - log_lo) / n
+
+    for i <- 0..(n - 1) do
+      log_a = log_lo + i * step
+      lambda_mid = :math.pow(10, log_a + step / 2)
+      x_a = em_top_x(:math.pow(10, log_a))
+      x_b = em_top_x(:math.pow(10, log_a + step))
+
+      %{
+        x: Float.round(x_a, 2),
+        w: Float.round(x_b - x_a + 0.4, 2),
+        color: Fugue.Color.Spectrum.hex(lambda_mid)
+      }
+    end
+  end
+
+  attr :focus, :atom, required: true
+
+  defp em_spectrum_splash(assigns) do
+    creature_rows =
+      @em_creatures
+      |> Enum.with_index()
+      |> Enum.map(fn {c, i} ->
+        Map.merge(c, %{
+          row_y: 170 + i * 36,
+          strips: em_creature_strips(c.lo, c.hi, &em_bot_x/1),
+          x_lo: em_bot_x(c.lo),
+          x_hi: em_bot_x(c.hi)
+        })
+      end)
+
+    bands =
+      Enum.map(@em_bands, fn b ->
+        Map.merge(b, %{x_lo: em_top_x(b.lo), x_hi: em_top_x(b.hi)})
+      end)
+
+    note =
+      case Enum.find(@em_creatures, &(&1.slug == assigns.focus)) do
+        nil -> nil
+        c -> c.note
+      end
+
+    assigns =
+      assigns
+      |> assign(:bands, bands)
+      |> assign(:top_visible_strips, em_top_visible_strips())
+      |> assign(:visible_top_lo, em_top_x(380))
+      |> assign(:visible_top_hi, em_top_x(700))
+      |> assign(:visible_bot_lo, em_bot_x(380))
+      |> assign(:visible_bot_hi, em_bot_x(700))
+      |> assign(:bot_ticks, [
+        {100, "100 nm"},
+        {1_000, "1,000 nm"},
+        {10_000, "10,000 nm"},
+        {100_000, "100,000 nm"}
+      ])
+      |> assign(:creature_rows, creature_rows)
+      |> assign(:note, note)
+      |> assign(:x_left, @em_x_left)
+      |> assign(:x_right, @em_x_right)
+
+    ~H"""
+    <figure class="space-y-3">
+      <div class="w-full rounded border border-base-content/10 bg-base-200/30 p-4">
+        <svg
+          viewBox="0 0 1000 320"
+          class="w-full h-auto"
+          role="img"
+          aria-label="The full electromagnetic spectrum on a log scale, with the visible band marked. Below, the sensitivity ranges of human, bee, snake, and mantis shrimp on a wider zoomed axis."
+        >
+          <g
+            font-family="ui-monospace, monospace"
+            font-size="10"
+            fill="currentColor"
+            fill-opacity="0.55"
+            text-anchor="middle"
+          >
+            <text x="500" y="14">all electromagnetic radiation</text>
+          </g>
+
+          <g>
+            <rect
+              :for={b <- @bands}
+              x={Float.round(b.x_lo, 2)}
+              y="22"
+              width={Float.round(b.x_hi - b.x_lo, 2)}
+              height="36"
+              fill={b.fill}
+            />
+            <rect
+              :for={s <- @top_visible_strips}
+              x={s.x}
+              y="22"
+              width={s.w}
+              height="36"
+              fill={s.color}
+            />
+          </g>
+
+          <g
+            font-family="ui-monospace, monospace"
+            font-size="10"
+            fill="currentColor"
+            fill-opacity="0.85"
+            text-anchor="middle"
+          >
+            <text :for={b <- @bands} x={Float.round((b.x_lo + b.x_hi) / 2, 2)} y="44">
+              {b.label}
+            </text>
+          </g>
+
+          <polygon
+            points={
+              "#{Float.round(@visible_top_lo, 2)},58 " <>
+                "#{Float.round(@visible_top_hi, 2)},58 " <>
+                "#{Float.round(@visible_bot_hi, 2)},120 " <>
+                "#{Float.round(@visible_bot_lo, 2)},120"
+            }
+            fill="currentColor"
+            fill-opacity="0.06"
+            stroke="currentColor"
+            stroke-opacity="0.35"
+            stroke-width="0.5"
+          />
+
+          <g
+            font-family="ui-monospace, monospace"
+            font-size="9"
+            fill="currentColor"
+            fill-opacity="0.55"
+            text-anchor="middle"
+          >
+            <text x={Float.round((@visible_top_lo + @visible_top_hi) / 2, 2)} y="71">visible</text>
+          </g>
+
+          <g stroke="currentColor" stroke-opacity="0.2" stroke-width="0.5">
+            <line x1={@x_left} y1="120" x2={@x_right} y2="120" />
+          </g>
+
+          <g
+            font-family="ui-monospace, monospace"
+            font-size="10"
+            fill="currentColor"
+            fill-opacity="0.5"
+            text-anchor="middle"
+          >
+            <%= for {lambda, label} <- @bot_ticks do %>
+              <line
+                x1={Float.round(em_bot_x(lambda), 2)}
+                y1="120"
+                x2={Float.round(em_bot_x(lambda), 2)}
+                y2="126"
+                stroke="currentColor"
+                stroke-opacity="0.4"
+                stroke-width="0.5"
+              />
+              <text x={Float.round(em_bot_x(lambda), 2)} y="138">{label}</text>
+            <% end %>
+          </g>
+
+          <g :for={c <- @creature_rows} opacity={if @focus in [:all, c.slug], do: "1", else: "0.18"}>
+            <text
+              x={@x_left - 8}
+              y={c.row_y + 14}
+              text-anchor="end"
+              font-family="ui-monospace, monospace"
+              font-size="11"
+              fill="currentColor"
+              fill-opacity={if @focus == c.slug, do: "0.95", else: "0.7"}
+            >
+              {c.label}
+            </text>
+
+            <line
+              x1={@x_left}
+              y1={c.row_y + 11}
+              x2={@x_right}
+              y2={c.row_y + 11}
+              stroke="currentColor"
+              stroke-opacity="0.08"
+              stroke-width="0.5"
+            />
+
+            <rect
+              :for={s <- c.strips}
+              x={s.x}
+              y={c.row_y}
+              width={s.w}
+              height="22"
+              fill={s.color}
+            />
+          </g>
+        </svg>
+      </div>
+
+      <div class="flex items-center gap-2 flex-wrap">
+        <button
+          :for={c <- @creature_rows}
+          type="button"
+          phx-click="focus_creature"
+          phx-value-creature={Atom.to_string(c.slug)}
+          aria-pressed={to_string(@focus == c.slug)}
+          class={[
+            "font-mono text-xs uppercase tracking-widest px-3 py-1.5 rounded border transition-colors",
+            if(@focus == c.slug,
+              do: "border-base-content/60 bg-base-200/60 text-base-content",
+              else:
+                "border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 text-base-content/70"
+            )
+          ]}
+        >
+          {c.label}
+        </button>
+
+        <button
+          type="button"
+          phx-click="focus_creature"
+          phx-value-creature="all"
+          aria-pressed={to_string(@focus == :all)}
+          class={[
+            "font-mono text-xs uppercase tracking-widest px-3 py-1.5 rounded border transition-colors ml-auto",
+            if(@focus == :all,
+              do: "border-base-content/60 bg-base-200/60 text-base-content",
+              else:
+                "border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 text-base-content/70"
+            )
+          ]}
+        >
+          all
+        </button>
+      </div>
+
+      <p
+        :if={@note}
+        class="font-mono text-xs text-base-content/65 leading-relaxed not-italic min-h-[2.5rem]"
+      >
+        {@note}
+      </p>
+
+      <figcaption
+        :if={!@note}
+        class="font-mono text-xs text-base-content/45 leading-relaxed not-italic min-h-[2.5rem]"
+      >
+        Top: all electromagnetic radiation, log-spaced. Visible is the
+        sliver in the middle. Bottom: a wider zoom from ultraviolet to
+        thermal infrared, with what each animal samples from it.
       </figcaption>
     </figure>
     """
@@ -1135,15 +1826,12 @@ defmodule FugueWeb.ColorLive do
     """
   end
 
-  # Hand-picked metamer pair: two trichromat-distinguishable colors that lie
-  # close to the same protan confusion line, so they collapse to (almost) the
-  # same color under Machado severity-1.0 protanope simulation.
-  @metamer_a "#c83232"
-  @metamer_b "#7d712b"
+  attr :index, :integer, required: true
 
   defp remainder_splash(assigns) do
-    a = Fugue.Color.Daltonize.protan_hex(@metamer_a)
-    b = Fugue.Color.Daltonize.protan_hex(@metamer_b)
+    {a_orig, b_orig} = Enum.at(@metamer_pairs, assigns.index)
+    a = Fugue.Color.Daltonize.protan_hex(a_orig)
+    b = Fugue.Color.Daltonize.protan_hex(b_orig)
 
     assigns =
       assigns
@@ -1176,20 +1864,24 @@ defmodule FugueWeb.ColorLive do
   end
 
   attr :protanope, :boolean, required: true
+  attr :index, :integer, required: true
 
   defp metamer_splash(assigns) do
+    n = length(@metamer_pairs)
+    {a_orig, b_orig} = Enum.at(@metamer_pairs, assigns.index)
+
     {a, b} =
       if assigns.protanope do
-        {Fugue.Color.Daltonize.protan_hex(@metamer_a),
-         Fugue.Color.Daltonize.protan_hex(@metamer_b)}
+        {Fugue.Color.Daltonize.protan_hex(a_orig), Fugue.Color.Daltonize.protan_hex(b_orig)}
       else
-        {@metamer_a, @metamer_b}
+        {a_orig, b_orig}
       end
 
     assigns =
       assigns
       |> assign(:patch_a, a)
       |> assign(:patch_b, b)
+      |> assign(:pair_label, "#{assigns.index + 1} / #{n}")
 
     ~H"""
     <figure class="space-y-3">
@@ -1207,9 +1899,42 @@ defmodule FugueWeb.ColorLive do
         >
         </div>
       </div>
-      <figcaption class="font-mono text-xs uppercase tracking-widest text-base-content/50">
-        {if @protanope, do: "One color. To me, always.", else: "Two colors."}
-      </figcaption>
+      <div class="flex items-center justify-between gap-4">
+        <figcaption class="font-mono text-xs uppercase tracking-widest text-base-content/50">
+          {if @protanope, do: "One color. To me, always.", else: "Two colors."}
+        </figcaption>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            phx-click="cycle_metamer"
+            phx-value-dir="prev"
+            aria-label="previous pair"
+            class="font-mono text-sm leading-none px-2 py-1.5 rounded border border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 transition-colors"
+          >
+            &lsaquo;
+          </button>
+          <span class="font-mono text-xs uppercase tracking-widest text-base-content/50 tabular-nums px-2 min-w-[3rem] text-center">
+            {@pair_label}
+          </span>
+          <button
+            type="button"
+            phx-click="cycle_metamer"
+            phx-value-dir="next"
+            aria-label="next pair"
+            class="font-mono text-sm leading-none px-2 py-1.5 rounded border border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 transition-colors"
+          >
+            &rsaquo;
+          </button>
+          <button
+            type="button"
+            phx-click="toggle_protanope"
+            aria-pressed={to_string(@protanope)}
+            class="font-mono text-xs uppercase tracking-widest px-3 py-1.5 rounded border border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 transition-colors ml-1"
+          >
+            {if @protanope, do: "show trichromat", else: "show protanope"}
+          </button>
+        </div>
+      </div>
     </figure>
     """
   end
