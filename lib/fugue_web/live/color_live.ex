@@ -1,6 +1,18 @@
 defmodule FugueWeb.ColorLive do
   use FugueWeb, :live_view
 
+  # Protan-metameric pairs for §3 + §6. Each {a, b} has been verified to
+  # collapse to the same color under Machado severity-1.0 protanope
+  # simulation (delta <= 1 RGB unit). Found by stepping along the null
+  # vector of the Machado matrix in linear RGB. First pair is the canonical
+  # red/green; the rest span pink/teal, orange/spring-green, salmon/sage.
+  @metamer_pairs [
+    {"#da3030", "#006632"},
+    {"#da8930", "#00a032"},
+    {"#da306c", "#00666d"},
+    {"#da8989", "#00a089"}
+  ]
+
   def mount(_params, _session, socket) do
     {:ok,
      socket
@@ -13,7 +25,8 @@ defmodule FugueWeb.ColorLive do
      |> assign(:lambda, 540.0)
      |> assign(:wcs_language, :english)
      |> assign(:focus_creature, :all)
-     |> assign(:hero_pos, 200)}
+     |> assign(:hero_pos, 200)
+     |> assign(:metamer_index, 0)}
   end
 
   def handle_event("toggle_protanope", _params, socket) do
@@ -42,6 +55,20 @@ defmodule FugueWeb.ColorLive do
     {:noreply, assign(socket, :focus_creature, creature)}
   end
 
+  def handle_event("cycle_metamer", %{"dir" => dir}, socket) do
+    n = length(@metamer_pairs)
+    i = socket.assigns.metamer_index
+
+    new_i =
+      case dir do
+        "next" -> rem(i + 1, n)
+        "prev" -> rem(i - 1 + n, n)
+        _ -> i
+      end
+
+    {:noreply, assign(socket, :metamer_index, new_i)}
+  end
+
   def handle_event("cycle_wcs_language", _params, socket) do
     langs = Fugue.Color.WCSMock.languages()
     current = socket.assigns.wcs_language
@@ -52,33 +79,47 @@ defmodule FugueWeb.ColorLive do
   def render(assigns) do
     ~H"""
     <article class="px-4 py-8 max-w-3xl mx-auto">
-      <header class="mb-16">
+      <header class="mb-16 max-w-2xl">
         <h1 class="text-3xl font-bold tracking-tight text-base-content">
           Color.
         </h1>
+        <p class="text-gray-500 mt-2 mb-10">
+          Three cones, mostly.
+        </p>
       </header>
 
-      <.section number="1" id="light" title="The light">
+      <.section number="1" id="light">
         <.iridescence_splash />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Oil on a puddle. A morpho's wing. A cuttlefish smoothing
-          into the seafloor. No pigments; just thin films catching
-          light and handing back the wavelengths that fit. Color is
-          sometimes a piece of geometry pretending to be a piece of
-          dye.
+          A cuttlefish presses against gravel and the gravel-color
+          happens in its skin. Not pigment -- geometry. Stacks of
+          crystal layers inside the cells, interfering with whatever
+          light hits them, picking which wavelengths bounce back.
+          The morpho butterfly is doing the same thing from a
+          completely different branch of the animal kingdom. Oil on
+          a puddle, same trick. The color isn't in the thing.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          I'm colorblind. Two cones instead of three. Reds and
-          greens are talking among themselves; I catch about half.
+          Before we go further: I can't actually see most of the
+          colors I'm about to walk you through. I have two cones
+          where standard issue is three. Christmas trees and their
+          ornaments tend to merge on me; I read stoplights by
+          position. I'm also bipolar and lefthanded, neither of
+          which is relevant, but you're going to be in here a while
+          and may as well know what kind of person you're following
+          around.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Past red, infrared, then heat. Past violet, ultraviolet,
-          then the kind of light that gives you cancer. Bees see the
-          cool end. Snakes see the warm. We catch a strip in the
-          middle.
+          Past red there's infrared, which is heat. Past violet
+          there's ultraviolet, which is sunburn and skin cancer.
+          Bees see the UV side. Snakes have a separate organ for
+          infrared -- a literal pit in their face that picks up
+          warm bodies in the dark. We get a strip in the middle,
+          narrow, and we built every painting and every screen and
+          every color word inside it.
         </p>
       </.section>
 
@@ -86,109 +127,94 @@ defmodule FugueWeb.ColorLive do
         <.cone_splash protanope={@protanope} lambda={@lambda} />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          The eye has three cones. Each one's a sensor that gets excited
-          about a different range of wavelengths. Light comes in, three
-          numbers come out, and that is everything your brain ever has
-          to work with.
+          OK so. Three cones. Each one is a sensor that gets excited
+          about a stretch of wavelengths and bored about the rest;
+          light hits the retina, three excitement levels come out,
+          and those three numbers are everything your brain is ever
+          going to be told about what's there. Thousands of
+          distinguishable wavelengths in the world, smashed into a
+          triple. That triple is your color. That's all you get.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Three numbers can't tell you what's actually there. The world
-          has thousands of distinguishable wavelengths and your retina
-          crushes them down to a triple. The triple is your color.
+          The cone curves overlap on purpose. A wavelength sitting
+          in the seam between two of them lights both partly; the
+          brain reads the ratio and assigns a name. Yellow is a
+          ratio. Drag the slider above and watch the dots move --
+          what you're seeing is how loud each cone is, which is the
+          only thing the brain ever sees.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Cones are membership functions. Color is the result.
+          Now: I'm missing the L cone. The long one. The cone that's
+          supposed to make "red" feel like a different flavor than
+          "green." Without it my brain is running two channels
+          where it's supposed to be running three, and the two it
+          has are arguing about a problem that needs a third
+          opinion. The argument keeps landing in roughly the same
+          place. Christmas trees from across the room: fine. Up
+          close, the ornaments and the needles agree about the
+          color in a way they're not supposed to.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          The curves overlap on purpose. A wavelength near the seam
-          between two cones triggers both, partly; the brain reads the
-          ratio and calls it something. Yellow is a ratio. Pink is a
-          ratio. So is the green you're sure of, and the one you're not.
-        </p>
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          Drag the slider above. The dots tell you how loud each cone is
-          at that wavelength. The brain never sees the wavelength
-          itself; it sees the loudness.
-        </p>
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          Most people make three guesses. I make two.
-        </p>
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          I'm missing the L cone — the long one, the cone responsible for
-          red being a different flavor than green. Without it, my brain
-          has two channels arguing with each other and the argument
-          always lands in roughly the same place. Christmas trees look
-          fine from across the room. Up close, the ornaments and the
-          needles agree about the color in a way they're not supposed
-          to.
-        </p>
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          Three isn't fundamental either. Some women have four cones —
-          there are studies, those people exist, and they apparently see
-          differences in beige paint the rest of us can't. Mantis shrimp
-          have sixteen and presumably think the rest of us are barely
-          seeing. Bees have three, but their middle cone is in the
-          ultraviolet, and flowers have patterns on them we don't know
-          are there. Snakes have a separate organ entirely for infrared,
-          which is to say snakes can see warm.
-        </p>
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          Three is a number that comes out of one branch of evolution
-          deciding three was good enough. The number isn't about color.
-          The number is about us.
+          And three isn't even fundamental. Some women have <em>four</em>
+          cones -- they exist, there are studies, and they
+          apparently see distinctions in beige paint the rest of us
+          can't. Mantis shrimp have sixteen, which presumably means
+          they think the rest of the ocean is functionally blind.
+          Bees have three but their middle one is in the
+          ultraviolet, and flowers turn out to have whole patterns
+          painted on them in UV that we don't know are there.
+          Snakes have an entirely separate organ for infrared.
+          Snakes can see warm.
         </p>
       </.section>
 
       <.section number="3" id="metamerism" title="Two colors, same color">
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Two patches. They look like two colors. Underneath, the spectra
-          disagree wildly — different physical light, almost no shared
-          wavelengths. The eye averages each spectrum down to three cone
-          numbers; the cones produce different ratios; the brain reports
-          two colors.
+          Two patches, two colors. Look at them. Now: underneath,
+          the actual physical light coming off each patch is wildly
+          different -- different mixes of wavelengths, almost no
+          overlap. Your eye doesn't see the mix. Your eye runs the
+          average through three cones, gets two different triples
+          out, and the brain reports two colors. If two completely
+          different mixes happen to give the same triple, the brain
+          gets one color. Same patches, same eye, same brain --
+          there's just no way for the system to know there was
+          anything to disagree about.
         </p>
 
-        <.metamer_splash protanope={@protanope} />
+        <.metamer_splash protanope={@protanope} index={@metamer_index} />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          This is a magic trick the eye does to itself. There's nothing
-          fancy in the math; the trick is just that two completely
-          different physical things can hit your three sensors the same
-          way. The cones can't tell, so the brain doesn't know there
-          was anything to tell.
-        </p>
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          Your screen depends on this. Every color it shows you is a
-          fake. The yellow on this page isn't yellow light — it's red
-          and green pixels next to each other in a ratio the eye
-          averages into yellow. There is no actual yellow involved. The
-          eye never notices.
+          This is the trick your screen runs on. Every color it
+          shows you is a fake. The yellow on this page isn't yellow
+          light coming off the screen, it's red and green pixels
+          sitting next to each other in a ratio the eye averages
+          into yellow. There is no actual yellow involved anywhere.
+          The eye never notices. Your phone, your TV, every monitor
+          you've ever used -- the entire industry is built on a
+          loophole in your retina.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           It's also why clothes look one color in the store and a
-          different one at home. The lights in the store and the lights
-          in your kitchen are different spectra hitting the same shirt;
-          the cones run different averages over different inputs; the
-          answer changes even though the shirt didn't. (Buy clothes
+          different one at home. The lights in the store and the
+          lights in your kitchen are different spectra, hitting the
+          same shirt, getting averaged through your cones into
+          different triples. The shirt didn't change. The light
+          changed and your eye changed its mind. (Buy clothes
           outdoors.)
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Toggle the protanope view in the cone splash above. The
-          patches were two colors; now they're one color. The patches
-          haven't moved. My cones run the average; the average lands
-          in the same place for both. To a trichromat: two clearly
-          different patches. To me: one patch, twice.
+          Toggle the button above. The patches <em>were</em> two colors --
+          now they're one color, and they haven't moved. My cones
+          run the average and the average lands in the same place
+          for both. To a trichromat looking at this: two clearly
+          different patches. To me looking at this: one patch,
+          twice.
         </p>
       </.section>
 
@@ -196,171 +222,191 @@ defmodule FugueWeb.ColorLive do
         <.gamut_splash />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          The filled triangle is your screen — every color it knows how
-          to mix. The rings around it are colors only fancier screens
-          can mix. The whole horseshoe is what an eye can have. The
-          screen reaches in and grabs a triangle.
+          The filled-in triangle is your screen -- the colors it
+          knows how to mix. The rings around it are fancier screens.
+          The whole horseshoe shape is the set of colors a real eye
+          can actually have. Your screen, your phone, the most
+          expensive display you've ever sat in front of -- they all
+          reach in and grab a triangle. They never get the rest.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Three primaries means a triangle. The screen has a red pixel,
-          a green pixel, and a blue pixel; everything it shows is a
-          weighted mix. Anything outside the triangle is a color a real
-          eye can have but the screen can't manufacture from those
-          three.
+          Three primaries means a triangle, geometrically. The
+          screen has a red pixel, a green pixel, and a blue pixel,
+          and everything it ever shows you is a weighted mix of
+          those three. Anything outside the triangle is a color a
+          real eye is capable of having that the screen literally
+          cannot make.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          sRGB is what most monitors do. DCI-P3 is what new phones and
-          recent Apple laptops do. Rec.2020 is what high-end TV
-          manufacturers gesture at and almost nobody owns. The fancier
-          the screen, the bigger the triangle — but it's always a
-          triangle, always inside the eye's full shape, always missing
-          the edges.
+          sRGB is what most monitors are doing. DCI-P3 is what
+          newer phones and recent Apple laptops do. Rec.2020 is
+          what high-end TV manufacturers gesture at and almost
+          nobody actually owns. Bigger triangle, bigger triangle,
+          bigger triangle -- always a triangle, always strictly
+          inside the eye's full shape, always missing the edges.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          The X is at a real wavelength of light, a deep spectral red
-          around 700 nanometers. You can see it. A sunset is partly
-          made of it. No screen in your life is going to render it
-          accurately. The X is rendered with a wide-gamut color request:
-          on a wide-gamut display it might look slightly more saturated
-          than the surrounding sRGB; on a normal display it gets
-          clamped to the closest available red. Either way, what you're
-          seeing is the closest the screen could come.
+          That X is sitting at a real wavelength -- a deep spectral
+          red, around 700 nanometers. Your eye can see it. A sunset
+          is partly made of it. No screen in your life is going to
+          render it accurately. We marked it with a wide-gamut
+          color request, so on a fancier display it might look a
+          touch more saturated than its surroundings; on a normal
+          display it just gets clamped down to the closest red the
+          monitor has. Either way, what you're looking at is the
+          closest the box could come.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          The diagram itself is trichromat. The map of what your screen
-          can't reach was drawn so your screen could draw it. The
-          chicken-and-egg here is on purpose; it's the same chicken and
-          the same egg the rest of the chapter is about.
+          And the whole diagram is trichromat. The map of what your
+          screen can't reach was drawn so your screen could draw
+          it. The chicken-and-egg there is on purpose -- it's
+          basically the whole rest of the chapter.
         </p>
       </.section>
 
       <.section number="5" id="language" title="Language carves it up">
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Cones partition wavelength; language partitions cones.
-          Different languages partition differently, and where they do,
-          the line's real to whoever drew it.
+          OK so cones cut up the wavelengths. Then language comes
+          in and cuts up the cones. And the kicker -- different
+          languages cut them up in completely different places. The
+          line your language drew is real to you and arguably
+          invisible to someone whose language drew it somewhere
+          else.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          How many color words a language needs is also up to the
-          language. English has eleven basic ones — red, orange, yellow,
-          green, blue, purple, pink, brown, black, white, grey. Some
-          languages have only two basic terms: one for the warm half of
-          the spectrum, one for the cool. Both languages work fine; both
-          speakers see the same wavelengths; each thinks its own
-          partition is the obvious one.
+          How many words does a language need for color? Up to the
+          language. English commits to eleven basic ones -- red,
+          orange, yellow, green, blue, purple, pink, brown, black,
+          white, grey. Some languages get by with two: one warm
+          word, one cool word. Both languages work fine. Both sets
+          of speakers are seeing the same wavelengths. Each one
+          thinks its own partition is the obvious one.
         </p>
 
         <.wcs_splash language={@wcs_language} />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Each chip is colored by the term most speakers used; the
-          opacity is how often they agreed. Faded squares are chips the
-          speakers argued about. The arguments are also data.
+          Each chip up there is painted with whichever term most
+          speakers reached for; the opacity is how often they
+          agreed on it. The faded chips are the ones the speakers
+          argued about, which is itself information about where
+          the language is firm and where it's improvising.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           Berinmo cuts the green-yellow region in a place English
-          doesn't. Berinmo speakers tell colors across that line apart
-          faster than colors on the same side. English speakers do the
-          same trick across the green-blue line. The line in your
-          language did some work in your brain. The chip on the chart
-          didn't change; the speaker did.
+          doesn't. Berinmo speakers tell colors across that line
+          apart faster than colors sitting on the same side of it.
+          English speakers do the same thing across the green-blue
+          line. The line your language drew did some actual work
+          inside your head. The chip on the chart didn't change;
+          <em>you</em> did, when you learned the word for it.
         </p>
 
         <.langs_splash />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Russian splits blue: синий, голубой. Mongolian splits it on a
-          different line: хөх, the deep blue of winter ice, against
-          цэнхэр, summer sky. Hungarian splits red. Vietnamese xanh
-          covers green and blue at once; Japanese 青 (ao) did the same
-          until 緑 (midori) carved off a piece a thousand years ago;
-          Kazakh көк still covers both, with жасыл a newer green
-          settling in. None of these are translation problems. They're
-          different partitions of the same continuous thing.
+          Russian splits blue in two: синий, голубой. Mongolian
+          splits it more dramatically: хөх for winter ice, цэнхэр
+          for summer sky. Hungarian goes the other direction and
+          splits red instead. None of these are translation
+          problems. They're different cuts of the same continuous
+          ribbon, and every cut goes all the way down -- it
+          changes how fast the speaker can tell two chips apart,
+          which is wild if you sit with it.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Across hundreds of languages, basic color terms emerge in a
-          roughly predictable order. A three-term language always uses
-          black, white, and red. Add a fourth and you get green or
-          yellow. Add a fifth and you get the other. Blue shows up late,
-          possibly because blue is genuinely uncommon in nature outside
-          the sky.
+          And then -- across hundreds of languages -- there's a
+          rough order things show up in. A language with three
+          basic color words always uses black, white, and red. Add
+          a fourth and you get green or yellow. Add a fifth and
+          you get the other one. Blue shows up late. Possibly
+          because blue is genuinely uncommon in nature outside the
+          sky and even <em>that</em> took a while for various languages
+          to commit to as a separate thing.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Some languages skip abstract color words altogether. Yélî
-          Dnye, on Rossel Island, describes a color by what it's like —
-          the night sky, ripe pandanus, burned wood, water at dusk. The
-          comparison is doing the work an abstract color word would,
-          and arguably doing it better; "burned wood" tells you more
-          than "brown" if you've ever seen burned wood. The category
-          "color word" is a habit.
+          Some languages skip abstract color words entirely. Yélî
+          Dnye, on Rossel Island, names colors by what they remind
+          you of -- the night sky, ripe pandanus, burned wood,
+          water at dusk. The comparison is doing the work the
+          abstract word would do, and arguably doing it better;
+          "burned wood" tells you more than "brown" if you've
+          actually seen burned wood. Whose system is the weird one,
+          exactly.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          And new color words are still being made. Crayola named
-          Macaroni and Cheese, Razzmatazz, Outer Space. Pantone named
-          Living Coral Color of the Year for 2019. Categories are
-          getting invented as we speak; they take when enough people
-          use them and don't when not enough do. The chart of basic
-          terms above isn't done.
+          And new color words are still being made up, right now.
+          Crayola named Macaroni and Cheese, Razzmatazz, Outer
+          Space. Pantone declared Living Coral the Color of the
+          Year in 2019, like an emperor naming a province. New
+          categories take when enough people use them and don't
+          when they don't. Whatever chart of basic terms exists is
+          still being argued over.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          I learned "red" before I understood I wasn't seeing whatever
-          the word pointed at. The word still works fine — I can buy
-          red sweaters, mostly, on the second try. Some of those lines
-          on the chart above are real to their speakers and invisible
-          to me. I'm trusting the chart.
+          I learned the word "red" before I figured out I wasn't
+          seeing whatever the word was pointing at. The word still
+          works fine for me -- I can buy red sweaters, mostly, on
+          the second try. Some of the lines on that chart above
+          are real to their speakers and invisible to me. I'm
+          trusting the chart.
         </p>
       </.section>
 
       <.section number="6" id="remainder" title="What I can't show you">
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Five sections, four parties: light, eye, screen, word. Each
-          one with a number against it.
+          OK so. Five sections, four parties: light, eye, screen,
+          word. Each one of them you can put a number against. Each
+          one of them I just walked you through.
         </p>
 
-        <p class="text-sm text-base-content/65 leading-relaxed">This is the part that doesn't.</p>
+        <p class="text-sm text-base-content/65 leading-relaxed">This is the part that you can't.</p>
 
-        <.remainder_splash />
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          Look at the patches above. To a trichromat: two patches in
-          two slightly different shades. To me, looking at the same
-          patches: nothing in particular. (To me, this is a paragraph
-          about two grey patches.) The simulation is a trichromat's
-          guess at a dichromat's experience, written in trichromat math
-          and rendered on a trichromat-calibrated screen. It can't be
-          right; it's the closest the chain knows how to come.
-        </p>
+        <.remainder_splash index={@metamer_index} />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          You can measure the wavelength. You can measure the cones, the
-          primaries, the categories language draws. The seeing, while
-          you're in it, you can't.
+          Look at those patches. Two patches, one color, to anyone
+          looking at this page. (To me, this is a paragraph about
+          two grey patches.) That simulation up there is a
+          trichromat's guess at what dichromat experience is like,
+          calculated in trichromat math, rendered on a trichromat
+          screen. It can't actually be right. It's the closest the
+          machinery knows how to come.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          And it's the bigger problem under the obvious one. The
-          obvious problem is that the simulation can't show you what
-          I see. The bigger problem is that nothing on this page can
-          show you what you're seeing — your having of the experience,
-          right now, looking at this — is happening somewhere the page
-          doesn't reach. The chain ends at the cone activation. The
-          rest is on you.
+          And it goes the other direction too. You can measure the
+          wavelength coming off a tomato. You can measure how my
+          two cones respond to it, how your three cones respond to
+          it, what your screen does to approximate it, what
+          category your language drops it into. All of that's on
+          the table. The actual <em>seeing</em> of it, while you're inside
+          your seeing of it, isn't.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          There's a smaller problem and a bigger one. The smaller
+          one is that the simulation can't show you what I see. The
+          bigger one is that nothing on this page can show you what
+          <em>you</em> see. Your seeing is happening somewhere this page
+          doesn't reach, and it's never going to. That's where the
+          chapter ends.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           There's a thought experiment about a scientist who learns
-          everything about red and then sees it. This is the inverse.
+          everything there is to know about red and then sees it
+          for the first time. This is the inverse.
         </p>
       </.section>
 
@@ -368,15 +414,16 @@ defmodule FugueWeb.ColorLive do
         <.closer_splash />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Light, eye, screen, word. Four parties, in the open. The
-          chapter's been about them.
+          Light, eye, screen, word. Four parties, all of them in
+          the open. The whole chapter has been about them.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          You can probably play Lite Brite. You can probably tell when
-          an avocado is ripe. Those things land in you differently than
-          they would in me; either way, what they're like to land at
-          all — your having of any of this — isn't on the page.
+          You can probably play Lite Brite without consulting
+          anyone. You can probably read a stoplight from a block
+          away. Those events are landing inside you differently
+          than they would inside me, and either way, what it's
+          actually like for them to land at all isn't on this page.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -395,14 +442,17 @@ defmodule FugueWeb.ColorLive do
 
   attr :number, :string, default: nil
   attr :id, :string, required: true
-  attr :title, :any, required: true
+  attr :title, :any, default: nil
 
   slot :inner_block, required: true
 
   defp section(assigns) do
     ~H"""
     <section id={@id} class="mb-24">
-      <h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/85 mb-4">
+      <h2
+        :if={@title}
+        class="text-sm font-semibold uppercase tracking-widest text-base-content/85 mb-4"
+      >
         {@title}
       </h2>
 
@@ -850,7 +900,12 @@ defmodule FugueWeb.ColorLive do
       lambda_mid = :math.pow(10, log_a + step / 2)
       x_a = x_fn.(:math.pow(10, log_a))
       x_b = x_fn.(:math.pow(10, log_a + step))
-      %{x: Float.round(x_a, 2), w: Float.round(x_b - x_a + 0.4, 2), color: em_band_color(lambda_mid)}
+
+      %{
+        x: Float.round(x_a, 2),
+        w: Float.round(x_b - x_a + 0.4, 2),
+        color: em_band_color(lambda_mid)
+      }
     end
   end
 
@@ -1064,7 +1119,8 @@ defmodule FugueWeb.ColorLive do
             "font-mono text-xs uppercase tracking-widest px-3 py-1.5 rounded border transition-colors",
             if(@focus == c.slug,
               do: "border-base-content/60 bg-base-200/60 text-base-content",
-              else: "border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 text-base-content/70"
+              else:
+                "border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 text-base-content/70"
             )
           ]}
         >
@@ -1080,7 +1136,8 @@ defmodule FugueWeb.ColorLive do
             "font-mono text-xs uppercase tracking-widest px-3 py-1.5 rounded border transition-colors ml-auto",
             if(@focus == :all,
               do: "border-base-content/60 bg-base-200/60 text-base-content",
-              else: "border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 text-base-content/70"
+              else:
+                "border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 text-base-content/70"
             )
           ]}
         >
@@ -1769,15 +1826,12 @@ defmodule FugueWeb.ColorLive do
     """
   end
 
-  # Hand-picked metamer pair: two trichromat-distinguishable colors that lie
-  # close to the same protan confusion line, so they collapse to (almost) the
-  # same color under Machado severity-1.0 protanope simulation.
-  @metamer_a "#c83232"
-  @metamer_b "#7d712b"
+  attr :index, :integer, required: true
 
   defp remainder_splash(assigns) do
-    a = Fugue.Color.Daltonize.protan_hex(@metamer_a)
-    b = Fugue.Color.Daltonize.protan_hex(@metamer_b)
+    {a_orig, b_orig} = Enum.at(@metamer_pairs, assigns.index)
+    a = Fugue.Color.Daltonize.protan_hex(a_orig)
+    b = Fugue.Color.Daltonize.protan_hex(b_orig)
 
     assigns =
       assigns
@@ -1810,20 +1864,24 @@ defmodule FugueWeb.ColorLive do
   end
 
   attr :protanope, :boolean, required: true
+  attr :index, :integer, required: true
 
   defp metamer_splash(assigns) do
+    n = length(@metamer_pairs)
+    {a_orig, b_orig} = Enum.at(@metamer_pairs, assigns.index)
+
     {a, b} =
       if assigns.protanope do
-        {Fugue.Color.Daltonize.protan_hex(@metamer_a),
-         Fugue.Color.Daltonize.protan_hex(@metamer_b)}
+        {Fugue.Color.Daltonize.protan_hex(a_orig), Fugue.Color.Daltonize.protan_hex(b_orig)}
       else
-        {@metamer_a, @metamer_b}
+        {a_orig, b_orig}
       end
 
     assigns =
       assigns
       |> assign(:patch_a, a)
       |> assign(:patch_b, b)
+      |> assign(:pair_label, "#{assigns.index + 1} / #{n}")
 
     ~H"""
     <figure class="space-y-3">
@@ -1841,9 +1899,42 @@ defmodule FugueWeb.ColorLive do
         >
         </div>
       </div>
-      <figcaption class="font-mono text-xs uppercase tracking-widest text-base-content/50">
-        {if @protanope, do: "One color. To me, always.", else: "Two colors."}
-      </figcaption>
+      <div class="flex items-center justify-between gap-4">
+        <figcaption class="font-mono text-xs uppercase tracking-widest text-base-content/50">
+          {if @protanope, do: "One color. To me, always.", else: "Two colors."}
+        </figcaption>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            phx-click="cycle_metamer"
+            phx-value-dir="prev"
+            aria-label="previous pair"
+            class="font-mono text-sm leading-none px-2 py-1.5 rounded border border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 transition-colors"
+          >
+            &lsaquo;
+          </button>
+          <span class="font-mono text-xs uppercase tracking-widest text-base-content/50 tabular-nums px-2 min-w-[3rem] text-center">
+            {@pair_label}
+          </span>
+          <button
+            type="button"
+            phx-click="cycle_metamer"
+            phx-value-dir="next"
+            aria-label="next pair"
+            class="font-mono text-sm leading-none px-2 py-1.5 rounded border border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 transition-colors"
+          >
+            &rsaquo;
+          </button>
+          <button
+            type="button"
+            phx-click="toggle_protanope"
+            aria-pressed={to_string(@protanope)}
+            class="font-mono text-xs uppercase tracking-widest px-3 py-1.5 rounded border border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 transition-colors ml-1"
+          >
+            {if @protanope, do: "show trichromat", else: "show protanope"}
+          </button>
+        </div>
+      </div>
     </figure>
     """
   end

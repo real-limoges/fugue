@@ -19,59 +19,107 @@ uniform float u_time;
 
 out vec4 fragColor;
 
-vec2 hash2(vec2 p) {
-  p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
-  return -1.0 + 2.0 * fract(sin(p) * 43758.5453);
+float hash1(vec2 p) {
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
 }
 
-// Voronoi-cell papillae. Returns dome height at uv, animated by t so
-// cell centers drift even when the cursor is still.
-float papillae(vec2 uv, float t) {
-  vec2 ip = floor(uv);
-  vec2 fp = fract(uv);
-  float minD = 8.0;
-  for (int j = -1; j <= 1; j++) {
-    for (int i = -1; i <= 1; i++) {
-      vec2 g = vec2(float(i), float(j));
-      vec2 o = 0.5 + 0.5 * sin(t * 0.35 + 6.2831853 * hash2(ip + g));
-      vec2 r = g + o - fp;
-      float d = dot(r, r);
-      minD = min(minD, d);
-    }
+float vnoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  float a = hash1(i);
+  float b = hash1(i + vec2(1.0, 0.0));
+  float c = hash1(i + vec2(0.0, 1.0));
+  float d = hash1(i + vec2(1.0, 1.0));
+  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+float fbm(vec2 p) {
+  float v = 0.0;
+  float a = 0.5;
+  for (int i = 0; i < 5; i++) {
+    v += a * vnoise(p);
+    p = p * 2.0 + vec2(11.3, 5.7);
+    a *= 0.5;
   }
-  return 1.0 - smoothstep(0.0, 0.65, sqrt(minD));
+  return v;
+}
+
+// Domain-warped fbm. Feeds an fbm result back into its own input twice
+// to produce flowing organic swirls -- no cells, no spots, no holes.
+float swirl(vec2 p, float t) {
+  vec2 q = vec2(
+    fbm(p + vec2(0.0, t * 0.06)),
+    fbm(p + vec2(5.2, 1.3) + vec2(t * 0.05, 0.0))
+  );
+  vec2 r = vec2(
+    fbm(p + 3.5 * q + vec2(1.7, 9.2)),
+    fbm(p + 3.5 * q + vec2(8.3, 2.8))
+  );
+  return fbm(p + 3.5 * r);
+}
+
+// Flamboyant-cuttlefish palette: deep crimson -> bright red -> magenta
+// -> burnt orange -> cream-yellow -> wine, then back. No greens, no
+// blues, no cyans -- just the vivid warning-coloration band these
+// animals wear when they're not bothering to hide.
+vec3 flamboyantPalette(float t) {
+  t = fract(t);
+  if (t < 0.2)      return mix(vec3(0.45, 0.04, 0.10), vec3(0.95, 0.08, 0.18), t * 5.0);
+  else if (t < 0.4) return mix(vec3(0.95, 0.08, 0.18), vec3(0.85, 0.10, 0.55), (t - 0.2) * 5.0);
+  else if (t < 0.6) return mix(vec3(0.85, 0.10, 0.55), vec3(1.00, 0.42, 0.12), (t - 0.4) * 5.0);
+  else if (t < 0.8) return mix(vec3(1.00, 0.42, 0.12), vec3(1.00, 0.86, 0.55), (t - 0.6) * 5.0);
+  else              return mix(vec3(1.00, 0.86, 0.55), vec3(0.45, 0.04, 0.10), (t - 0.8) * 5.0);
 }
 
 void main() {
   vec2 uv = gl_FragCoord.xy / u_res;
   vec2 aspect = vec2(u_res.x / u_res.y, 1.0);
 
-  // ~5 cells across; aspect-corrected so cells stay round on wide canvases
-  float h = papillae(uv * aspect * 5.5, u_time);
+  // Flowing thickness field -- domain-warped fbm, organic swirls.
+  float thicknessField = swirl(uv * aspect * 2.4, u_time);
 
-  // Effective viewing angle from cursor: head-on near cursor, grazing far
-  vec2 toC = (uv - u_cursor) * aspect;
-  float cosTheta = clamp(1.0 - length(toC) * 0.7, 0.25, 1.0);
-
-  // Optical path length difference. n_film ~= water; thickness biased so
-  // even dome valleys still produce some color.
+  // Optical path length, no cursor influence on geometry.
   float n_film = 1.33;
-  float thickness = 0.35 + 0.65 * h;
-  float opl = 2.0 * n_film * thickness * cosTheta;
+  float thickness = 0.30 + 0.70 * thicknessField;
+  float opl = 2.0 * n_film * thickness;
 
-  // Newton's-series iridescent palette: three offset cosines on the OPL
-  // produce silver/gold/magenta/blue/cyan/yellow as opl sweeps.
-  float phase = opl * 4.5 * 6.2831853;
-  vec3 col = 0.5 + 0.5 * vec3(
-    cos(phase),
-    cos(phase + 2.0944),
-    cos(phase + 4.1888)
-  );
+  // Cursor as a faint global phase shift: moving the pointer slides the
+  // whole palette one step, like a pet-the-cuttlefish nudge. No spatial
+  // halo. No tilt. Nothing tracks the mouse.
+  float cursorPhase = (u_cursor.x + u_cursor.y) * 0.15;
+  float t = opl * 1.6 + cursorPhase;
 
-  // Grazing-angle dimming so the surface has depth, not a flat sticker
-  col *= 0.55 + 0.45 * cosTheta;
+  vec3 col = flamboyantPalette(t);
 
-  // Soft vignette so the panel feels seated, not edge-to-edge clipped
+  // Cream highlights: drifting fbm gates bright pearl-yellow patches,
+  // the white-yellow flecks a flamboyant cuttlefish wears alongside its
+  // reds. Offset and counter-drift so they aren't synced with the dark
+  // patches.
+  float lightPatch = fbm(uv * aspect * 1.4 + vec2(100.0, 50.0) + vec2(u_time * 0.05, u_time * 0.08));
+  float highlight = smoothstep(0.62, 0.78, lightPatch);
+  vec3 highlightColor = vec3(1.00, 0.92, 0.65);
+  col = mix(col, highlightColor, highlight * 0.55);
+
+  // Chromatophore patches: drifting fbm gates regions of dark wine
+  // pigment. Sharper smoothstep edges so the pigment cells look
+  // committed, not foggy.
+  float darkPatch = fbm(uv * aspect * 1.6 + vec2(u_time * 0.07, u_time * 0.04));
+  float pigment = smoothstep(0.60, 0.72, darkPatch);
+
+  // Passing-cloud display: a traveling wave of darkness sweeps across
+  // the surface periodically, modulated by fbm so the front isn't a
+  // straight line. The wave momentarily intensifies the chromatophore
+  // patches as it passes -- the signature cuttlefish move.
+  float cloudPhase = uv.x * 1.5 - u_time * 0.3;
+  float cloudWave = pow(0.5 + 0.5 * sin(cloudPhase + fbm(uv * aspect * 1.0) * 2.5), 4.0);
+  pigment *= 0.4 + 1.2 * cloudWave;
+  pigment = clamp(pigment, 0.0, 1.0);
+
+  vec3 pigmentColor = vec3(0.10, 0.02, 0.04);
+  col = mix(col, pigmentColor, pigment * 0.85);
+
+  // Soft vignette so the panel feels seated, not edge-to-edge clipped.
   float vig = 1.0 - 0.18 * smoothstep(0.5, 1.05, length((uv - 0.5) * 2.0));
   col *= vig;
 

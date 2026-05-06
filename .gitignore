@@ -55,3 +55,9 @@ priv/blog/TEMPLATE.md
 
 CLAUDE.md
 **/CLAUDE.md
+
+# Playwright MCP artifacts
+.playwright-mcp/
+mood-*.png
+color-*.png
+menagerie-*.png
