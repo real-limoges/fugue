@@ -74,7 +74,7 @@ defmodule FugueWeb.LabLiveTest do
     end
   end
 
-  describe "/lab/bayes — search section" do
+  describe "/lab/bayes -- search section" do
     test "clicking the truth cell sets search_found", %{conn: conn} do
       {:ok, view, _html} = live(conn, "/lab/bayes")
       truth = :sys.get_state(view.pid).socket.assigns.search_truth
@@ -115,7 +115,7 @@ defmodule FugueWeb.LabLiveTest do
     end
   end
 
-  describe "/lab/bayes — rate section" do
+  describe "/lab/bayes -- rate section" do
     test "observe_year increments year count and accumulates observations", %{conn: conn} do
       {:ok, view, _html} = live(conn, "/lab/bayes")
 
@@ -141,7 +141,7 @@ defmodule FugueWeb.LabLiveTest do
     end
   end
 
-  describe "/lab/bayes — decision section" do
+  describe "/lab/bayes -- decision section" do
     test "set_threshold parses and clamps the slider value", %{conn: conn} do
       {:ok, view, _html} = live(conn, "/lab/bayes")
 

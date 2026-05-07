@@ -56,7 +56,7 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
         <p class="text-sm text-gray-400 mt-1 max-w-3xl leading-relaxed">
           Drop grains one at a time. When a cell reaches four it topples,
           sending one grain to each neighbor. The cascade can be tiny or
-          enormous — and over time the system tunes itself to a critical state
+          enormous -- and over time the system tunes itself to a critical state
           where avalanche sizes follow a power law. Nobody sets that up; it
           just happens. Click anywhere on the grid to drop a grain by hand.
         </p>

@@ -1,6 +1,6 @@
 defmodule FugueWeb.LabLive.Index do
   @moduledoc """
-  Landing page for /lab — small, separately-addressable statistical
+  Landing page for /lab -- small, separately-addressable statistical
   experiments. Rougher than the menagerie, narrower than a topic chapter.
   """
 
@@ -45,7 +45,7 @@ defmodule FugueWeb.LabLive.Index do
           accent="accent"
         >
           A search, a rate, a decision. Each ends with a distribution over the
-          thing you didn't know — and any question you had is now an integral
+          thing you didn't know -- and any question you had is now an integral
           over it. That's the whole framework.
         </.card>
       </div>

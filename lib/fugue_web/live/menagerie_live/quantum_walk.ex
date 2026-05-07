@@ -68,7 +68,7 @@ defmodule FugueWeb.MenagerieLive.QuantumWalk do
         <h1 class="text-2xl font-bold text-gray-100">Classical vs quantum walk</h1>
         <p class="text-sm text-gray-400 mt-1 max-w-3xl leading-relaxed">
           Both walkers start at the center and take {@params.steps} steps. The gray
-          one takes a classical random walk — coin flip, step, coin flip, step —
+          one takes a classical random walk -- coin flip, step, coin flip, step --
           and settles into the familiar bell curve. The cyan one takes a quantum
           walk, and does something strange: it refuses to settle in the middle and
           spreads to the edges instead, piling up in two sharp horns at the outer

@@ -72,7 +72,7 @@ defmodule FugueWeb.MoodLiveTest do
       html = render(view)
 
       # One per ported component. Each assertion is a cheap grep on the rendered
-      # DOM — the real guarantee is that none of them crashed during render.
+      # DOM -- the real guarantee is that none of them crashed during render.
       assert html =~ ~s(id="mood-experience")
       assert html =~ ~s(id="mood-trajectory")
       assert html =~ "#traj-glow"

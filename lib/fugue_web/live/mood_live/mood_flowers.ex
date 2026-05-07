@@ -213,7 +213,7 @@ defmodule FugueWeb.MoodLive.MoodFlowers do
 
   defp tooltip_html(flower, color, cluster_names, month_names) do
     cluster_name =
-      if flower.cluster, do: Map.get(cluster_names, flower.cluster, flower.cluster), else: "—"
+      if flower.cluster, do: Map.get(cluster_names, flower.cluster, flower.cluster), else: "--"
 
     dims_rows =
       Enum.map_join(flower.raw || %{}, "", fn {k, v} ->

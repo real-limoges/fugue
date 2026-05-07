@@ -108,7 +108,7 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
         <h1 class="text-2xl font-bold text-gray-100">Fuzzy temperature bands</h1>
         <p class="text-sm text-gray-400 mt-1 max-w-3xl leading-relaxed">
           Hard categories lose the gradient. A 22°C day isn't exactly <em>mild</em>
-          and exactly nothing else — it's mostly mild, a little cool, a little warm.
+          and exactly nothing else -- it's mostly mild, a little cool, a little warm.
           Five overlapping triangular membership functions let every day hold partial
           membership in every fuzzy set at once.
         </p>
@@ -188,7 +188,7 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
         />
         <p class="mt-3 max-w-3xl text-xs leading-snug text-gray-500">
           Top strip: the five triangular membership functions on the temperature
-          axis — drag the sliders to reshape them. Bottom: for every day in the
+          axis -- drag the sliders to reshape them. Bottom: for every day in the
           dataset, the bands show how much that day belongs to each set.
           Memberships are normalized so every column fills the full height;
           hover for the exact breakdown.

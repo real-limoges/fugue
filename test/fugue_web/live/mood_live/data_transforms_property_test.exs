@@ -195,7 +195,7 @@ defmodule FugueWeb.MoodLive.DataTransformsPropertyTest do
   # --- smooth_runs/2 ------------------------------------------------------
 
   describe "smooth_runs/2 property" do
-    property "length is preserved — one output day per input day" do
+    property "length is preserved -- one output day per input day" do
       check all(
               daily <- daily_sequence_gen(1),
               min <- StreamData.integer(1..10)

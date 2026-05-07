@@ -1,6 +1,6 @@
 defmodule FugueWeb.LabLive.Bayes do
   @moduledoc """
-  Three small Bayesian demos — search, rate, decision — that all end with
+  Three small Bayesian demos -- search, rate, decision -- that all end with
   a posterior. Rendering is fully server-side: no JS hooks, no push_event.
   """
 
@@ -223,7 +223,7 @@ defmodule FugueWeb.LabLive.Bayes do
     <section class="mb-14">
       <h2 class="text-lg font-semibold text-white mb-1">Where are the keys?</h2>
       <p class="text-gray-400 text-sm mb-4 max-w-2xl">
-        Twenty-five rooms. The shading is where you think you left them —
+        Twenty-five rooms. The shading is where you think you left them --
         your prior. Click a room to look. If they're not in there, the
         room's mass collapses to zero and the rest of the grid soaks it up.
         Same total probability, rearranged. Bayes' rule is the rearrangement.
@@ -347,7 +347,7 @@ defmodule FugueWeb.LabLive.Bayes do
         <code class="text-gray-400">
           Gamma({Float.round(@prior_alpha, 1)}, {Float.round(@prior_beta, 1)})
         </code>
-        prior times a Poisson likelihood is another Gamma — <code class="text-primary/70">Gamma({Float.round(@post_alpha, 1)}, {Float.round(@post_beta, 1)})</code>.
+        prior times a Poisson likelihood is another Gamma -- <code class="text-primary/70">Gamma({Float.round(@post_alpha, 1)}, {Float.round(@post_beta, 1)})</code>.
         Same shape, sharper. For models without a clean conjugate, the framework
         does the same thing numerically; the answer is the same kind of object
         either way.
@@ -598,7 +598,7 @@ defmodule FugueWeb.LabLive.Bayes do
   end
 
   defp cell_label(_, _, _, true), do: "found"
-  defp cell_label(_, _, true, _), do: "—"
+  defp cell_label(_, _, true, _), do: "--"
   defp cell_label(p, _max_p, false, _) when p >= 0.005, do: "#{round(p * 100)}%"
   defp cell_label(_, _, _, _), do: nil
 

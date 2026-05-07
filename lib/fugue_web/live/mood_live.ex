@@ -1,5 +1,5 @@
 defmodule FugueWeb.MoodLive do
-  @moduledoc "Mood journal explorer — fuzzy-clustering visualization of daily mood entries."
+  @moduledoc "Mood journal explorer -- fuzzy-clustering visualization of daily mood entries."
 
   use FugueWeb, :live_view
 

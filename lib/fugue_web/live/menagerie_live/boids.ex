@@ -145,7 +145,7 @@ defmodule FugueWeb.MenagerieLive.Boids do
           Each bird follows three simple rules: steer away from crowded neighbors,
           turn toward the average heading of the flock, and drift toward the local
           center of mass. Small changes to any of the three produce wildly
-          different group behavior — tight flocks, streaming schools, or ragged
+          different group behavior -- tight flocks, streaming schools, or ragged
           chaos.
         </p>
       </div>

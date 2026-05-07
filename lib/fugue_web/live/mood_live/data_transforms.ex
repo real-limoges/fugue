@@ -91,7 +91,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
     # Store membership as tuple-of-tuples for O(1) indexed access
     membership = raw_membership |> Enum.map(&List.to_tuple/1) |> List.to_tuple()
 
-    # Compute centroids once — used for naming and later for radar charts
+    # Compute centroids once -- used for naming and later for radar charts
     raw_centroids = weighted_centroids(clusters, membership, entries)
     clusters = generate_cluster_names_from_centroids(clusters, raw_centroids)
 
@@ -267,7 +267,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   Projects the entries' five raw dimensions to 2D via PCA and returns
   chronologically-ordered points with their smoothed dominant cluster. The
   hero trajectory chart at the top of the page draws a line through these
-  in order — four years of mood as a single scribble in a 2D space the data
+  in order -- four years of mood as a single scribble in a 2D space the data
   discovered for itself.
   """
   def build_trajectory(entries, smoothed_daily) do

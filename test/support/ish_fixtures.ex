@@ -93,7 +93,7 @@ defmodule Fugue.IshFixtures do
     end
   end
 
-  @doc "A gaps payload matching `entries/0` — one 3-day gap between Jan 14 and Jan 18."
+  @doc "A gaps payload matching `entries/0` -- one 3-day gap between Jan 14 and Jan 18."
   def gaps_response do
     %{
       "transitions" => [
@@ -119,7 +119,7 @@ defmodule Fugue.IshFixtures do
     }
   end
 
-  @doc "A suggested `MembershipFuncDefs` — same shape, different peaks."
+  @doc "A suggested `MembershipFuncDefs` -- same shape, different peaks."
   def suggested_membership_defs do
     suggested =
       Enum.map(@dimensions, fn dim ->
@@ -152,7 +152,7 @@ defmodule Fugue.IshFixtures do
   @doc """
   A deterministic Mamdani inference response matching
   `Ish.Types.MamdaniResponse` for the fan-controller fixture. Values are
-  representative, not the result of actually running the solver — tests
+  representative, not the result of actually running the solver -- tests
   should assert on shape and on the crisp result being forwarded, not on
   exact numbers.
   """

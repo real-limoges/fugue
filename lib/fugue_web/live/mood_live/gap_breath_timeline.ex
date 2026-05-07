@@ -170,7 +170,7 @@ defmodule FugueWeb.MoodLive.GapBreathTimeline do
 
       dominant = totals |> Enum.max_by(fn {_, v} -> v end, fn -> {nil, 0} end) |> elem(0)
       color = (dominant && Map.get(cluster_colors, dominant)) || "#888"
-      cluster_name = (dominant && Map.get(cluster_names, dominant, dominant)) || "—"
+      cluster_name = (dominant && Map.get(cluster_names, dominant, dominant)) || "--"
 
       end_date = Date.add(start_date, max(length - 1, 0))
       end_str = Date.to_iso8601(end_date)
