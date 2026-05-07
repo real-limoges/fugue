@@ -1,6 +1,6 @@
 defmodule FugueWeb.MoodLive.SeasonRing do
   @moduledoc """
-  Polar stacked chart — cluster dominance by month-of-year, pooled across all
+  Polar stacked chart -- cluster dominance by month-of-year, pooled across all
   years. Replaces the former `SeasonRing` JS hook: annular-segment paths are
   generated server-side using SVG's native elliptical-arc (`A`) command.
   """

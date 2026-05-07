@@ -159,7 +159,7 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
               end)
           end
 
-        # Per-day data for the hover tooltip — one row per day.
+        # Per-day data for the hover tooltip -- one row per day.
         # Shipped as JSON in a data attr; tiny JS hook bisects by x position.
         series_json =
           stacked

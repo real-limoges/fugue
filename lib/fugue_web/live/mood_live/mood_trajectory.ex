@@ -62,7 +62,7 @@ defmodule FugueWeb.MoodLive.MoodTrajectory do
           Enum.map(pts, fn p ->
             cluster = val(p, :cluster)
             date = val(p, :date)
-            cluster_name = (cluster && Map.get(assigns.cluster_names, cluster, cluster)) || "—"
+            cluster_name = (cluster && Map.get(assigns.cluster_names, cluster, cluster)) || "--"
             color = color_for(cluster, assigns.cluster_colors)
 
             %{

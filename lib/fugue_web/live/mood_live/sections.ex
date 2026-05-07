@@ -275,7 +275,7 @@ defmodule FugueWeb.MoodLive.Sections do
               c["id"] == @selected_cluster && c["name"]
             end)}
           </span>
-          — everything else across the page is dimmed.
+          -- everything else across the page is dimmed.
         </div>
       <% end %>
 
@@ -330,7 +330,7 @@ defmodule FugueWeb.MoodLive.Sections do
           <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.first_state.id, "#aaa")}"}>
             {@stats.first_state.name}
           </span>
-          and — for now — I'm in <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.last_state.id, "#aaa")}"}>
+          and -- for now -- I'm in <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.last_state.id, "#aaa")}"}>
             {@stats.last_state.name}</span>.
         <% end %>
         Drag across the strip below to zoom into a window, or click any square to see the days around it.
@@ -664,7 +664,7 @@ defmodule FugueWeb.MoodLive.Sections do
     ~H"""
     <aside class="my-8 max-w-xl ml-auto">
       <p class="text-sm text-gray-300 leading-relaxed">
-        One more thing before we close out. Every chart up to this one has been built from days I sat down and filled out the form. The next part is about the days I didn't. There's a pattern there.
+        One more thing before I close out. Every chart up to this one has been built from days I sat down and filled out the form. The next part is about the days I didn't. There's a pattern there.
       </p>
     </aside>
     """

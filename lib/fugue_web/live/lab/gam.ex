@@ -1,6 +1,6 @@
 defmodule FugueWeb.LabLive.Gam do
   @moduledoc """
-  `/lab/gam` — four scatter datasets, each fit by a line, a GAM, and a
+  `/lab/gam` -- four scatter datasets, each fit by a line, a GAM, and a
   GAMLSS. The chart itself is a JS hook (drag-to-edit interactivity);
   this module owns dataset selection and per-dataset layer toggles.
   """

@@ -73,7 +73,7 @@ defmodule FugueWeb.MenagerieLive.QuantumStats do
         <h1 class="text-2xl font-bold text-gray-100">Three ways to count</h1>
         <p class="text-sm text-gray-400 mt-1 max-w-3xl leading-relaxed">
           Drag the temperature slider. On the hot end, the three curves lie right
-          on top of each other — you'd think there was only one. Drag to the cold
+          on top of each other -- you'd think there was only one. Drag to the cold
           end and they peel apart into three completely different shapes. One is
           a fat spike at the lowest level and nothing anywhere else. Another holds
           flat across many levels and then falls off a cliff. The third is a
@@ -84,7 +84,7 @@ defmodule FugueWeb.MenagerieLive.QuantumStats do
           state: Bose-Einstein (the pile), Fermi-Dirac (the cliff), and
           Maxwell-Boltzmann (the smooth decay). Bosons can pile onto the same
           state without limit. Fermions can't share a state at all. Classical
-          particles are indifferent — and once it's hot enough, the rule stops
+          particles are indifferent -- and once it's hot enough, the rule stops
           mattering.
         </p>
       </div>

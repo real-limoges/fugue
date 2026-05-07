@@ -62,7 +62,7 @@ defmodule FugueWeb.MenagerieLiveTest do
 
       # Shapes panel (MF triangle outlines).
       assert html =~ ~s(class="stream-svg) or html =~ ~s(id="temperature-bands")
-      # Stacked band paths — one per fuzzy set.
+      # Stacked band paths -- one per fuzzy set.
       assert html =~ ~s(class="band")
       # Crosshair line carrying the bands-crosshair class.
       assert html =~ "bands-crosshair"

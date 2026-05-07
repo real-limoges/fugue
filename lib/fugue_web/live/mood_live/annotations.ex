@@ -8,16 +8,16 @@ defmodule FugueWeb.MoodLive.Annotations do
 
   ## Adding an entry
 
-  Append a map to the `@annotations` list below. Order doesn't matter — the
+  Append a map to the `@annotations` list below. Order doesn't matter -- the
   renderer sorts by date. Dates not in the dataset are skipped with a
   console warning.
 
   Fields:
 
-    * `:date` — required, "YYYY-MM-DD"
-    * `:label` — required, the short text shown next to the marker. Keep it
+    * `:date` -- required, "YYYY-MM-DD"
+    * `:label` -- required, the short text shown next to the marker. Keep it
       to ~30 characters; it has to fit in the hero margin. The headline.
-    * `:note` — optional, the full sentence shown on hover. This is where
+    * `:note` -- optional, the full sentence shown on hover. This is where
       you actually say what happened. Wrapping is fine.
 
   Example:

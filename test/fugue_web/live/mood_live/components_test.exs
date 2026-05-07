@@ -709,7 +709,7 @@ defmodule FugueWeb.MoodLive.ComponentsTest do
       assert html =~ ~r/>\s*sleep\s*</
       # Overall curve: dashed outline.
       assert html =~ ~s|stroke-dasharray="2 3"|
-      # Per-cluster filled areas — one per cluster.
+      # Per-cluster filled areas -- one per cluster.
       assert html =~ "#ff0000"
       assert html =~ "#00ff00"
       # Tick labels rendered for sleep's 0-15 scale.

@@ -3,7 +3,7 @@ defmodule Fugue.MembershipDefaults do
   Lazy snapshot of the initial membership function definitions from Ish.
   The first caller triggers a fetch; the result is stored in `:persistent_term`
   and becomes the "reset to defaults" target for the menagerie. Uses
-  `:persistent_term` instead of an Agent so there's no process to supervise —
+  `:persistent_term` instead of an Agent so there's no process to supervise --
   the snapshot survives code reloads and is readable from any process.
   """
 

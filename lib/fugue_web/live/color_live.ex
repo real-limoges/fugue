@@ -1,14 +1,14 @@
 defmodule FugueWeb.ColorLive do
   use FugueWeb, :live_view
 
-  # Protan-metameric pairs for §3 + §6. Each {a, b, label} has been verified
-  # to collapse to the same color under Machado severity-1.0 protanope
-  # simulation (delta <= 2 RGB units). Found by stepping along the null
-  # vector of the Machado matrix in linear RGB. The set spans both the
-  # canonical red/green (and its near neighbors) and a wider arc of warm
-  # and cool collapses so §6 isn't all greige.
-  # §6 pins to a single pair from @metamer_pairs (no carousel — it's the
-  # echo of §3, not a re-cycle). Index into the list below.
+  # Protan-metameric pairs for sections 3 + 6. Each {a, b, label} has been
+  # verified to collapse to the same color under Machado severity-1.0
+  # protanope simulation (delta <= 2 RGB units). Found by stepping along
+  # the null vector of the Machado matrix in linear RGB. The set spans both
+  # the canonical red/green (and its near neighbors) and a wider arc of
+  # warm and cool collapses so section 6 isn't all greige.
+  # Section 6 pins to a single pair from @metamer_pairs (no carousel -- it's
+  # the echo of section 3, not a re-cycle). Index into the list below.
   @remainder_pair_index 7
 
   @metamer_pairs [
@@ -95,7 +95,7 @@ defmodule FugueWeb.ColorLive do
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Before we go further: I can't actually see most of the
+          Before going further: I can't actually see most of the
           colors I'm about to walk you through. I have two cones
           where standard issue is three. Christmas trees and their
           ornaments tend to merge on me; I read stoplights by
@@ -169,9 +169,9 @@ defmodule FugueWeb.ColorLive do
           Two patches, two colors. Look at them. Now: underneath,
           the actual physical light coming off each patch is wildly
           different -- different mixes of wavelengths, almost no
-          overlap. Your eye doesn't see the mix. Your eye runs the
-          average through three cones, gets two different triples
-          out, and the brain reports two colors. If two completely
+          overlap. Your eye runs the average through three cones,
+          gets two different triples out, and the brain reports two
+          colors. The mix itself never lands. If two completely
           different mixes happen to give the same triple, the brain
           gets one color. Same patches, same eye, same brain --
           there's just no way for the system to know there was
@@ -243,7 +243,7 @@ defmodule FugueWeb.ColorLive do
           That X is sitting at a real wavelength -- a deep spectral
           red, around 700 nanometers. Your eye can see it. A sunset
           is partly made of it. No screen in your life is going to
-          render it accurately. We marked it with a wide-gamut
+          render it accurately. I marked it with a wide-gamut
           color request, so on a fancier display it might look a
           touch more saturated than its surroundings; on a normal
           display it just gets clamped down to the closest red the
@@ -416,10 +416,6 @@ defmodule FugueWeb.ColorLive do
           away. Those events are landing inside you differently
           than they would inside me, and either way, what it's
           actually like for them to land at all isn't on this page.
-        </p>
-
-        <p class="text-sm text-base-content/65 leading-relaxed">
-          Never was. Couldn't be.
         </p>
       </.section>
     </article>
