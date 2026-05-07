@@ -164,8 +164,8 @@ defmodule FugueWeb.MoodLive.ComponentsTest do
 
       assert html =~ ~s(data-date="2026-01-01")
       assert html =~ ~s(data-date="2026-01-02")
-      # data-day attribute carries escaped JSON for the hover hook.
-      assert html =~ "data-day="
+      # data-tooltip carries server-rendered HTML; the hook only positions it.
+      assert html =~ "data-tooltip="
       assert html =~ ~s(phx-click="day_selected")
     end
 

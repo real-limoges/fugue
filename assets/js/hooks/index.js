@@ -13,9 +13,6 @@ import { QuantumStats } from "./quantum_stats"
 import { SandpileCanvas } from "./sandpile_canvas"
 import { CloudsCanvas } from "./clouds_canvas"
 import { LabGam } from "./lab_gam"
-import { BayesSearch } from "./bayes_search"
-import { BayesRate } from "./bayes_rate"
-import { BayesDecision } from "./bayes_decision"
 import { IridescenceCanvas } from "./iridescence"
 
 export default {
@@ -23,6 +20,5 @@ export default {
   MoodTourSandbox, MoodIntroGate, MoodTour,
   ClusterAttractor, BandsHover, MamdaniPlayground, BoidsCanvas,
   QuantumWalk, QuantumStats, SandpileCanvas, CloudsCanvas, LabGam,
-  BayesSearch, BayesRate, BayesDecision,
   IridescenceCanvas
 }
