@@ -41,13 +41,16 @@ defmodule Fugue.Blog do
   @non_draft_tags @non_draft_posts |> Enum.flat_map(& &1.tags) |> Enum.uniq() |> Enum.sort()
 
   def list_posts(opts \\ []) do
-    tag = Keyword.get(opts, :tag)
-
     posts()
-    |> then(fn posts ->
-      if tag, do: Enum.filter(posts, &(tag in &1.tags)), else: posts
-    end)
+    |> filter_by_tag(Keyword.get(opts, :tag))
+    |> apply_limit(Keyword.get(opts, :limit))
   end
+
+  defp filter_by_tag(posts, nil), do: posts
+  defp filter_by_tag(posts, tag), do: Enum.filter(posts, &(tag in &1.tags))
+
+  defp apply_limit(posts, nil), do: posts
+  defp apply_limit(posts, limit), do: Enum.take(posts, limit)
 
   def get_post(slug) do
     case Enum.find(posts(), &(&1.slug == slug)) do

@@ -11,12 +11,48 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
 
   use Phoenix.Component
 
+  alias FugueWeb.MoodLive.Tooltip
+
   @cell_size 13
   @cell_gap 2
   @cell_step @cell_size + @cell_gap
   @year_padding 24
   @left_margin 30
   @top_margin 20
+
+  attr :days, :list, default: []
+  attr :cluster_colors, :map, default: %{}
+  attr :cluster_names, :map, default: %{}
+  attr :transition_dates, :list, default: []
+  attr :highlighted_dates, :list, default: []
+  attr :selected_gap, :any, default: nil
+  attr :selected_cluster, :any, default: nil
+
+  def card(assigns) do
+    ~H"""
+    <div class="calendar-section bg-base-200 rounded-lg p-4">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-semibold">Temporal Heatmap</h2>
+        <%= if @highlighted_dates != [] or @selected_gap != nil do %>
+          <button phx-click="clear_highlights" class="btn btn-xs btn-ghost">
+            Clear selection
+          </button>
+        <% end %>
+      </div>
+      <div class="overflow-x-auto" style="min-height: 200px;">
+        <.grid
+          days={@days}
+          cluster_colors={@cluster_colors}
+          cluster_names={@cluster_names}
+          transition_dates={@transition_dates}
+          highlighted_dates={@highlighted_dates}
+          selected_gap={@selected_gap}
+          selected_cluster={@selected_cluster}
+        />
+      </div>
+    </div>
+    """
+  end
 
   attr :days, :list, default: []
   attr :cluster_colors, :map, default: %{}
@@ -91,7 +127,7 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
       )
 
     ~H"""
-    <div id="calendar-heatmap" phx-hook="CalendarTooltip" style="position: relative;">
+    <Tooltip.container id="calendar-heatmap" hook="CalendarTooltip">
       <svg width={@svg_width} height={@svg_height} class={@svg_classes}>
         <defs>
           <pattern
@@ -165,7 +201,7 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
         .calendar-svg.has-cluster-isolate .day-cell { opacity: 0.08; }
         .calendar-svg.has-cluster-isolate .day-cell.matches-cluster { opacity: 1; }
       </style>
-    </div>
+    </Tooltip.container>
     """
   end
 

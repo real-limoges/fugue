@@ -8,7 +8,7 @@ defmodule FugueWeb.MoodLive.MoodFlowers do
 
   use Phoenix.Component
 
-  alias FugueWeb.MoodLive.SvgMath
+  alias FugueWeb.MoodLive.{SvgMath, Tooltip}
 
   @month_names ~w(Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec)
   @r 40
@@ -62,7 +62,7 @@ defmodule FugueWeb.MoodLive.MoodFlowers do
       )
 
     ~H"""
-    <div id="mood-flowers" phx-hook="HoverTooltip" style="position: relative;">
+    <Tooltip.container id="mood-flowers">
       <div class="mood-flower-grid">
         <div></div>
         <%= for m <- @month_names do %>
@@ -136,7 +136,7 @@ defmodule FugueWeb.MoodLive.MoodFlowers do
           box-sizing: border-box;
         }
       </style>
-    </div>
+    </Tooltip.container>
     """
   end
 

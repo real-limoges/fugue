@@ -10,7 +10,7 @@ defmodule FugueWeb.MoodLive.Sections do
 
   alias FugueWeb.MoodLive.{
     AmbiguityHistogram,
-    Calendar,
+    CalendarGrid,
     ClusterRadar,
     DimensionDistributions,
     DimensionDrift,
@@ -362,9 +362,7 @@ defmodule FugueWeb.MoodLive.Sections do
       </div>
 
       <div class="mt-3">
-        <.live_component
-          module={Calendar}
-          id="calendar"
+        <CalendarGrid.card
           days={@calendar_days}
           cluster_colors={@analysis.cluster_colors}
           cluster_names={@analysis.cluster_names}

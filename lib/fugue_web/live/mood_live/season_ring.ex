@@ -7,6 +7,8 @@ defmodule FugueWeb.MoodLive.SeasonRing do
 
   use Phoenix.Component
 
+  alias FugueWeb.MoodLive.Tooltip
+
   @size 420
   @center @size / 2
   @outer_r 155
@@ -76,7 +78,7 @@ defmodule FugueWeb.MoodLive.SeasonRing do
       )
 
     ~H"""
-    <div id="season-ring" phx-hook="HoverTooltip" style="position: relative;">
+    <Tooltip.container id="season-ring">
       <svg
         viewBox={"0 0 #{@size} #{@size}"}
         preserveAspectRatio="xMidYMid meet"
@@ -136,7 +138,7 @@ defmodule FugueWeb.MoodLive.SeasonRing do
         .season-arc.highlight { fill-opacity: 0.85; stroke-opacity: 0.6; }
         .season-arc.dim { fill-opacity: 0.08; stroke-opacity: 0.05; }
       </style>
-    </div>
+    </Tooltip.container>
     """
   end
 

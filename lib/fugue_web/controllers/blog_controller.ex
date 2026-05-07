@@ -29,7 +29,7 @@ defmodule FugueWeb.BlogController do
   end
 
   def feed(conn, _params) do
-    posts = Fugue.Blog.list_posts() |> Enum.take(20)
+    posts = Fugue.Blog.list_posts(limit: 20)
     xml = FugueWeb.BlogHTML.feed_xml(posts)
 
     conn
