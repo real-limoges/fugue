@@ -7,7 +7,7 @@ defmodule FugueWeb.MoodLive.GapBreathTimeline do
 
   use Phoenix.Component
 
-  alias FugueWeb.MoodLive.SvgMath
+  alias FugueWeb.MoodLive.{SvgMath, Tooltip}
 
   @svg_width 900
   @height 170
@@ -88,7 +88,7 @@ defmodule FugueWeb.MoodLive.GapBreathTimeline do
 
   defp render_full(assigns) do
     ~H"""
-    <div id="gap-breath-timeline" phx-hook="HoverTooltip" style="position: relative;">
+    <Tooltip.container id="gap-breath-timeline">
       <svg
         viewBox={"0 0 #{@svg_width} #{@svg_height}"}
         preserveAspectRatio="xMidYMid meet"
@@ -153,7 +153,7 @@ defmodule FugueWeb.MoodLive.GapBreathTimeline do
         .breath { transition: fill-opacity 0.15s; }
         .breath:hover { fill-opacity: 1 !important; }
       </style>
-    </div>
+    </Tooltip.container>
     """
   end
 

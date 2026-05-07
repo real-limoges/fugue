@@ -44,10 +44,7 @@ defmodule Fugue.Ish do
 
   def cluster(k, m, from \\ nil, to \\ nil) do
     IshCache.fetch({:cluster, k, m, from, to}, fn ->
-      Req.post(
-        "#{base_url()}/cluster",
-        Keyword.merge(req_opts(), json: %{k: k, m: m}, params: date_params(from, to))
-      )
+      post("/cluster", json: %{k: k, m: m}, params: date_params(from, to))
       |> parse_response()
     end)
   end
@@ -64,7 +61,7 @@ defmodule Fugue.Ish do
 
   def update_membership_functions(defs) do
     result =
-      Req.post("#{base_url()}/membership-functions", Keyword.merge(req_opts(), json: defs))
+      post("/membership-functions", json: defs)
       |> parse_response()
 
     case result do
@@ -78,12 +75,11 @@ defmodule Fugue.Ish do
   end
 
   def suggest_membership_functions do
-    Req.post("#{base_url()}/membership-functions/suggest", req_opts()) |> parse_response()
+    post("/membership-functions/suggest", []) |> parse_response()
   end
 
   def mamdani(request) do
-    Req.post("#{base_url()}/inference/mamdani", Keyword.merge(req_opts(), json: request))
-    |> parse_response()
+    post("/inference/mamdani", json: request) |> parse_response()
   end
 
   defp fetch_id_token do
@@ -110,6 +106,10 @@ defmodule Fugue.Ish do
 
   defp get(path, params) do
     Req.get("#{base_url()}#{path}", Keyword.merge(req_opts(), params: params))
+  end
+
+  defp post(path, opts) do
+    Req.post("#{base_url()}#{path}", Keyword.merge(req_opts(), opts))
   end
 
   defp date_params(from, to) do

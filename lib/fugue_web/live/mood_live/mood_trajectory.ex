@@ -11,7 +11,7 @@ defmodule FugueWeb.MoodLive.MoodTrajectory do
 
   use Phoenix.Component
 
-  alias FugueWeb.MoodLive.SvgMath
+  alias FugueWeb.MoodLive.{SvgMath, Tooltip}
 
   @width 900
   @height 520
@@ -122,11 +122,7 @@ defmodule FugueWeb.MoodLive.MoodTrajectory do
       )
 
     ~H"""
-    <div
-      id="mood-trajectory"
-      phx-hook="HoverTooltip"
-      style="position: relative; width: 100%;"
-    >
+    <Tooltip.container id="mood-trajectory" style="width: 100%;">
       <svg
         viewBox={"0 0 #{@svg_width} #{@svg_height}"}
         preserveAspectRatio="xMidYMid meet"
@@ -243,7 +239,7 @@ defmodule FugueWeb.MoodLive.MoodTrajectory do
           </g>
         </g>
       </svg>
-    </div>
+    </Tooltip.container>
     """
   end
 
