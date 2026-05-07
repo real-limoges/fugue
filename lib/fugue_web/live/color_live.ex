@@ -302,14 +302,21 @@ defmodule FugueWeb.ColorLive do
         <.langs_splash />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Russian splits blue in two: синий, голубой. Mongolian
-          splits it more dramatically: хөх for winter ice, цэнхэр
-          for summer sky. Hungarian goes the other direction and
+          Russian splits blue in two: синий (siniy), голубой
+          (goluboy). Mongolian splits it more dramatically: хөх
+          (khökh) for winter ice, цэнхэр (tsenkher) for summer
+          sky. Hungarian goes the other direction and
           splits red instead. None of these are translation
           problems. They're different cuts of the same continuous
           ribbon, and every cut goes all the way down -- it
           changes how fast the speaker can tell two chips apart,
           which is wild if you sit with it.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Some languages don't even cut along hue. Zulu -mnyama
+          can cover black, dark blue, and dark green together;
+          the partition is lightness, not position on the ribbon.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -647,13 +654,32 @@ defmodule FugueWeb.ColorLive do
 
   @langs_groups [
     %{
+      title: "the whole spectrum in two",
+      anchor_hue_start: 400,
+      anchor_hue_end: 700,
+      rows: [
+        %{
+          language: "English",
+          baseline: true,
+          bounds: [
+            {0.30, "blue"},
+            {0.53, "green"},
+            {0.62, "yellow"},
+            {0.73, "orange"},
+            {1.0, "red"}
+          ]
+        },
+        %{language: "Dani", bounds: [{0.53, "mili"}, {1.0, "mola"}]}
+      ]
+    },
+    %{
       title: "splits of blue",
       anchor_hue_start: 450,
       anchor_hue_end: 510,
       rows: [
         %{language: "English", baseline: true, bounds: [{1.0, "blue"}]},
-        %{language: "Russian", bounds: [{0.40, "синий"}, {1.0, "голубой"}]},
-        %{language: "Mongolian", bounds: [{0.45, "хөх"}, {1.0, "цэнхэр"}]},
+        %{language: "Russian", bounds: [{0.40, "синий (siniy)"}, {1.0, "голубой (goluboy)"}]},
+        %{language: "Mongolian", bounds: [{0.45, "хөх (khökh)"}, {1.0, "цэнхэр (tsenkher)"}]},
         %{language: "Turkish", bounds: [{0.35, "lacivert"}, {1.0, "mavi"}]},
         %{language: "Italian", bounds: [{0.35, "blu"}, {0.70, "azzurro"}, {1.0, "celeste"}]}
       ]
@@ -674,11 +700,11 @@ defmodule FugueWeb.ColorLive do
       anchor_hue_end: 560,
       rows: [
         %{language: "English", baseline: true, bounds: [{0.22, "blue"}, {1.0, "green"}]},
+        %{language: "Welsh", bounds: [{0.55, "glas"}, {1.0, "gwyrdd"}]},
         %{language: "Vietnamese", bounds: [{1.0, "xanh"}]},
         %{language: "Japanese", bounds: [{0.55, "青 (ao)"}, {1.0, "緑 (midori)"}]},
-        %{language: "Kazakh", bounds: [{0.50, "көк"}, {1.0, "жасыл"}]},
-        %{language: "Navajo", bounds: [{1.0, "dootłʼizh"}]},
-        %{language: "Himba", bounds: [{0.65, "burou"}, {1.0, "grine"}]}
+        %{language: "Kazakh", bounds: [{0.50, "көк (kök)"}, {1.0, "жасыл (jasyl)"}]},
+        %{language: "Navajo", bounds: [{1.0, "dootłʼizh (dootlizh)"}]}
       ]
     },
     %{
