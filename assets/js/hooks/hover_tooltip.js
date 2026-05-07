@@ -1,19 +1,10 @@
-/** Generic hover tooltip: positions a floating div near the cursor whose
- *  content is pulled from a `data-tooltip` attribute (raw HTML) on any
- *  descendant. Used by views whose tooltip content is pre-rendered server-side. */
+// Generic hover tooltip: positions a floating div near the cursor whose
+// content comes from a `data-tooltip` attribute on any descendant. Content
+// is rendered server-side; the hook just positions and shows/hides.
 export const HoverTooltip = {
   mounted() {
     this.tip = document.createElement("div")
-    this.tip.className = "hover-tooltip"
-    this.tip.style.cssText = `
-      position: absolute; pointer-events: none;
-      background: rgba(10,10,26,0.92); color: #eee;
-      padding: 10px 14px; border-radius: 8px;
-      border: 1px solid rgba(255,255,255,0.06);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-      font-size: 12px; line-height: 1.5; white-space: nowrap;
-      z-index: 100; opacity: 0; transition: opacity 0.1s;
-    `
+    this.tip.className = "tooltip-card"
     this.el.appendChild(this.tip)
 
     this.onOver = (e) => {

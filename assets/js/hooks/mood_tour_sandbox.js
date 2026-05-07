@@ -236,7 +236,5 @@ export const MoodTourSandbox = {
 
     this.el.querySelector('[data-readout="m"]').textContent = m.toFixed(2)
     this.el.querySelector('[data-readout="k"]').textContent = String(k)
-  },
-
-  destroyed() {}
+  }
 }

@@ -1,10 +1,9 @@
 defmodule FugueWeb.MenagerieLive.Sandpile do
   use FugueWeb, :live_view
 
-  @defaults %{
-    "mode" => "center",
-    "speed" => 10
-  }
+  @speed_min 1
+  @speed_max 200
+  @defaults %{"mode" => "center", "speed" => 10}
 
   def mount(_params, _session, socket) do
     {:ok, assign(socket, params: @defaults)}
@@ -22,7 +21,7 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
   def handle_event("update_speed", %{"speed" => raw}, socket) do
     speed =
       case Integer.parse(raw) do
-        {val, _} -> max(1, min(val, 200))
+        {val, _} -> val |> max(@speed_min) |> min(@speed_max)
         :error -> socket.assigns.params["speed"]
       end
 
@@ -42,6 +41,8 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
   end
 
   def render(assigns) do
+    assigns = assign(assigns, speed_min: @speed_min, speed_max: @speed_max)
+
     ~H"""
     <div class="sandpile-menagerie p-4 max-w-6xl mx-auto">
       <nav class="mb-6 text-xs">
@@ -107,8 +108,8 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
             <input
               type="range"
               name="speed"
-              min="1"
-              max="200"
+              min={@speed_min}
+              max={@speed_max}
               step="1"
               value={@params["speed"]}
               class="range range-xs range-primary"

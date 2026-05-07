@@ -134,7 +134,7 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
               <rect
                 class={cell.class}
                 data-date={cell.date}
-                data-day={cell.tooltip_json}
+                data-tooltip={cell.tooltip_html}
                 width={@cell_size}
                 height={@cell_size}
                 rx="2"
@@ -204,7 +204,7 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
       stroke: cell_stroke(day, top_cluster, top_weight, cluster_colors, transition_set),
       stroke_width: cell_stroke_width(day, top_weight, transition_set),
       stroke_dasharray: if(day.is_gap, do: "2,1", else: "none"),
-      tooltip_json: build_tooltip_json(day, cluster_colors, cluster_names)
+      tooltip_html: build_tooltip_html(day, cluster_colors, cluster_names)
     }
   end
 
@@ -298,26 +298,77 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
 
   defp gap_dates_set(_), do: MapSet.new()
 
-  # --- Tooltip payload ---
+  # --- Tooltip HTML ---
+  #
+  # Pre-rendered server-side so the JS hook only has to position + show/hide.
+  # Output is a plain HTML string assigned to `data-tooltip` on each cell.
 
-  defp build_tooltip_json(day, cluster_colors, cluster_names) do
-    mems_sorted =
-      (day.memberships || %{})
-      |> Enum.sort_by(fn {_k, v} -> v end, :desc)
-      |> Enum.map(fn {id, weight} ->
-        %{
-          id: id,
-          name: Map.get(cluster_names, id, id),
-          color: Map.get(cluster_colors, id, "#888"),
-          weight: weight
-        }
+  defp build_tooltip_html(day, cluster_colors, cluster_names) do
+    IO.iodata_to_binary([
+      "<strong style=\"font-size: 13px\">",
+      html_escape(day.date),
+      "</strong>",
+      gap_tag(day.is_gap),
+      dimensions_block(day.dimensions),
+      memberships_block(day.memberships, cluster_colors, cluster_names)
+    ])
+  end
+
+  defp gap_tag(true),
+    do: "<br><span style=\"color: #666; font-style: italic\">gap day</span>"
+
+  defp gap_tag(_), do: ""
+
+  defp dimensions_block(nil), do: ""
+  defp dimensions_block(dims) when map_size(dims) == 0, do: ""
+
+  defp dimensions_block(dims) do
+    rows =
+      Enum.map_join(dims, "", fn {k, v} ->
+        "<span style=\"color: #888\">" <>
+          html_escape(to_string(k)) <>
+          "</span><strong>" <>
+          html_escape(to_string(v)) <>
+          "</strong>"
       end)
 
-    Jason.encode!(%{
-      date: day.date,
-      isGap: day.is_gap,
-      dimensions: day.dimensions,
-      memberships: mems_sorted
-    })
+    "<div style=\"margin-top: 6px; display: grid; grid-template-columns: auto auto; gap: 1px 10px\">" <>
+      rows <> "</div>"
   end
+
+  defp memberships_block(nil, _, _), do: ""
+  defp memberships_block(mems, _, _) when map_size(mems) == 0, do: ""
+
+  defp memberships_block(mems, cluster_colors, cluster_names) do
+    rows =
+      mems
+      |> Enum.sort_by(fn {_k, v} -> v end, :desc)
+      |> Enum.map_join("", fn {id, weight} ->
+        membership_row(
+          Map.get(cluster_names, id, id),
+          Map.get(cluster_colors, id, "#888"),
+          weight
+        )
+      end)
+
+    "<div style=\"margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 5px\">" <>
+      rows <> "</div>"
+  end
+
+  defp membership_row(name, color, weight) do
+    pct = weight |> Kernel.*(100) |> round() |> Integer.to_string()
+    bar_w = weight |> Kernel.*(50) |> round() |> Integer.to_string()
+    safe_name = html_escape(to_string(name))
+    safe_color = html_escape(to_string(color))
+
+    "<div style=\"display: flex; align-items: center; gap: 5px; margin: 2px 0\">" <>
+      "<span style=\"color: #{safe_color}; font-size: 11px; white-space: nowrap\">#{safe_name}</span>" <>
+      "<div style=\"flex: 0 0 50px; height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px\">" <>
+      "<div style=\"width: #{bar_w}px; height: 3px; background: #{safe_color}; border-radius: 2px\"></div>" <>
+      "</div>" <>
+      "<span style=\"color: #888; font-size: 10px; white-space: nowrap\">#{pct}%</span>" <>
+      "</div>"
+  end
+
+  defp html_escape(s), do: s |> Phoenix.HTML.html_escape() |> Phoenix.HTML.safe_to_string()
 end
