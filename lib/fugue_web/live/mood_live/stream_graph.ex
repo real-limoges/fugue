@@ -10,7 +10,7 @@ defmodule FugueWeb.MoodLive.StreamGraph do
 
   use Phoenix.Component
 
-  alias FugueWeb.MoodLive.SvgMath
+  alias FugueWeb.MoodLive.{DateRange, SvgMath}
 
   @width 800
   @height 200
@@ -37,7 +37,7 @@ defmodule FugueWeb.MoodLive.StreamGraph do
         {[], [], nil, "stream-svg"}
       else
         dates = Enum.map(series, & &1.date)
-        {min_d, max_d} = date_range(dates)
+        {min_d, max_d} = DateRange.from_iso_strings(dates)
         span = max(Date.diff(max_d, min_d), 1)
 
         x_fn = fn date_str ->
@@ -254,11 +254,4 @@ defmodule FugueWeb.MoodLive.StreamGraph do
   defp legend_class(_cluster, nil), do: "stream-legend-item"
   defp legend_class(cluster, cluster), do: "stream-legend-item"
   defp legend_class(_cluster, _selected), do: "stream-legend-item dim"
-
-  defp date_range([first | _] = dates) do
-    parsed = Enum.map(dates, &Date.from_iso8601!/1)
-    {Enum.min(parsed, Date), Enum.max(parsed, Date)}
-  rescue
-    _ -> {Date.from_iso8601!(first), Date.from_iso8601!(first)}
-  end
 end

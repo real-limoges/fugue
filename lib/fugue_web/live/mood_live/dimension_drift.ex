@@ -6,7 +6,7 @@ defmodule FugueWeb.MoodLive.DimensionDrift do
 
   use Phoenix.Component
 
-  alias FugueWeb.MoodLive.SvgMath
+  alias FugueWeb.MoodLive.{DateRange, SvgMath}
 
   @width 800
   @m_top 6
@@ -35,7 +35,7 @@ defmodule FugueWeb.MoodLive.DimensionDrift do
         {[], [], 100, 0}
       else
         dates = Enum.map(List.first(dims).series, & &1.date)
-        {min_d, max_d} = date_range(dates)
+        {min_d, max_d} = DateRange.from_iso_strings(dates)
         span = max(Date.diff(max_d, min_d), 1)
 
         x_fn = fn d -> Date.diff(Date.from_iso8601!(d), min_d) / span * inner_w end
@@ -184,11 +184,4 @@ defmodule FugueWeb.MoodLive.DimensionDrift do
 
   defp num(v) when is_float(v), do: :erlang.float_to_binary(v, decimals: 1)
   defp num(v), do: to_string(v)
-
-  defp date_range([first | _] = dates) do
-    parsed = Enum.map(dates, &Date.from_iso8601!/1)
-    {Enum.min(parsed, Date), Enum.max(parsed, Date)}
-  rescue
-    _ -> {Date.from_iso8601!(first), Date.from_iso8601!(first)}
-  end
 end

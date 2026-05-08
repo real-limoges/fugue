@@ -60,17 +60,9 @@ defmodule Fugue.Ish do
   end
 
   def update_membership_functions(defs) do
-    result =
-      post("/membership-functions", json: defs)
-      |> parse_response()
-
-    case result do
-      {:ok, _} = ok ->
-        IshCache.invalidate_all()
-        ok
-
-      err ->
-        err
+    with {:ok, _} = ok <- post("/membership-functions", json: defs) |> parse_response() do
+      IshCache.invalidate_all()
+      ok
     end
   end
 

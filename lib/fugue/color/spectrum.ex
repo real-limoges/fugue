@@ -15,6 +15,16 @@ defmodule Fugue.Color.Spectrum do
   @doc """
   Returns an sRGB hex string (e.g. `"#aa3300"`) for `lambda` in nm.
   Clamps outside ~380..780.
+
+      iex> Fugue.Color.Spectrum.hex(300)
+      "#000000"
+
+      iex> Fugue.Color.Spectrum.hex(800)
+      "#000000"
+
+      iex> hex = Fugue.Color.Spectrum.hex(580)
+      iex> String.match?(hex, ~r/^#[0-9A-F]{6}$/)
+      true
   """
   def hex(lambda) when is_number(lambda) do
     {r, g, b} = rgb(lambda)

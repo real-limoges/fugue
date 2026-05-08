@@ -116,15 +116,13 @@ function centersFor(k) {
 }
 
 function memberships(x, centers, m) {
-  const dists = centers.map(c => Math.abs(x - c))
+  const dists = centers.map((c) => Math.abs(x - c))
   const minD = Math.min(...dists)
   if (minD < 1e-6) {
     return centers.map((_, i) => (dists[i] === minD ? 1 : 0))
   }
   const exponent = 2 / (m - 1)
-  return dists.map(di =>
-    1 / dists.reduce((sum, dj) => sum + Math.pow(di / dj, exponent), 0)
-  )
+  return dists.map((di) => 1 / dists.reduce((sum, dj) => sum + Math.pow(di / dj, exponent), 0))
 }
 
 export const MoodTourSandbox = {
@@ -236,5 +234,5 @@ export const MoodTourSandbox = {
 
     this.el.querySelector('[data-readout="m"]').textContent = m.toFixed(2)
     this.el.querySelector('[data-readout="k"]').textContent = String(k)
-  }
+  },
 }

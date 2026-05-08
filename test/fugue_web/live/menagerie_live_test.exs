@@ -303,6 +303,118 @@ defmodule FugueWeb.MenagerieLiveTest do
     end)
   end
 
+  describe "mount /menagerie/boids" do
+    test "renders the boids page with the canvas hook anchor", %{conn: conn} do
+      {:ok, _view, html} = live(conn, "/menagerie/boids")
+      assert html =~ ~s(phx-hook="BoidsCanvas")
+      assert html =~ "Flock size"
+    end
+
+    test "preset replaces params with the named preset", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/menagerie/boids")
+      render_hook(view, "preset", %{"name" => "tight_flock"})
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.params["count"] == 1200
+      assert assigns.params["align_force"] == 0.06
+    end
+
+    test "reset returns params to the defaults", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/menagerie/boids")
+      render_hook(view, "preset", %{"name" => "chaos"})
+      render_hook(view, "reset", %{})
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.params["count"] == 1500
+      assert assigns.params["max_speed"] == 3.0
+    end
+  end
+
+  describe "mount /menagerie/sandpile" do
+    test "renders the sandpile page with the canvas hook anchor", %{conn: conn} do
+      {:ok, _view, html} = live(conn, "/menagerie/sandpile")
+      assert html =~ ~s(phx-hook="SandpileCanvas")
+      assert html =~ "Abelian sandpile"
+    end
+
+    test "set_mode updates the mode param", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/menagerie/sandpile")
+      render_hook(view, "set_mode", %{"mode" => "random"})
+      assert :sys.get_state(view.pid).socket.assigns.params["mode"] == "random"
+    end
+
+    test "update_speed clamps to the configured bounds", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/menagerie/sandpile")
+
+      render_hook(view, "update_speed", %{"speed" => "9999"})
+      assert :sys.get_state(view.pid).socket.assigns.params["speed"] == 200
+
+      render_hook(view, "update_speed", %{"speed" => "0"})
+      assert :sys.get_state(view.pid).socket.assigns.params["speed"] == 1
+    end
+  end
+
+  describe "mount /menagerie/quantum-walk" do
+    test "renders the quantum walk page with the canvas hook anchor", %{conn: conn} do
+      {:ok, _view, html} = live(conn, "/menagerie/quantum-walk")
+      assert html =~ ~s(phx-hook="QuantumWalk")
+      assert html =~ "Classical vs quantum walk"
+    end
+
+    test "update_params parses steps + decoherence", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/menagerie/quantum-walk")
+
+      view
+      |> element("form[phx-change=update_params]")
+      |> render_change(%{"steps" => "120", "decoherence" => "0.5"})
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.params.steps == 120
+      assert assigns.params.decoherence == 0.5
+    end
+
+    test "reset returns params to defaults", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/menagerie/quantum-walk")
+
+      view
+      |> element("form[phx-change=update_params]")
+      |> render_change(%{"steps" => "120", "decoherence" => "0.5"})
+
+      render_hook(view, "reset", %{})
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.params == %{steps: 80, decoherence: 0.0}
+    end
+  end
+
+  describe "mount /menagerie/quantum-stats" do
+    test "renders the quantum stats page with the canvas hook anchor", %{conn: conn} do
+      {:ok, _view, html} = live(conn, "/menagerie/quantum-stats")
+      assert html =~ ~s(phx-hook="QuantumStats")
+      assert html =~ "Three ways to count"
+    end
+
+    test "update_params parses log_temperature + particles", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/menagerie/quantum-stats")
+
+      view
+      |> element("form[phx-change=update_params]")
+      |> render_change(%{"log_temperature" => "1.5", "particles" => "30"})
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.params.log_temperature == 1.5
+      assert assigns.params.particles == 30
+    end
+
+    test "reset returns params to defaults", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/menagerie/quantum-stats")
+      render_hook(view, "reset", %{})
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.params == %{log_temperature: 0.0, particles: 18}
+    end
+  end
+
   describe "Fugue.Menagerie.MelbourneWeather" do
     alias Fugue.Menagerie.MelbourneWeather
 

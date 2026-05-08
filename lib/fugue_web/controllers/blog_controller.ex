@@ -1,4 +1,9 @@
 defmodule FugueWeb.BlogController do
+  @moduledoc """
+  Index, show, and Atom feed for posts compiled into `Fugue.Blog` at
+  build time. Posts are loaded from `priv/blog/` via `@external_resource`
+  so adding a markdown file recompiles this module on the next request.
+  """
   use FugueWeb, :controller
 
   def index(conn, params) do

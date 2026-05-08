@@ -1,4 +1,10 @@
 defmodule FugueWeb.MenagerieLive.Boids do
+  @moduledoc """
+  `/menagerie/boids` — flocking sim. Doubles as the site splash and
+  is settled; see `lib/fugue_web/live/menagerie_live/CLAUDE.md` before
+  proposing changes. Simulation runs in petri WASM via the
+  `BoidsCanvas` hook; this LiveView only owns slider state and presets.
+  """
   use FugueWeb, :live_view
 
   @defaults %{

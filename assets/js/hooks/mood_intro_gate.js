@@ -52,5 +52,5 @@ export const MoodIntroGate = {
     this.el.style.display = skipped ? "none" : ""
     const link = document.getElementById("mood-show-intro")
     if (link) link.style.display = skipped ? "inline-block" : "none"
-  }
+  },
 }

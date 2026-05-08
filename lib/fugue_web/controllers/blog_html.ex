@@ -1,4 +1,5 @@
 defmodule FugueWeb.BlogHTML do
+  @moduledoc false
   use FugueWeb, :html
 
   embed_templates "blog_html/*"

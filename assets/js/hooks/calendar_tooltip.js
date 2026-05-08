@@ -14,10 +14,12 @@ export const CalendarTooltip = {
       if (!html) return
       this.tip.innerHTML = html
       const r = this.el.getBoundingClientRect()
-      this.tip.style.top = (e.clientY - r.top - 10) + "px"
+      this.tip.style.top = e.clientY - r.top - 10 + "px"
       this.tip.style.opacity = "1"
     }
-    this.onLeave = () => { this.tip.style.opacity = "0" }
+    this.onLeave = () => {
+      this.tip.style.opacity = "0"
+    }
 
     this.el.addEventListener("mouseover", this.onEnter)
     this.el.addEventListener("mouseout", this.onLeave)
@@ -26,5 +28,5 @@ export const CalendarTooltip = {
   destroyed() {
     this.el.removeEventListener("mouseover", this.onEnter)
     this.el.removeEventListener("mouseout", this.onLeave)
-  }
+  },
 }

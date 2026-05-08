@@ -3,6 +3,8 @@ defmodule Fugue.BlogTest do
 
   alias Fugue.Blog
 
+  doctest Fugue.Blog.Parser
+
   describe "list_posts/0" do
     test "returns posts sorted by date descending" do
       posts = Blog.list_posts()

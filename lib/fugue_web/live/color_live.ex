@@ -1,4 +1,11 @@
 defmodule FugueWeb.ColorLive do
+  @moduledoc """
+  Top-level LiveView for `/color`, the protanopia-threaded chapter on
+  color science. Owns the chapter's interactive state — protanope
+  toggle, single-wavelength `lambda` slider, WCS chip-grid language,
+  and metamer-pair index — and renders the section bodies through
+  `FugueWeb.ColorLive.Splashes`.
+  """
   use FugueWeb, :live_view
 
   alias FugueWeb.ColorLive.Splashes

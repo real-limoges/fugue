@@ -30,10 +30,11 @@ export const TemporalBrush = {
 
     this.el.innerHTML = ""
 
-    const allDates = this.dates.map(d => parseDate(d)).filter(Boolean)
+    const allDates = this.dates.map((d) => parseDate(d)).filter(Boolean)
     if (allDates.length === 0) return
 
-    const svgEl = d3.select(this.el)
+    const svgEl = d3
+      .select(this.el)
       .append("svg")
       .attr("viewBox", `0 0 ${WIDTH} ${HEIGHT}`)
       .attr("preserveAspectRatio", "xMidYMid meet")
@@ -41,20 +42,17 @@ export const TemporalBrush = {
 
     this.svg = svgEl
 
-    const g = svgEl.append("g")
-      .attr("transform", `translate(${MARGIN.left},${MARGIN.top})`)
+    const g = svgEl.append("g").attr("transform", `translate(${MARGIN.left},${MARGIN.top})`)
 
-    const x = d3.scaleTime()
-      .domain(d3.extent(allDates))
-      .range([0, INNER_W])
+    const x = d3.scaleTime().domain(d3.extent(allDates)).range([0, INNER_W])
 
     // Tick marks for each day
     g.selectAll("line.tick")
       .data(allDates)
       .join("line")
       .attr("class", "tick")
-      .attr("x1", d => x(d))
-      .attr("x2", d => x(d))
+      .attr("x1", (d) => x(d))
+      .attr("x2", (d) => x(d))
       .attr("y1", 0)
       .attr("y2", INNER_H)
       .attr("stroke", "#555")
@@ -65,13 +63,20 @@ export const TemporalBrush = {
     g.append("g")
       .attr("transform", `translate(0,${INNER_H})`)
       .call(d3.axisBottom(x).ticks(d3.timeMonth.every(3)).tickFormat(d3.timeFormat("%b %Y")))
-      .selectAll("text,line,path").attr("stroke", "#666").attr("fill", "#666").attr("font-size", "9px")
+      .selectAll("text,line,path")
+      .attr("stroke", "#666")
+      .attr("fill", "#666")
+      .attr("font-size", "9px")
 
     // Brush
     const formatDate = d3.timeFormat("%Y-%m-%d")
 
-    this.brush = d3.brushX()
-      .extent([[0, 0], [INNER_W, INNER_H]])
+    this.brush = d3
+      .brushX()
+      .extent([
+        [0, 0],
+        [INNER_W, INNER_H],
+      ])
       .on("end", (event) => {
         if (!event.selection) {
           this.pushEvent("brush_changed", { start: null, end: null })
@@ -80,7 +85,7 @@ export const TemporalBrush = {
         const [x0, x1] = event.selection.map(x.invert)
         this.pushEvent("brush_changed", {
           start: formatDate(x0),
-          end: formatDate(x1)
+          end: formatDate(x1),
         })
       })
 
@@ -95,5 +100,5 @@ export const TemporalBrush = {
   destroyed() {
     this.brush = null
     this.svg = null
-  }
+  },
 }

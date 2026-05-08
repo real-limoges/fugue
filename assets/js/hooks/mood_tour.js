@@ -8,28 +8,28 @@ const STEPS = [
   {
     id: "mood-chapter-1",
     title: "Here are my states",
-    body: "The fuzzy clustering found these on its own — no labels given. Each one is a shape my days tend to fall into, more gravity well than box."
+    body: "The fuzzy clustering found these on its own — no labels given. Each one is a shape my days tend to fall into, more gravity well than box.",
   },
   {
     id: "mood-chapter-2",
     title: "Every day, laid out",
-    body: "One square per day. Color is the dominant state, brightness is how hard it pulled. Drag across the strip to zoom into any window."
+    body: "One square per day. Color is the dominant state, brightness is how hard it pulled. Drag across the strip to zoom into any window.",
   },
   {
     id: "mood-chapter-3",
     title: "How they shift",
-    body: "States don't change at random. Thicker paths mean a well-trodden route from one to another."
+    body: "States don't change at random. Thicker paths mean a well-trodden route from one to another.",
   },
   {
     id: "mood-chapter-5",
     title: "And where I missed",
-    body: "I'm not perfect at this. A lot of the time the state I came back in wasn't the one I left in — that's its own kind of signal."
+    body: "I'm not perfect at this. A lot of the time the state I came back in wasn't the one I left in — that's its own kind of signal.",
   },
   {
     id: "mood-param-controls",
     title: "Poke the math yourself",
-    body: "The algorithm has knobs. Open this drawer to tune k and m and watch the whole page recompute."
-  }
+    body: "The algorithm has knobs. Open this drawer to tune k and m and watch the whole page recompute.",
+  },
 ]
 
 const STYLES = `
@@ -135,9 +135,16 @@ export const MoodTour = {
 
     this.keyHandler = (e) => {
       if (!this.active) return
-      if (e.key === "Escape") { e.preventDefault(); this.cancel() }
-      else if (e.key === "ArrowRight" || e.key === "Enter") { e.preventDefault(); this.next() }
-      else if (e.key === "ArrowLeft") { e.preventDefault(); this.prev() }
+      if (e.key === "Escape") {
+        e.preventDefault()
+        this.cancel()
+      } else if (e.key === "ArrowRight" || e.key === "Enter") {
+        e.preventDefault()
+        this.next()
+      } else if (e.key === "ArrowLeft") {
+        e.preventDefault()
+        this.prev()
+      }
     }
     document.addEventListener("keydown", this.keyHandler)
   },
@@ -248,10 +255,10 @@ export const MoodTour = {
       `${this.index + 1} / ${STEPS.length}`
 
     const primary = this.card.querySelector("[data-tour-primary]")
-    primary.innerHTML = (this.index === STEPS.length - 1) ? "Done" : "Next &rsaquo;"
+    primary.innerHTML = this.index === STEPS.length - 1 ? "Done" : "Next &rsaquo;"
 
     const prevBtn = this.card.querySelector('[data-tour-action="prev"]')
-    prevBtn.style.visibility = (this.index === 0) ? "hidden" : "visible"
+    prevBtn.style.visibility = this.index === 0 ? "hidden" : "visible"
   },
 
   finish() {
@@ -271,5 +278,5 @@ export const MoodTour = {
     this.clearSpotlight()
     this.teardownCard()
     this.active = false
-  }
+  },
 }

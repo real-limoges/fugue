@@ -16,9 +16,20 @@ import { LabGam } from "./lab_gam"
 import { IridescenceCanvas } from "./iridescence"
 
 export default {
-  CalendarTooltip, HoverTooltip, TemporalBrush,
-  MoodTourSandbox, MoodIntroGate, MoodTour,
-  ClusterAttractor, BandsHover, MamdaniPlayground, BoidsCanvas,
-  QuantumWalk, QuantumStats, SandpileCanvas, CloudsCanvas, LabGam,
-  IridescenceCanvas
+  CalendarTooltip,
+  HoverTooltip,
+  TemporalBrush,
+  MoodTourSandbox,
+  MoodIntroGate,
+  MoodTour,
+  ClusterAttractor,
+  BandsHover,
+  MamdaniPlayground,
+  BoidsCanvas,
+  QuantumWalk,
+  QuantumStats,
+  SandpileCanvas,
+  CloudsCanvas,
+  LabGam,
+  IridescenceCanvas,
 }
