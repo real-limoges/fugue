@@ -45,6 +45,16 @@ jobs:
       - name: Install dependencies
         run: mix deps.get
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: assets/package-lock.json
+
+      - name: Install asset deps (Prettier)
+        run: npm --prefix assets ci
+
       - name: Precommit checks (compile + format + test)
         run: mix precommit
 
