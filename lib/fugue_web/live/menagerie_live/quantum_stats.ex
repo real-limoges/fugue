@@ -7,57 +7,46 @@ defmodule FugueWeb.MenagerieLive.QuantumStats do
 
   use FugueWeb, :live_view
 
-  @defaults %{log_temperature: 0.0, particles: 18}
+  alias FugueWeb.MenagerieLive.AnimatedCard
+  alias FugueWeb.MenagerieLive.AnimatedCard.Slider
+
+  @defaults %{"log_temperature" => 0.0, "particles" => 18}
+
+  @sliders [
+    Slider.new(
+      key: "log_temperature",
+      label: "Temperature",
+      min: -1.3,
+      max: 1.3,
+      step: 0.01,
+      format: &__MODULE__.format_log_temperature/1
+    ),
+    Slider.new(
+      key: "particles",
+      label: "Particles",
+      min: 3,
+      max: 25,
+      step: 1,
+      cast: &trunc/1,
+      format: &Integer.to_string/1
+    )
+  ]
 
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, params: @defaults)}
+    {:ok, assign(socket, params: @defaults, sliders: @sliders)}
   end
 
   def handle_event("update_params", form, socket) do
-    new_params = %{
-      log_temperature:
-        parse_float(form["log_temperature"], socket.assigns.params.log_temperature),
-      particles: parse_int(form["particles"], socket.assigns.params.particles)
-    }
-
-    if new_params == socket.assigns.params do
-      {:noreply, socket}
-    else
-      {:noreply,
-       socket
-       |> assign(:params, new_params)
-       |> push_event("quantum_stats:set_params", new_params)}
-    end
+    AnimatedCard.handle_update_params(form, socket, @sliders, "quantum_stats:set_params")
   end
 
   def handle_event("reset", _params, socket) do
-    {:noreply,
-     socket
-     |> assign(:params, @defaults)
-     |> push_event("quantum_stats:set_params", @defaults)}
+    AnimatedCard.handle_reset(socket, @defaults, "quantum_stats:set_params")
   end
 
-  defp parse_int(raw, fallback) when is_binary(raw) do
-    case Integer.parse(raw) do
-      {n, _} -> n
-      :error -> fallback
-    end
-  end
-
-  defp parse_int(_, fallback), do: fallback
-
-  defp parse_float(raw, fallback) when is_binary(raw) do
-    case Float.parse(raw) do
-      {f, _} -> f
-      :error -> fallback
-    end
-  end
-
-  defp parse_float(_, fallback), do: fallback
-
-  defp format_temperature(log_t) do
-    t = :math.pow(10, log_t)
-    :erlang.float_to_binary(t, decimals: 2)
+  @doc false
+  def format_log_temperature(log_t) do
+    "kT = " <> :erlang.float_to_binary(:math.pow(10, log_t), decimals: 2)
   end
 
   def render(assigns) do
@@ -96,8 +85,8 @@ defmodule FugueWeb.MenagerieLive.QuantumStats do
           phx-update="ignore"
           class="block w-full"
           style="height: 420px;"
-          data-log_temperature={@params.log_temperature}
-          data-particles={@params.particles}
+          data-log_temperature={@params["log_temperature"]}
+          data-particles={@params["particles"]}
         >
         </canvas>
       </div>
@@ -108,41 +97,11 @@ defmodule FugueWeb.MenagerieLive.QuantumStats do
         </button>
       </div>
 
-      <form phx-change="update_params" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <label class="block bg-base-200 rounded-lg p-3">
-          <div class="flex items-center justify-between mb-1">
-            <span class="text-xs font-semibold text-gray-300">Temperature</span>
-            <span class="text-xs font-mono text-gray-400">
-              kT = {format_temperature(@params.log_temperature)}
-            </span>
-          </div>
-          <input
-            type="range"
-            name="log_temperature"
-            min="-1.3"
-            max="1.3"
-            step="0.01"
-            value={@params.log_temperature}
-            class="range range-xs range-primary"
-          />
-        </label>
-
-        <label class="block bg-base-200 rounded-lg p-3">
-          <div class="flex items-center justify-between mb-1">
-            <span class="text-xs font-semibold text-gray-300">Particles</span>
-            <span class="text-xs font-mono text-gray-400">{@params.particles}</span>
-          </div>
-          <input
-            type="range"
-            name="particles"
-            min="3"
-            max="25"
-            step="1"
-            value={@params.particles}
-            class="range range-xs range-primary"
-          />
-        </label>
-      </form>
+      <AnimatedCard.slider_grid
+        sliders={@sliders}
+        params={@params}
+        class="grid grid-cols-1 sm:grid-cols-2 gap-4"
+      />
     </div>
     """
   end

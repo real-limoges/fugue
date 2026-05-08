@@ -6,54 +6,45 @@ defmodule FugueWeb.MenagerieLive.QuantumWalk do
 
   use FugueWeb, :live_view
 
-  @defaults %{steps: 80, decoherence: 0.0}
+  alias FugueWeb.MenagerieLive.AnimatedCard
+  alias FugueWeb.MenagerieLive.AnimatedCard.Slider
+
+  @defaults %{"steps" => 80, "decoherence" => 0.0}
+
+  @sliders [
+    Slider.new(
+      key: "decoherence",
+      label: "Decoherence",
+      min: 0.0,
+      max: 1.0,
+      step: 0.01,
+      format: &__MODULE__.format_decoherence/1
+    ),
+    Slider.new(
+      key: "steps",
+      label: "Steps",
+      min: 10,
+      max: 160,
+      step: 2,
+      cast: &trunc/1,
+      format: &Integer.to_string/1
+    )
+  ]
 
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, params: @defaults)}
+    {:ok, assign(socket, params: @defaults, sliders: @sliders)}
   end
 
   def handle_event("update_params", form, socket) do
-    new_params = %{
-      steps: parse_int(form["steps"], socket.assigns.params.steps),
-      decoherence: parse_float(form["decoherence"], socket.assigns.params.decoherence)
-    }
-
-    if new_params == socket.assigns.params do
-      {:noreply, socket}
-    else
-      {:noreply,
-       socket
-       |> assign(:params, new_params)
-       |> push_event("quantum_walk:set_params", new_params)}
-    end
+    AnimatedCard.handle_update_params(form, socket, @sliders, "quantum_walk:set_params")
   end
 
   def handle_event("reset", _params, socket) do
-    {:noreply,
-     socket
-     |> assign(:params, @defaults)
-     |> push_event("quantum_walk:set_params", @defaults)}
+    AnimatedCard.handle_reset(socket, @defaults, "quantum_walk:set_params")
   end
 
-  defp parse_int(raw, fallback) when is_binary(raw) do
-    case Integer.parse(raw) do
-      {n, _} -> n
-      :error -> fallback
-    end
-  end
-
-  defp parse_int(_, fallback), do: fallback
-
-  defp parse_float(raw, fallback) when is_binary(raw) do
-    case Float.parse(raw) do
-      {f, _} -> f
-      :error -> fallback
-    end
-  end
-
-  defp parse_float(_, fallback), do: fallback
-
-  defp format_decoherence(d), do: :erlang.float_to_binary(d, decimals: 2)
+  @doc false
+  def format_decoherence(d), do: :erlang.float_to_binary(d, decimals: 2)
 
   def render(assigns) do
     ~H"""
@@ -67,7 +58,7 @@ defmodule FugueWeb.MenagerieLive.QuantumWalk do
       <div class="mb-4">
         <h1 class="text-2xl font-bold text-gray-100">Classical vs quantum walk</h1>
         <p class="text-sm text-gray-400 mt-1 max-w-3xl leading-relaxed">
-          Both walkers start at the center and take {@params.steps} steps. The gray
+          Both walkers start at the center and take {@params["steps"]} steps. The gray
           one takes a classical random walk -- coin flip, step, coin flip, step --
           and settles into the familiar bell curve. The cyan one takes a quantum
           walk, and does something strange: it refuses to settle in the middle and
@@ -88,8 +79,8 @@ defmodule FugueWeb.MenagerieLive.QuantumWalk do
           phx-update="ignore"
           class="block w-full"
           style="height: 420px;"
-          data-steps={@params.steps}
-          data-decoherence={@params.decoherence}
+          data-steps={@params["steps"]}
+          data-decoherence={@params["decoherence"]}
         >
         </canvas>
       </div>
@@ -100,41 +91,11 @@ defmodule FugueWeb.MenagerieLive.QuantumWalk do
         </button>
       </div>
 
-      <form phx-change="update_params" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <label class="block bg-base-200 rounded-lg p-3">
-          <div class="flex items-center justify-between mb-1">
-            <span class="text-xs font-semibold text-gray-300">Decoherence</span>
-            <span class="text-xs font-mono text-gray-400">
-              {format_decoherence(@params.decoherence)}
-            </span>
-          </div>
-          <input
-            type="range"
-            name="decoherence"
-            min="0"
-            max="1"
-            step="0.01"
-            value={@params.decoherence}
-            class="range range-xs range-primary"
-          />
-        </label>
-
-        <label class="block bg-base-200 rounded-lg p-3">
-          <div class="flex items-center justify-between mb-1">
-            <span class="text-xs font-semibold text-gray-300">Steps</span>
-            <span class="text-xs font-mono text-gray-400">{@params.steps}</span>
-          </div>
-          <input
-            type="range"
-            name="steps"
-            min="10"
-            max="160"
-            step="2"
-            value={@params.steps}
-            class="range range-xs range-primary"
-          />
-        </label>
-      </form>
+      <AnimatedCard.slider_grid
+        sliders={@sliders}
+        params={@params}
+        class="grid grid-cols-1 sm:grid-cols-2 gap-4"
+      />
     </div>
     """
   end

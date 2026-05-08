@@ -7,6 +7,9 @@ defmodule FugueWeb.MenagerieLive.Boids do
   """
   use FugueWeb, :live_view
 
+  alias FugueWeb.MenagerieLive.AnimatedCard
+  alias FugueWeb.MenagerieLive.AnimatedCard.Slider
+
   @defaults %{
     "count" => 1500,
     "sep_radius" => 25.0,
@@ -22,12 +25,20 @@ defmodule FugueWeb.MenagerieLive.Boids do
   }
 
   @sliders [
-    {"count", "Flock size", 50, 3000, 50, &trunc/1},
-    {"sep_force", "Separation", 0.0, 0.3, 0.005, &Function.identity/1},
-    {"align_force", "Alignment", 0.0, 0.2, 0.002, &Function.identity/1},
-    {"cohesion_force", "Cohesion", 0.0, 0.02, 0.0002, &Function.identity/1},
-    {"max_speed", "Max speed", 0.5, 8.0, 0.1, &Function.identity/1},
-    {"trail_decay", "Trail persistence", 0.8, 0.999, 0.001, &Function.identity/1}
+    Slider.new(
+      key: "count",
+      label: "Flock size",
+      min: 50,
+      max: 3000,
+      step: 50,
+      cast: &trunc/1,
+      format: &Integer.to_string/1
+    ),
+    Slider.new(key: "sep_force", label: "Separation", min: 0.0, max: 0.3, step: 0.005),
+    Slider.new(key: "align_force", label: "Alignment", min: 0.0, max: 0.2, step: 0.002),
+    Slider.new(key: "cohesion_force", label: "Cohesion", min: 0.0, max: 0.02, step: 0.0002),
+    Slider.new(key: "max_speed", label: "Max speed", min: 0.5, max: 8.0, step: 0.1),
+    Slider.new(key: "trail_decay", label: "Trail persistence", min: 0.8, max: 0.999, step: 0.001)
   ]
 
   @presets %{
@@ -76,17 +87,8 @@ defmodule FugueWeb.MenagerieLive.Boids do
     {:ok, assign(socket, params: @defaults, sliders: @sliders)}
   end
 
-  def handle_event("update_params", form_params, socket) do
-    new_params = parse_params(form_params, socket.assigns.params)
-
-    if new_params == socket.assigns.params do
-      {:noreply, socket}
-    else
-      {:noreply,
-       socket
-       |> assign(:params, new_params)
-       |> push_event("boids:set_params", new_params)}
-    end
+  def handle_event("update_params", form, socket) do
+    AnimatedCard.handle_update_params(form, socket, @sliders, "boids:set_params")
   end
 
   def handle_event("preset", %{"name" => name}, socket) when is_map_key(@presets, name) do
@@ -99,42 +101,8 @@ defmodule FugueWeb.MenagerieLive.Boids do
   end
 
   def handle_event("reset", _params, socket) do
-    {:noreply,
-     socket
-     |> assign(:params, @defaults)
-     |> push_event("boids:reset", @defaults)}
+    AnimatedCard.handle_reset(socket, @defaults, "boids:reset")
   end
-
-  defp parse_params(form, current) do
-    Enum.reduce(@sliders, current, fn {key, _label, _min, _max, _step, cast}, acc ->
-      case Map.fetch(form, key) do
-        {:ok, raw} ->
-          Map.put(acc, key, parse_number(raw, current[key]) |> cast.())
-
-        :error ->
-          acc
-      end
-    end)
-  end
-
-  defp parse_number(raw, fallback) when is_binary(raw) do
-    case Float.parse(raw) do
-      {val, _} -> val
-      :error -> fallback
-    end
-  end
-
-  defp parse_number(_, fallback), do: fallback
-
-  defp format_value("count", v), do: trunc(v) |> Integer.to_string()
-
-  defp format_value(_, v) when is_float(v) do
-    # Show enough precision to distinguish one step, but no trailing zeros
-    raw = :erlang.float_to_binary(v, decimals: 4)
-    raw |> String.replace(~r/0+$/, "") |> String.replace(~r/\.$/, ".0")
-  end
-
-  defp format_value(_, v), do: to_string(v)
 
   def render(assigns) do
     ~H"""
@@ -203,25 +171,7 @@ defmodule FugueWeb.MenagerieLive.Boids do
         </button>
       </div>
 
-      <form phx-change="update_params" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        <%= for {key, label, min, max, step, _cast} <- @sliders do %>
-          <label class="block bg-base-200 rounded-lg p-3">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-xs font-semibold text-gray-300">{label}</span>
-              <span class="text-xs font-mono text-gray-400">{format_value(key, @params[key])}</span>
-            </div>
-            <input
-              type="range"
-              name={key}
-              min={min}
-              max={max}
-              step={step}
-              value={@params[key]}
-              class="range range-xs range-primary"
-            />
-          </label>
-        <% end %>
-      </form>
+      <AnimatedCard.slider_grid sliders={@sliders} params={@params} />
     </div>
     """
   end

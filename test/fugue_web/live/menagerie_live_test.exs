@@ -343,13 +343,19 @@ defmodule FugueWeb.MenagerieLiveTest do
       assert :sys.get_state(view.pid).socket.assigns.params["mode"] == "random"
     end
 
-    test "update_speed clamps to the configured bounds", %{conn: conn} do
+    test "update_params clamps speed to the configured bounds", %{conn: conn} do
       {:ok, view, _html} = live(conn, "/menagerie/sandpile")
 
-      render_hook(view, "update_speed", %{"speed" => "9999"})
+      view
+      |> element("form[phx-change=update_params]")
+      |> render_change(%{"speed" => "9999"})
+
       assert :sys.get_state(view.pid).socket.assigns.params["speed"] == 200
 
-      render_hook(view, "update_speed", %{"speed" => "0"})
+      view
+      |> element("form[phx-change=update_params]")
+      |> render_change(%{"speed" => "0"})
+
       assert :sys.get_state(view.pid).socket.assigns.params["speed"] == 1
     end
   end
@@ -369,8 +375,8 @@ defmodule FugueWeb.MenagerieLiveTest do
       |> render_change(%{"steps" => "120", "decoherence" => "0.5"})
 
       assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.params.steps == 120
-      assert assigns.params.decoherence == 0.5
+      assert assigns.params["steps"] == 120
+      assert assigns.params["decoherence"] == 0.5
     end
 
     test "reset returns params to defaults", %{conn: conn} do
@@ -383,7 +389,7 @@ defmodule FugueWeb.MenagerieLiveTest do
       render_hook(view, "reset", %{})
 
       assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.params == %{steps: 80, decoherence: 0.0}
+      assert assigns.params == %{"steps" => 80, "decoherence" => 0.0}
     end
   end
 
@@ -399,11 +405,23 @@ defmodule FugueWeb.MenagerieLiveTest do
 
       view
       |> element("form[phx-change=update_params]")
-      |> render_change(%{"log_temperature" => "1.5", "particles" => "30"})
+      |> render_change(%{"log_temperature" => "1.0", "particles" => "20"})
 
       assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.params.log_temperature == 1.5
-      assert assigns.params.particles == 30
+      assert assigns.params["log_temperature"] == 1.0
+      assert assigns.params["particles"] == 20
+    end
+
+    test "out-of-range slider input clamps to bounds", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/menagerie/quantum-stats")
+
+      view
+      |> element("form[phx-change=update_params]")
+      |> render_change(%{"log_temperature" => "5.0", "particles" => "999"})
+
+      assigns = :sys.get_state(view.pid).socket.assigns
+      assert assigns.params["log_temperature"] == 1.3
+      assert assigns.params["particles"] == 25
     end
 
     test "reset returns params to defaults", %{conn: conn} do
@@ -411,7 +429,7 @@ defmodule FugueWeb.MenagerieLiveTest do
       render_hook(view, "reset", %{})
 
       assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.params == %{log_temperature: 0.0, particles: 18}
+      assert assigns.params == %{"log_temperature" => 0.0, "particles" => 18}
     end
   end
 

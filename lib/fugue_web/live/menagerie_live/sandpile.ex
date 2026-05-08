@@ -7,12 +7,25 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
   """
   use FugueWeb, :live_view
 
-  @speed_min 1
-  @speed_max 200
+  alias FugueWeb.MenagerieLive.AnimatedCard
+  alias FugueWeb.MenagerieLive.AnimatedCard.Slider
+
   @defaults %{"mode" => "center", "speed" => 10}
 
+  @sliders [
+    Slider.new(
+      key: "speed",
+      label: "Grains per frame",
+      min: 1,
+      max: 200,
+      step: 1,
+      cast: &trunc/1,
+      format: &Integer.to_string/1
+    )
+  ]
+
   def mount(_params, _session, socket) do
-    {:ok, assign(socket, params: @defaults)}
+    {:ok, assign(socket, params: @defaults, sliders: @sliders)}
   end
 
   def handle_event("set_mode", %{"mode" => mode}, socket) when mode in ["center", "random"] do
@@ -24,31 +37,15 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
      |> push_event("sandpile:set_mode", %{mode: mode})}
   end
 
-  def handle_event("update_speed", %{"speed" => raw}, socket) do
-    speed =
-      case Integer.parse(raw) do
-        {val, _} -> val |> max(@speed_min) |> min(@speed_max)
-        :error -> socket.assigns.params["speed"]
-      end
-
-    new_params = Map.put(socket.assigns.params, "speed", speed)
-
-    {:noreply,
-     socket
-     |> assign(:params, new_params)
-     |> push_event("sandpile:set_speed", %{speed: speed})}
+  def handle_event("update_params", form, socket) do
+    AnimatedCard.handle_update_params(form, socket, @sliders, "sandpile:set_params")
   end
 
   def handle_event("reset", _params, socket) do
-    {:noreply,
-     socket
-     |> assign(:params, @defaults)
-     |> push_event("sandpile:reset", %{mode: @defaults["mode"], speed: @defaults["speed"]})}
+    AnimatedCard.handle_reset(socket, @defaults, "sandpile:reset")
   end
 
   def render(assigns) do
-    assigns = assign(assigns, speed_min: @speed_min, speed_max: @speed_max)
-
     ~H"""
     <div class="sandpile-menagerie p-4 max-w-6xl mx-auto">
       <nav class="mb-6 text-xs">
@@ -106,21 +103,7 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
             </div>
           </div>
 
-          <form phx-change="update_speed" class="bg-base-200 rounded-lg p-4">
-            <div class="flex items-center justify-between mb-1">
-              <span class="text-xs font-semibold text-gray-300">Grains per frame</span>
-              <span class="text-xs font-mono text-gray-400">{@params["speed"]}</span>
-            </div>
-            <input
-              type="range"
-              name="speed"
-              min={@speed_min}
-              max={@speed_max}
-              step="1"
-              value={@params["speed"]}
-              class="range range-xs range-primary"
-            />
-          </form>
+          <AnimatedCard.slider_grid sliders={@sliders} params={@params} class="" />
 
           <div class="bg-base-200 rounded-lg p-4">
             <div class="flex items-center justify-between mb-1">

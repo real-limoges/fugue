@@ -183,7 +183,7 @@ export const SandpileCanvas = {
         sandpile.setMode(mode === "random" ? 1 : 0)
       })
 
-      this.handleEvent("sandpile:set_speed", ({ speed }) => {
+      this.handleEvent("sandpile:set_params", ({ speed }) => {
         dropsPerFrame = Math.max(1, Math.min(200, speed))
       })
 
