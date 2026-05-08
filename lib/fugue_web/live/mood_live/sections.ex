@@ -12,6 +12,7 @@ defmodule FugueWeb.MoodLive.Sections do
     AmbiguityHistogram,
     CalendarGrid,
     ClusterRadar,
+    DateRange,
     DimensionDistributions,
     DimensionDrift,
     GapAnalysis,
@@ -51,8 +52,7 @@ defmodule FugueWeb.MoodLive.Sections do
               Four Years, One Line
             </div>
             <div class="text-gray-500 mb-3">
-              {@stats.date_range && elem(@stats.date_range, 0)} – {@stats.date_range &&
-                elem(@stats.date_range, 1)} &middot; PCA projection on daily self-ratings &middot; real limoges
+              {DateRange.format(@stats.date_range)} &middot; PCA projection on daily self-ratings &middot; real limoges
             </div>
             <p class="mb-2">
               Every night before bed for four years; five numbers about how the day went. This is all of them, flattened onto 2D by PCA. Five dimensions don't fit on a screen; two do, mostly. Most of the variance is preserved; the rest is gone.

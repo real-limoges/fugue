@@ -1,4 +1,9 @@
 defmodule FugueWeb.CloudsLive do
+  @moduledoc """
+  `/clouds` — pixel-art Worley-noise canvas. The LiveView is a thin
+  shell that mounts the canvas; all rendering runs client-side via the
+  `CloudsCanvas` hook in `assets/js/hooks/clouds_canvas.js`.
+  """
   use FugueWeb, :live_view
 
   def mount(_params, _session, socket) do

@@ -6,7 +6,7 @@ const FAN_COLORS = {
   off: "#9ca3af",
   low: "#60a5fa",
   medium: "#f59e0b",
-  high: "#ec4899"
+  high: "#ec4899",
 }
 
 const INPUT_TERM_COLORS = ["#60a5fa", "#f59e0b", "#ec4899"]
@@ -69,14 +69,14 @@ export const MamdaniPlayground = {
     const inputVars = this.data.mfs.inputs || []
 
     const degrees = {}
-    inputVars.forEach(varDef => {
+    inputVars.forEach((varDef) => {
       degrees[varDef.name] = {}
-      varDef.terms.forEach(term => {
+      varDef.terms.forEach((term) => {
         degrees[varDef.name][term.name] = triangular(values[varDef.name], term.params)
       })
     })
 
-    inputVars.forEach(varDef => {
+    inputVars.forEach((varDef) => {
       const panelEl = d3.select(this.el).select(`[data-var="${varDef.name}"]`)
       if (panelEl.empty()) return
 
@@ -85,7 +85,8 @@ export const MamdaniPlayground = {
 
       const crispValue = values[varDef.name]
 
-      panelEl.select(".input-crisp-readout")
+      panelEl
+        .select(".input-crisp-readout")
         .text(typeof crispValue === "number" ? d3.format(".1f")(crispValue) : "—")
 
       const g = panelEl.select("svg g")
@@ -100,7 +101,8 @@ export const MamdaniPlayground = {
 
     const dyn = g.append("g").attr("class", "input-dynamics")
 
-    dyn.append("line")
+    dyn
+      .append("line")
       .attr("x1", x(crispValue))
       .attr("x2", x(crispValue))
       .attr("y1", 0)
@@ -115,7 +117,8 @@ export const MamdaniPlayground = {
       const degree = degrees[term.name] ?? 0
       if (degree <= 0.005) return
 
-      dyn.append("circle")
+      dyn
+        .append("circle")
         .attr("cx", x(crispValue))
         .attr("cy", y(degree))
         .attr("r", 5)
@@ -141,8 +144,9 @@ export const MamdaniPlayground = {
     }
 
     const leftSide = x(crispValue) > innerW / 2
-    degreeData.forEach(d => {
-      dyn.append("text")
+    degreeData.forEach((d) => {
+      dyn
+        .append("text")
         .attr("x", x(crispValue) + (leftSide ? -8 : 8))
         .attr("y", d.y)
         .attr("fill", "#e5e7eb")
@@ -155,8 +159,7 @@ export const MamdaniPlayground = {
 
   render() {
     if (!this.data) {
-      this.el.innerHTML =
-        `<div class="py-12 text-center text-xs italic text-gray-500">awaiting inference…</div>`
+      this.el.innerHTML = `<div class="py-12 text-center text-xs italic text-gray-500">awaiting inference…</div>`
       return
     }
 
@@ -166,14 +169,16 @@ export const MamdaniPlayground = {
     let container = d3.select(this.el).select(".mamdani-container")
     if (container.empty()) {
       this.el.innerHTML = ""
-      container = d3.select(this.el)
+      container = d3
+        .select(this.el)
         .append("div")
         .attr("class", "mamdani-container")
         .style("display", "flex")
         .style("flex-direction", "column")
         .style("gap", "16px")
 
-      container.append("div")
+      container
+        .append("div")
         .attr("class", "mamdani-input-row")
         .style("display", "grid")
         .style("grid-template-columns", "1fr 1fr")
@@ -190,22 +195,29 @@ export const MamdaniPlayground = {
 
     if (needsInputBuild) {
       inputRow.selectAll("*").remove()
-      inputVars.forEach(varDef => {
+      inputVars.forEach((varDef) => {
         this._buildInputPanel(inputRow, varDef)
       })
     }
 
-    inputVars.forEach(varDef => {
+    inputVars.forEach((varDef) => {
       const panelEl = inputRow.select(`[data-var="${varDef.name}"]`)
       if (panelEl.empty()) return
       const scales = panelEl.node().__scales
       if (!scales) return
 
-      panelEl.select(".input-crisp-readout")
+      panelEl
+        .select(".input-crisp-readout")
         .text(typeof inputs[varDef.name] === "number" ? d3.format(".1f")(inputs[varDef.name]) : "—")
 
       const g = panelEl.select("svg g")
-      this._renderInputDynamics(g, varDef, inputs[varDef.name], input_degrees[varDef.name] || {}, scales)
+      this._renderInputDynamics(
+        g,
+        varDef,
+        inputs[varDef.name],
+        input_degrees[varDef.name] || {},
+        scales
+      )
     })
 
     // Rules and output: always rebuild from server data
@@ -224,22 +236,27 @@ export const MamdaniPlayground = {
   },
 
   _buildInputPanel(parent, varDef) {
-    const panel = parent.append("div")
+    const panel = parent
+      .append("div")
       .attr("data-var", varDef.name)
       .style("background", "#0b1220")
       .style("border", "1px solid #1f2937")
       .style("border-radius", "8px")
       .style("padding", "12px 14px")
 
-    const header = panel.append("div")
-      .attr("class", "flex items-baseline justify-between mb-1")
+    const header = panel.append("div").attr("class", "flex items-baseline justify-between mb-1")
 
-    header.append("span")
+    header
+      .append("span")
       .attr("class", "text-[10px] uppercase tracking-[0.2em] text-gray-500")
       .text(`${varDef.name.replace(/_/g, " ")} fuzzification`)
 
-    header.append("span")
-      .attr("class", "input-crisp-readout font-mono text-lg font-semibold tabular-nums text-gray-100")
+    header
+      .append("span")
+      .attr(
+        "class",
+        "input-crisp-readout font-mono text-lg font-semibold tabular-nums text-gray-100"
+      )
       .text("—")
 
     const panelW = 400
@@ -248,14 +265,14 @@ export const MamdaniPlayground = {
     const innerW = panelW - margin.left - margin.right
     const innerH = panelH - margin.top - margin.bottom
 
-    const svg = panel.append("svg")
+    const svg = panel
+      .append("svg")
       .attr("viewBox", `0 0 ${panelW} ${panelH}`)
       .attr("preserveAspectRatio", "xMidYMid meet")
       .style("width", "100%")
       .style("display", "block")
 
-    const g = svg.append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`)
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`)
 
     const x = d3.scaleLinear().domain(varDef.bounds).range([0, innerW])
     const y = d3.scaleLinear().domain([0, 1]).range([innerH, 0])
@@ -264,15 +281,21 @@ export const MamdaniPlayground = {
     panel.node().__scales = { x, y, innerW, innerH }
 
     g.append("line")
-      .attr("x1", 0).attr("x2", innerW)
-      .attr("y1", innerH).attr("y2", innerH)
+      .attr("x1", 0)
+      .attr("x2", innerW)
+      .attr("y1", innerH)
+      .attr("y2", innerH)
       .attr("stroke", "#374151")
 
-    const line = d3.line().x(d => x(d[0])).y(d => y(d[1]))
-    const area = d3.area()
-      .x(d => x(d[0]))
+    const line = d3
+      .line()
+      .x((d) => x(d[0]))
+      .y((d) => y(d[1]))
+    const area = d3
+      .area()
+      .x((d) => x(d[0]))
       .y0(y(0))
-      .y1(d => y(d[1]))
+      .y1((d) => y(d[1]))
 
     // --- static: triangle shapes + term name labels ---
     const charW = 6
@@ -280,10 +303,7 @@ export const MamdaniPlayground = {
       const color = INPUT_TERM_COLORS[i % INPUT_TERM_COLORS.length]
       const samples = sampleMf(term, varDef.bounds)
 
-      g.append("path")
-        .attr("d", area(samples))
-        .attr("fill", color)
-        .attr("fill-opacity", 0.12)
+      g.append("path").attr("d", area(samples)).attr("fill", color).attr("fill-opacity", 0.12)
 
       g.append("path")
         .attr("d", line(samples))
@@ -309,7 +329,7 @@ export const MamdaniPlayground = {
       }
     }
 
-    termLabels.forEach(d => {
+    termLabels.forEach((d) => {
       g.append("text")
         .attr("x", d.x)
         .attr("y", d.y)
@@ -324,39 +344,40 @@ export const MamdaniPlayground = {
     g.append("g")
       .attr("transform", `translate(0,${innerH})`)
       .call(d3.axisBottom(x).ticks(5))
-      .call(sel => sel.selectAll("text").attr("fill", "#9ca3af").attr("font-size", 9))
-      .call(sel => sel.selectAll("line").attr("stroke", "#374151"))
-      .call(sel => sel.select(".domain").attr("stroke", "#374151"))
+      .call((sel) => sel.selectAll("text").attr("fill", "#9ca3af").attr("font-size", 9))
+      .call((sel) => sel.selectAll("line").attr("stroke", "#374151"))
+      .call((sel) => sel.select(".domain").attr("stroke", "#374151"))
 
     g.append("g")
       .call(d3.axisLeft(y).ticks(3).tickFormat(d3.format(".0%")))
-      .call(sel => sel.selectAll("text").attr("fill", "#9ca3af").attr("font-size", 9))
-      .call(sel => sel.selectAll("line").attr("stroke", "#374151"))
-      .call(sel => sel.select(".domain").attr("stroke", "#374151"))
+      .call((sel) => sel.selectAll("text").attr("fill", "#9ca3af").attr("font-size", 9))
+      .call((sel) => sel.selectAll("line").attr("stroke", "#374151"))
+      .call((sel) => sel.select(".domain").attr("stroke", "#374151"))
   },
 
   renderRulesPanel(container, rules) {
-    const panel = container.append("div")
+    const panel = container
+      .append("div")
       .style("background", "#0b1220")
       .style("border", "1px solid #1f2937")
       .style("border-radius", "8px")
       .style("padding", "12px 14px")
 
-    const header = panel.append("div")
-      .attr("class", "flex items-baseline justify-between mb-2")
+    const header = panel.append("div").attr("class", "flex items-baseline justify-between mb-2")
 
-    header.append("span")
+    header
+      .append("span")
       .attr("class", "text-[10px] uppercase tracking-[0.2em] text-gray-500")
       .text("rule firing · bar color = consequent fan term")
 
-    const legend = header.append("div")
-      .style("display", "flex")
-      .style("gap", "10px")
+    const legend = header.append("div").style("display", "flex").style("gap", "10px")
 
     Object.entries(FAN_COLORS).forEach(([name, color]) => {
-      const item = legend.append("span")
+      const item = legend
+        .append("span")
         .attr("class", "inline-flex items-center gap-1 text-[10px] text-gray-400")
-      item.append("span")
+      item
+        .append("span")
         .style("width", "8px")
         .style("height", "8px")
         .style("background", color)
@@ -371,21 +392,22 @@ export const MamdaniPlayground = {
     const innerW = WIDTH - margin.left - margin.right
     const innerH = height - margin.top - margin.bottom
 
-    const svg = panel.append("svg")
+    const svg = panel
+      .append("svg")
       .attr("viewBox", `0 0 ${WIDTH} ${height}`)
       .attr("preserveAspectRatio", "xMidYMid meet")
       .style("width", "100%")
       .style("display", "block")
 
-    const g = svg.append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`)
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`)
 
     const labelW = 440
     const thenX = 320
     const valueW = 44
     const barAreaW = innerW - labelW - valueW - 12
 
-    const y = d3.scaleBand()
+    const y = d3
+      .scaleBand()
       .domain(rules.map((_, i) => i))
       .range([0, innerH])
       .padding(0.22)
@@ -461,13 +483,15 @@ export const MamdaniPlayground = {
   },
 
   renderOutputPanel(container, varDef, aggCurve, crispValue, rules) {
-    const panel = container.append("div")
+    const panel = container
+      .append("div")
       .style("background", "#0b1220")
       .style("border", "1px solid #1f2937")
       .style("border-radius", "8px")
       .style("padding", "12px 14px")
 
-    panel.append("div")
+    panel
+      .append("div")
       .attr("class", "text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-1")
       .text(`${varDef.name.replace(/_/g, " ")} · aggregated output`)
 
@@ -476,25 +500,31 @@ export const MamdaniPlayground = {
     const innerW = WIDTH - margin.left - margin.right
     const innerH = panelH - margin.top - margin.bottom
 
-    const svg = panel.append("svg")
+    const svg = panel
+      .append("svg")
       .attr("viewBox", `0 0 ${WIDTH} ${panelH}`)
       .attr("preserveAspectRatio", "xMidYMid meet")
       .style("width", "100%")
       .style("display", "block")
 
-    const g = svg.append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`)
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`)
 
     const x = d3.scaleLinear().domain(varDef.bounds).range([0, innerW])
     const y = d3.scaleLinear().domain([0, 1]).range([innerH, 0])
 
     const charW = 6
-    const outputLabels = varDef.terms.map(term => {
+    const outputLabels = varDef.terms.map((term) => {
       const color = FAN_COLORS[term.name] || "#6b7280"
       const samples = sampleMf(term, varDef.bounds)
 
       g.append("path")
-        .attr("d", d3.line().x(d => x(d[0])).y(d => y(d[1]))(samples))
+        .attr(
+          "d",
+          d3
+            .line()
+            .x((d) => x(d[0]))
+            .y((d) => y(d[1]))(samples)
+        )
         .attr("fill", "none")
         .attr("stroke", color)
         .attr("stroke-width", 1)
@@ -518,7 +548,7 @@ export const MamdaniPlayground = {
       }
     }
 
-    outputLabels.forEach(d => {
+    outputLabels.forEach((d) => {
       g.append("text")
         .attr("x", d.x)
         .attr("y", d.y)
@@ -529,33 +559,34 @@ export const MamdaniPlayground = {
         .text(d.name)
     })
 
-    const termByName = Object.fromEntries(varDef.terms.map(t => [t.name, t]))
-    const area = d3.area()
-      .x(d => x(d[0]))
+    const termByName = Object.fromEntries(varDef.terms.map((t) => [t.name, t]))
+    const area = d3
+      .area()
+      .x((d) => x(d[0]))
       .y0(y(0))
-      .y1(d => y(d[1]))
+      .y1((d) => y(d[1]))
 
     rules
-      .filter(r => (r.strength || 0) > 0.005 && termByName[r.output_term])
-      .forEach(r => {
+      .filter((r) => (r.strength || 0) > 0.005 && termByName[r.output_term])
+      .forEach((r) => {
         const term = termByName[r.output_term]
         const color = FAN_COLORS[r.output_term] || "#6b7280"
         const clipped = clipTriangle(term, varDef.bounds, r.strength)
 
-        g.append("path")
-          .attr("d", area(clipped))
-          .attr("fill", color)
-          .attr("fill-opacity", 0.22)
+        g.append("path").attr("d", area(clipped)).attr("fill", color).attr("fill-opacity", 0.22)
       })
 
     if (aggCurve && aggCurve.length > 0) {
-      g.append("path")
-        .attr("d", area(aggCurve))
-        .attr("fill", "#f8fafc")
-        .attr("fill-opacity", 0.08)
+      g.append("path").attr("d", area(aggCurve)).attr("fill", "#f8fafc").attr("fill-opacity", 0.08)
 
       g.append("path")
-        .attr("d", d3.line().x(d => x(d[0])).y(d => y(d[1]))(aggCurve))
+        .attr(
+          "d",
+          d3
+            .line()
+            .x((d) => x(d[0]))
+            .y((d) => y(d[1]))(aggCurve)
+        )
         .attr("fill", "none")
         .attr("stroke", "#f8fafc")
         .attr("stroke-width", 2.25)
@@ -597,14 +628,14 @@ export const MamdaniPlayground = {
     g.append("g")
       .attr("transform", `translate(0,${innerH})`)
       .call(d3.axisBottom(x).ticks(6))
-      .call(sel => sel.selectAll("text").attr("fill", "#9ca3af").attr("font-size", 10))
-      .call(sel => sel.selectAll("line").attr("stroke", "#374151"))
-      .call(sel => sel.select(".domain").attr("stroke", "#374151"))
+      .call((sel) => sel.selectAll("text").attr("fill", "#9ca3af").attr("font-size", 10))
+      .call((sel) => sel.selectAll("line").attr("stroke", "#374151"))
+      .call((sel) => sel.select(".domain").attr("stroke", "#374151"))
 
     g.append("g")
       .call(d3.axisLeft(y).ticks(3).tickFormat(d3.format(".0%")))
-      .call(sel => sel.selectAll("text").attr("fill", "#9ca3af").attr("font-size", 10))
-      .call(sel => sel.selectAll("line").attr("stroke", "#374151"))
-      .call(sel => sel.select(".domain").attr("stroke", "#374151"))
-  }
+      .call((sel) => sel.selectAll("text").attr("fill", "#9ca3af").attr("font-size", 10))
+      .call((sel) => sel.selectAll("line").attr("stroke", "#374151"))
+      .call((sel) => sel.select(".domain").attr("stroke", "#374151"))
+  },
 }

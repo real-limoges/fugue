@@ -1,4 +1,5 @@
 defmodule FugueWeb.Router do
+  @moduledoc false
   use FugueWeb, :router
 
   pipeline :browser do

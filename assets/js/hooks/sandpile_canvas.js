@@ -1,49 +1,7 @@
 import * as sandpile from "../../vendor/petri/js/sandpile.js"
 import * as d3 from "d3"
+import { resolveThemeColors, buildColorTable } from "../lib/theme_colors.js"
 
-// ---------------------------------------------------------------------------
-// Theme color resolution (shared pattern with boids_canvas)
-// ---------------------------------------------------------------------------
-function resolveThemeColors() {
-  const style = getComputedStyle(document.documentElement)
-  const baseProp = style.getPropertyValue("--color-base-100").trim()
-  const primaryProp = style.getPropertyValue("--color-primary").trim()
-
-  const probe = document.createElement("canvas")
-  probe.width = 1; probe.height = 1
-  const pctx = probe.getContext("2d")
-  const resolve = (oklchStr, fallback) => {
-    if (!oklchStr) return fallback
-    pctx.clearRect(0, 0, 1, 1)
-    pctx.fillStyle = oklchStr
-    pctx.fillRect(0, 0, 1, 1)
-    const [r, g, b] = pctx.getImageData(0, 0, 1, 1).data
-    return [r, g, b]
-  }
-
-  return {
-    base: resolve(baseProp, [28, 19, 37]),
-    primary: resolve(primaryProp, [200, 50, 180]),
-  }
-}
-
-function buildColorTable(base, primary) {
-  const table = new Uint8Array(256 * 4)
-  for (let i = 0; i < 256; i++) {
-    const t = i / 255
-    const t2 = t * t
-    const offset = i * 4
-    table[offset]     = base[0] + Math.round((primary[0] - base[0]) * t2)
-    table[offset + 1] = base[1] + Math.round((primary[1] - base[1]) * t2)
-    table[offset + 2] = base[2] + Math.round((primary[2] - base[2]) * t2)
-    table[offset + 3] = 255
-  }
-  return table
-}
-
-// ---------------------------------------------------------------------------
-// Avalanche histogram (log-log)
-// ---------------------------------------------------------------------------
 function setupHistogram(container) {
   const margin = { top: 8, right: 12, bottom: 28, left: 36 }
   const width = container.clientWidth || 320
@@ -51,13 +9,9 @@ function setupHistogram(container) {
   const innerW = width - margin.left - margin.right
   const innerH = height - margin.top - margin.bottom
 
-  const svg = d3.select(container)
-    .append("svg")
-    .attr("width", width)
-    .attr("height", height)
+  const svg = d3.select(container).append("svg").attr("width", width).attr("height", height)
 
-  const g = svg.append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`)
+  const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`)
 
   const x = d3.scaleLog().domain([1, 1000]).range([0, innerW])
   const y = d3.scaleLog().domain([1, 1000]).range([innerH, 0])
@@ -66,14 +20,19 @@ function setupHistogram(container) {
     .attr("class", "x-axis")
     .attr("transform", `translate(0,${innerH})`)
     .call(d3.axisBottom(x).ticks(4, "~s"))
-    .selectAll("text, line, path").attr("stroke", "#666").attr("fill", "#666")
+    .selectAll("text, line, path")
+    .attr("stroke", "#666")
+    .attr("fill", "#666")
 
   g.append("g")
     .attr("class", "y-axis")
     .call(d3.axisLeft(y).ticks(4, "~s"))
-    .selectAll("text, line, path").attr("stroke", "#666").attr("fill", "#666")
+    .selectAll("text, line, path")
+    .attr("stroke", "#666")
+    .attr("fill", "#666")
 
-  svg.append("text")
+  svg
+    .append("text")
     .attr("x", margin.left + innerW / 2)
     .attr("y", height - 2)
     .attr("text-anchor", "middle")
@@ -81,7 +40,8 @@ function setupHistogram(container) {
     .attr("font-size", "10px")
     .text("avalanche size")
 
-  svg.append("text")
+  svg
+    .append("text")
     .attr("transform", `translate(10,${margin.top + innerH / 2}) rotate(-90)`)
     .attr("text-anchor", "middle")
     .attr("fill", "#666")
@@ -101,33 +61,37 @@ function updateHistogram(chart, bins) {
   }
   if (data.length === 0) return
 
-  const maxSize = d3.max(data, d => d.size) || 1000
-  const maxCount = d3.max(data, d => d.count) || 1000
+  const maxSize = d3.max(data, (d) => d.size) || 1000
+  const maxCount = d3.max(data, (d) => d.count) || 1000
   chart.x.domain([1, Math.max(10, maxSize * 1.5)])
   chart.y.domain([1, Math.max(10, maxCount * 1.5)])
 
-  chart.g.select(".x-axis")
+  chart.g
+    .select(".x-axis")
     .call(d3.axisBottom(chart.x).ticks(4, "~s"))
-    .selectAll("text, line, path").attr("stroke", "#666").attr("fill", "#666")
-  chart.g.select(".y-axis")
+    .selectAll("text, line, path")
+    .attr("stroke", "#666")
+    .attr("fill", "#666")
+  chart.g
+    .select(".y-axis")
     .call(d3.axisLeft(chart.y).ticks(4, "~s"))
-    .selectAll("text, line, path").attr("stroke", "#666").attr("fill", "#666")
+    .selectAll("text, line, path")
+    .attr("stroke", "#666")
+    .attr("fill", "#666")
 
-  const dots = chart.dotsGroup.selectAll("circle").data(data, d => d.size)
-  dots.enter()
+  const dots = chart.dotsGroup.selectAll("circle").data(data, (d) => d.size)
+  dots
+    .enter()
     .append("circle")
     .attr("r", 2)
     .attr("fill", "#888")
     .attr("opacity", 0.7)
     .merge(dots)
-    .attr("cx", d => chart.x(d.size))
-    .attr("cy", d => chart.y(d.count))
+    .attr("cx", (d) => chart.x(d.size))
+    .attr("cy", (d) => chart.y(d.count))
   dots.exit().remove()
 }
 
-// ---------------------------------------------------------------------------
-// Hook
-// ---------------------------------------------------------------------------
 export const SandpileCanvas = {
   async mounted() {
     try {
@@ -190,7 +154,7 @@ export const SandpileCanvas = {
         for (let i = 0; i < pixelCount; i++) {
           const c = intensity[i] * 4
           const o = i * 4
-          rgba[o]     = colorTable[c]
+          rgba[o] = colorTable[c]
           rgba[o + 1] = colorTable[c + 1]
           rgba[o + 2] = colorTable[c + 2]
           rgba[o + 3] = colorTable[c + 3]
@@ -200,7 +164,9 @@ export const SandpileCanvas = {
       }
       loop()
 
-      this._stopLoop = () => { if (rafId !== null) cancelAnimationFrame(rafId) }
+      this._stopLoop = () => {
+        if (rafId !== null) cancelAnimationFrame(rafId)
+      }
       this._width = width
       this._height = height
 

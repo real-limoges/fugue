@@ -6,82 +6,82 @@ import * as clouds from "../../vendor/petri/js/clouds.js"
 
 // --- Render config -----------------------------------------------------
 
-const CANVAS_W = 800   // internal canvas resolution; CSS upscales
+const CANVAS_W = 800 // internal canvas resolution; CSS upscales
 const CANVAS_H = 400
 
 // World-coordinate window we show
-const VIEW_X0 =  500   // m
-const VIEW_X1 = 5500   // m  (5 km wide)
-const VIEW_Z0 =    0   // m
-const VIEW_Z1 = 2500   // m  (2.5 km tall)
+const VIEW_X0 = 500 // m
+const VIEW_X1 = 5500 // m  (5 km wide)
+const VIEW_Z0 = 0 // m
+const VIEW_Z1 = 2500 // m  (2.5 km tall)
 
 // Sky gradient: smooth lerp horizon -> zenith. No bands -- the band look
 // fights the painterly clouds.
-const SKY_ZENITH  = [ 32,  72, 140]   // deep cobalt
-const SKY_HORIZON = [244, 220, 188]   // warm peach
+const SKY_ZENITH = [32, 72, 140] // deep cobalt
+const SKY_HORIZON = [244, 220, 188] // warm peach
 
 // Cloud rendering knobs
-const QC_LO = 0.00008   // soft alpha: fully transparent below
-const QC_HI = 0.00025   // fully opaque above
-const SUN_X = 0.6       // sun direction in world coords (right and up)
+const QC_LO = 0.00008 // soft alpha: fully transparent below
+const QC_HI = 0.00025 // fully opaque above
+const SUN_X = 0.6 // sun direction in world coords (right and up)
 const SUN_Z = 0.8
-const H_GRAD = 60       // m, finite-difference spacing for normal
+const H_GRAD = 60 // m, finite-difference spacing for normal
 const SHADOW_STEP_M = 60
 const SHADOW_SAMPLES = 6
-const TRANSMIT_K = 350  // optical-depth coefficient (lower = brighter cores)
+const TRANSMIT_K = 350 // optical-depth coefficient (lower = brighter cores)
 
 // 3-stop luminance ramp for cloud color. Lightness is the volume cue;
 // hue is decorative. Pumped contrast (deep cool shadow -> warm-white
 // highlight) to match real cumulus.
-const RAMP_SHADOW = [ 36,  52,  84]
-const RAMP_MID    = [180, 188, 208]
-const RAMP_HI     = [255, 252, 240]
+const RAMP_SHADOW = [36, 52, 84]
+const RAMP_MID = [180, 188, 208]
+const RAMP_HI = [255, 252, 240]
 
 // Sub-grid cauliflower. Two octaves drive different things:
 //   * coarse fBm displaces qc -> lumpy cluster silhouette
 //   * fine fBm perturbs the surface normal -> directional bump-lighting
 //     so lit-side bumps catch light and shadow-side bumps stay dark
-const FBM_FREQ_COARSE = 0.005   // 1/m (~200 m silhouette features)
-const FBM_FREQ_FINE   = 0.020   // 1/m (~50 m bump features)
-const FBM_QC_AMP      = 0.00022 // qc displacement amplitude
+const FBM_FREQ_COARSE = 0.005 // 1/m (~200 m silhouette features)
+const FBM_FREQ_FINE = 0.02 // 1/m (~50 m bump features)
+const FBM_QC_AMP = 0.00022 // qc displacement amplitude
 // Tuned so noise-gradient magnitude is ~30-60% of the qc-gradient
 // magnitude. Noise gradient (~0.5/feature) dwarfs qc gradient (~0.001
 // over H_GRAD) without explicit scaling.
 const NORMAL_NOISE_AMP = 0.0008
-const NORMAL_EPS_M     = 25     // m, finite diff for normal-noise gradient
+const NORMAL_EPS_M = 25 // m, finite diff for normal-noise gradient
 
 // --- Foreground (plains + barn) ---------------------------------------
 
-const HORIZON_PY = 300  // top of ground band (px from top of canvas)
+const HORIZON_PY = 300 // top of ground band (px from top of canvas)
 
 // Ground bands: each entry is [py_start, [r,g,b]]; last band runs to bottom.
 const GROUND_BANDS = [
-  [300, [156, 168, 110]],  // far hazy green
-  [312, [140, 158,  92]],
-  [328, [122, 146,  78]],
-  [348, [104, 132,  66]],
-  [372, [ 88, 118,  56]],
+  [300, [156, 168, 110]], // far hazy green
+  [312, [140, 158, 92]],
+  [328, [122, 146, 78]],
+  [348, [104, 132, 66]],
+  [372, [88, 118, 56]],
 ]
 
 // Barn palette
-const BARN_RED  = [156,  56,  48]
-const BARN_DARK = [104,  36,  32]
+const BARN_RED = [156, 56, 48]
+const BARN_DARK = [104, 36, 32]
 const BARN_TRIM = [232, 224, 200]
-const BARN_ROOF = [ 56,  44,  40]
-const BARN_DOOR = [ 36,  28,  28]
+const BARN_ROOF = [56, 44, 40]
+const BARN_DOOR = [36, 28, 28]
 
 // --- Forcing config ----------------------------------------------------
 
 // JS owns when bubbles fire. For now, sustained discrete clusters --
 // next step is to swap this for distributed always-on forcing.
-const BUBBLE_PERIOD_FRAMES = 350     // sim frames between cluster fires
+const BUBBLE_PERIOD_FRAMES = 350 // sim frames between cluster fires
 const STEPS_PER_FRAME = 2
 
 // Pre-seed: drop a curated set of multi-lobed clusters at staggered ages
 // so the opening frame already shows 4 cumulus distributed across the
 // view, varying maturity left->right. East-coast plains, no storm.
 
-const PRESEED_WIND = 3.0  // m/s (live loop drift)
+const PRESEED_WIND = 3.0 // m/s (live loop drift)
 
 // Direct-paint cumulus: clouds already exist at altitude, no surface
 // thermal spinup. Each cluster is many overlapping Gaussian qc blobs,
@@ -93,23 +93,23 @@ const PRESEED_WIND = 3.0  // m/s (live loop drift)
 const LOBES = [
   // base spread
   { dx: -300, dz: -200, sigma: 200, peak: 0.00075 },
-  { dx:    0, dz: -180, sigma: 240, peak: 0.00090 },
-  { dx:  300, dz: -200, sigma: 200, peak: 0.00075 },
+  { dx: 0, dz: -180, sigma: 240, peak: 0.0009 },
+  { dx: 300, dz: -200, sigma: 200, peak: 0.00075 },
   // mid body 1
-  { dx: -200, dz:    0, sigma: 220, peak: 0.00105 },
-  { dx:  200, dz:    0, sigma: 220, peak: 0.00105 },
-  { dx:    0, dz:   60, sigma: 280, peak: 0.00130 },  // densest core
+  { dx: -200, dz: 0, sigma: 220, peak: 0.00105 },
+  { dx: 200, dz: 0, sigma: 220, peak: 0.00105 },
+  { dx: 0, dz: 60, sigma: 280, peak: 0.0013 }, // densest core
   // mid body 2
-  { dx: -140, dz:  220, sigma: 200, peak: 0.00105 },
-  { dx:  140, dz:  220, sigma: 200, peak: 0.00105 },
+  { dx: -140, dz: 220, sigma: 200, peak: 0.00105 },
+  { dx: 140, dz: 220, sigma: 200, peak: 0.00105 },
   // upper
-  { dx:    0, dz:  380, sigma: 220, peak: 0.00100 },
-  { dx: -100, dz:  500, sigma: 180, peak: 0.00080 },
-  { dx:  100, dz:  500, sigma: 180, peak: 0.00080 },
+  { dx: 0, dz: 380, sigma: 220, peak: 0.001 },
+  { dx: -100, dz: 500, sigma: 180, peak: 0.0008 },
+  { dx: 100, dz: 500, sigma: 180, peak: 0.0008 },
   // crown
-  { dx:    0, dz:  680, sigma: 180, peak: 0.00065 },
-  { dx: -120, dz:  780, sigma: 140, peak: 0.00050 },
-  { dx:  120, dz:  780, sigma: 140, peak: 0.00050 },
+  { dx: 0, dz: 680, sigma: 180, peak: 0.00065 },
+  { dx: -120, dz: 780, sigma: 140, peak: 0.0005 },
+  { dx: 120, dz: 780, sigma: 140, peak: 0.0005 },
 ]
 
 // Three towering cumulus across the view at altitude. cz is the cluster
@@ -123,7 +123,9 @@ const PRESEED = [
 
 // --- Helpers -----------------------------------------------------------
 
-function clamp01(x) { return x < 0 ? 0 : (x > 1 ? 1 : x) }
+function clamp01(x) {
+  return x < 0 ? 0 : x > 1 ? 1 : x
+}
 
 function smoothstep(a, b, x) {
   const t = clamp01((x - a) / (b - a))
@@ -131,11 +133,7 @@ function smoothstep(a, b, x) {
 }
 
 function lerp3(a, b, t) {
-  return [
-    a[0] + (b[0] - a[0]) * t,
-    a[1] + (b[1] - a[1]) * t,
-    a[2] + (b[2] - a[2]) * t,
-  ]
+  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]
 }
 
 // 3-stop ramp: shadow -> mid -> highlight
@@ -158,15 +156,17 @@ function hash2(ix, iy) {
 }
 
 function valueNoise(x, y) {
-  const ix = Math.floor(x), iy = Math.floor(y)
-  const fx = x - ix, fy = y - iy
-  const a = hash2(ix,     iy)
+  const ix = Math.floor(x),
+    iy = Math.floor(y)
+  const fx = x - ix,
+    fy = y - iy
+  const a = hash2(ix, iy)
   const b = hash2(ix + 1, iy)
-  const c = hash2(ix,     iy + 1)
+  const c = hash2(ix, iy + 1)
   const d = hash2(ix + 1, iy + 1)
   const ux = fx * fx * (3 - 2 * fx)
   const uy = fy * fy * (3 - 2 * fy)
-  return a + (b - a) * ux + ((c - a) + (d - b - c + a) * ux) * uy
+  return a + (b - a) * ux + (c - a + (d - b - c + a) * ux) * uy
 }
 
 // Deposit a Gaussian blob of qc directly into the WASM grid. Skips the
@@ -182,7 +182,8 @@ function paintGaussian(qc, NX, NZ, DX, DZ, cx_m, cz_m, sigma_m, peak) {
     const z_m = (iz + 0.5) * DZ
     for (let ix = ixMin; ix <= ixMax; ix++) {
       const x_m = (ix + 0.5) * DX
-      const dx = x_m - cx_m, dz = z_m - cz_m
+      const dx = x_m - cx_m,
+        dz = z_m - cz_m
       const g = Math.exp(-(dx * dx + dz * dz) * inv2s2)
       qc[iz * NX + ix] += peak * g
     }
@@ -190,18 +191,22 @@ function paintGaussian(qc, NX, NZ, DX, DZ, cx_m, cz_m, sigma_m, peak) {
 }
 
 function fbm3(x, y) {
-  let v = 0, amp = 0.5, freq = 1
+  let v = 0,
+    amp = 0.5,
+    freq = 1
   for (let i = 0; i < 3; i++) {
     v += amp * valueNoise(x * freq, y * freq)
     amp *= 0.5
     freq *= 2
   }
-  return v * 1.5  // approx normalize to [0, 1]
+  return v * 1.5 // approx normalize to [0, 1]
 }
 
 function makeQcSampler(qc) {
-  const NX = clouds.grid.NX, NZ = clouds.grid.NZ
-  const DX = clouds.grid.DX, DZ = clouds.grid.DZ
+  const NX = clouds.grid.NX,
+    NZ = clouds.grid.NZ
+  const DX = clouds.grid.DX,
+    DZ = clouds.grid.DZ
   // Bilinear sample qc at world coords (x_m, z_m). Out-of-domain = 0.
   return (x_m, z_m) => {
     if (z_m < 0 || z_m > (NZ - 1) * DZ) return 0
@@ -211,29 +216,29 @@ function makeQcSampler(qc) {
     if (fx > NX - 1.001) fx = NX - 1.001
     if (fz < 0) fz = 0
     if (fz > NZ - 1.001) fz = NZ - 1.001
-    const i = fx | 0, j = fz | 0
-    const a = fx - i, b = fz - j
+    const i = fx | 0,
+      j = fz | 0
+    const a = fx - i,
+      b = fz - j
     const f00 = qc[j * NX + i]
     const f10 = qc[j * NX + i + 1]
     const f01 = qc[(j + 1) * NX + i]
     const f11 = qc[(j + 1) * NX + i + 1]
-    return (1-a)*(1-b)*f00 + a*(1-b)*f10 + (1-a)*b*f01 + a*b*f11
+    return (1 - a) * (1 - b) * f00 + a * (1 - b) * f10 + (1 - a) * b * f01 + a * b * f11
   }
 }
 
 function setPx(rgba, px, py, rgb) {
   if (px < 0 || px >= CANVAS_W || py < 0 || py >= CANVAS_H) return
   const off = (py * CANVAS_W + px) * 4
-  rgba[off]   = rgb[0]
-  rgba[off+1] = rgb[1]
-  rgba[off+2] = rgb[2]
-  rgba[off+3] = 255
+  rgba[off] = rgb[0]
+  rgba[off + 1] = rgb[1]
+  rgba[off + 2] = rgb[2]
+  rgba[off + 3] = 255
 }
 
 function fillRect(rgba, x, y, w, h, rgb) {
-  for (let py = y; py < y + h; py++)
-    for (let px = x; px < x + w; px++)
-      setPx(rgba, px, py, rgb)
+  for (let py = y; py < y + h; py++) for (let px = x; px < x + w; px++) setPx(rgba, px, py, rgb)
 }
 
 function drawGround(rgba) {
@@ -249,7 +254,8 @@ function drawGround(rgba) {
 // Small gable-roof barn sitting on the horizon. Anchored at (bx, by) =
 // bottom-left corner of the wall block. Sized for an 800x400 canvas.
 function drawBarn(rgba, bx, by) {
-  const wallW = 56, wallH = 32
+  const wallW = 56,
+    wallH = 32
   const wallTop = by - wallH
 
   // Walls
@@ -259,13 +265,14 @@ function drawBarn(rgba, bx, by) {
   fillRect(rgba, bx, wallTop, wallW, 2, BARN_TRIM)
 
   // Door (centered, double-door dark rectangle)
-  const doorW = 16, doorH = 18
+  const doorW = 16,
+    doorH = 18
   const doorX = bx + ((wallW - doorW) >> 1)
   const doorY = by - doorH
   fillRect(rgba, doorX, doorY, doorW, doorH, BARN_DOOR)
   // Door X-brace (single diagonal hint, dark trim)
   for (let i = 0; i < doorH; i++) {
-    setPx(rgba, doorX + Math.round(i * (doorW - 1) / (doorH - 1)), doorY + i, BARN_TRIM)
+    setPx(rgba, doorX + Math.round((i * (doorW - 1)) / (doorH - 1)), doorY + i, BARN_TRIM)
   }
   // Vertical split between doors
   fillRect(rgba, doorX + (doorW >> 1), doorY, 2, doorH, BARN_DARK)
@@ -283,7 +290,7 @@ function drawBarn(rgba, bx, by) {
   const peakX = bx + (wallW >> 1)
   const eaveHalf = (wallW >> 1) + 4
   for (let dy = 0; dy < roofH; dy++) {
-    const t = dy / (roofH - 1)              // 0 at peak, 1 at eaves
+    const t = dy / (roofH - 1) // 0 at peak, 1 at eaves
     const halfW = Math.round(t * eaveHalf)
     const y = wallTop - (roofH - 1 - dy)
     fillRect(rgba, peakX - halfW, y, halfW * 2 + 1, 1, BARN_ROOF)
@@ -305,7 +312,9 @@ function renderFrame(rgba, qc) {
   for (let py = 0; py < CANVAS_H; py++) {
     const z_m = VIEW_Z1 - py * dzView
     const sky = skyAt(z_m)
-    const skyR = sky[0], skyG = sky[1], skyB = sky[2]
+    const skyR = sky[0],
+      skyG = sky[1],
+      skyB = sky[2]
 
     for (let px = 0; px < CANVAS_W; px++) {
       const x_m = VIEW_X0 + px * dxView
@@ -318,10 +327,10 @@ function renderFrame(rgba, qc) {
       const alpha = smoothstep(QC_LO, QC_HI, qc_here)
 
       if (alpha < 0.01) {
-        rgba[off]   = skyR
-        rgba[off+1] = skyG
-        rgba[off+2] = skyB
-        rgba[off+3] = 255
+        rgba[off] = skyR
+        rgba[off + 1] = skyG
+        rgba[off + 2] = skyB
+        rgba[off + 3] = 255
         off += 4
         continue
       }
@@ -333,14 +342,17 @@ function renderFrame(rgba, qc) {
       const dqdz = sample(x_m, z_m + H_GRAD) - sample(x_m, z_m - H_GRAD)
       const fxN = x_m * FBM_FREQ_FINE + 17.3
       const fzN = z_m * FBM_FREQ_FINE + 31.7
-      const dnx = fbm3(fxN + NORMAL_EPS_M * FBM_FREQ_FINE, fzN) -
-                  fbm3(fxN - NORMAL_EPS_M * FBM_FREQ_FINE, fzN)
-      const dnz = fbm3(fxN, fzN + NORMAL_EPS_M * FBM_FREQ_FINE) -
-                  fbm3(fxN, fzN - NORMAL_EPS_M * FBM_FREQ_FINE)
+      const dnx =
+        fbm3(fxN + NORMAL_EPS_M * FBM_FREQ_FINE, fzN) -
+        fbm3(fxN - NORMAL_EPS_M * FBM_FREQ_FINE, fzN)
+      const dnz =
+        fbm3(fxN, fzN + NORMAL_EPS_M * FBM_FREQ_FINE) -
+        fbm3(fxN, fzN - NORMAL_EPS_M * FBM_FREQ_FINE)
       let nx = -dqdx - dnx * NORMAL_NOISE_AMP
       let nz = -dqdz - dnz * NORMAL_NOISE_AMP
       const nlen = Math.hypot(nx, nz) || 1
-      nx /= nlen; nz /= nlen
+      nx /= nlen
+      nz /= nlen
 
       // Diffuse: cloud surface lit by sun direction
       const diff = Math.max(0, nx * SUN_X + nz * SUN_Z)
@@ -348,8 +360,7 @@ function renderFrame(rgba, qc) {
       // Self-shadow: optical depth marching toward sun
       let depth = 0
       for (let k = 1; k <= SHADOW_SAMPLES; k++) {
-        depth += sample(x_m + k * SHADOW_STEP_M * SUN_X,
-                        z_m + k * SHADOW_STEP_M * SUN_Z)
+        depth += sample(x_m + k * SHADOW_STEP_M * SUN_X, z_m + k * SHADOW_STEP_M * SUN_Z)
       }
       const transmit = Math.exp(-depth * TRANSMIT_K)
 
@@ -362,14 +373,14 @@ function renderFrame(rgba, qc) {
       // term swings the lit side toward HI. baseLight darkens undersides.
       const ambient = 0.55
       const direct = 0.45 * diff * (0.4 + 0.6 * transmit)
-      const L = clamp01(ambient + direct - 0.30 * (1 - baseLight))
+      const L = clamp01(ambient + direct - 0.3 * (1 - baseLight))
       const cloud = sampleRamp3(L)
 
       // Composite cloud over sky by alpha
-      rgba[off]   = skyR + (cloud[0] - skyR) * alpha
-      rgba[off+1] = skyG + (cloud[1] - skyG) * alpha
-      rgba[off+2] = skyB + (cloud[2] - skyB) * alpha
-      rgba[off+3] = 255
+      rgba[off] = skyR + (cloud[0] - skyR) * alpha
+      rgba[off + 1] = skyG + (cloud[1] - skyG) * alpha
+      rgba[off + 2] = skyB + (cloud[2] - skyB) * alpha
+      rgba[off + 3] = 255
       off += 4
     }
   }
@@ -382,7 +393,7 @@ function renderFrame(rgba, qc) {
 function fireCluster(simFrameCount) {
   // One fat thermal in the middle of the visible window. JS picks
   // x in world coords, the WASM does the actual perturbation.
-  const xc_norm = 0.30 + Math.random() * 0.40   // 30%..70% of domain
+  const xc_norm = 0.3 + Math.random() * 0.4 // 30%..70% of domain
   const xc_m = xc_norm * clouds.grid.widthM
   clouds.applyBubble(xc_m, 150, 4.0, 320)
 }
@@ -409,12 +420,13 @@ export const CloudsCanvas = {
       // The clouds are already there -- no surface convection. A few
       // sim steps after painting smooth the Gaussian sums via advection
       // without dissipating much.
-      const NX = clouds.grid.NX, NZ = clouds.grid.NZ
-      const DX = clouds.grid.DX, DZ = clouds.grid.DZ
+      const NX = clouds.grid.NX,
+        NZ = clouds.grid.NZ
+      const DX = clouds.grid.DX,
+        DZ = clouds.grid.DZ
       for (const c of PRESEED) {
         for (const lobe of LOBES) {
-          paintGaussian(qc, NX, NZ, DX, DZ,
-            c.cx + lobe.dx, c.cz + lobe.dz, lobe.sigma, lobe.peak)
+          paintGaussian(qc, NX, NZ, DX, DZ, c.cx + lobe.dx, c.cz + lobe.dz, lobe.sigma, lobe.peak)
         }
       }
       let simFrame = 0

@@ -31,7 +31,7 @@ export const HoverTooltip = {
 
   position(e) {
     const r = this.el.getBoundingClientRect()
-    this.tip.style.top = (e.clientY - r.top + 12) + "px"
+    this.tip.style.top = e.clientY - r.top + 12 + "px"
     this.tip.style.left = Math.min(e.clientX - r.left + 12, r.width - 220) + "px"
   },
 
@@ -39,5 +39,5 @@ export const HoverTooltip = {
     this.el.removeEventListener("mouseover", this.onOver)
     this.el.removeEventListener("mousemove", this.onMove)
     this.el.removeEventListener("mouseout", this.onOut)
-  }
+  },
 }

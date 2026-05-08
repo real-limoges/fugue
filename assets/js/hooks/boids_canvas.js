@@ -1,41 +1,5 @@
 import * as boids from "../../vendor/petri/js/boids.js"
-
-function resolveThemeColors(canvas) {
-  const style = getComputedStyle(document.documentElement)
-  const baseProp = style.getPropertyValue("--color-base-100").trim()
-  const primaryProp = style.getPropertyValue("--color-primary").trim()
-
-  const probe = document.createElement("canvas")
-  probe.width = 1; probe.height = 1
-  const pctx = probe.getContext("2d")
-  const resolve = (oklchStr, fallback) => {
-    if (!oklchStr) return fallback
-    pctx.clearRect(0, 0, 1, 1)
-    pctx.fillStyle = oklchStr
-    pctx.fillRect(0, 0, 1, 1)
-    const [r, g, b] = pctx.getImageData(0, 0, 1, 1).data
-    return [r, g, b]
-  }
-
-  return {
-    base: resolve(baseProp, [28, 19, 37]),
-    primary: resolve(primaryProp, [200, 50, 180]),
-  }
-}
-
-function buildColorTable(base, primary) {
-  const table = new Uint8Array(256 * 4)
-  for (let i = 0; i < 256; i++) {
-    const t = i / 255
-    const t2 = t * t
-    const offset = i * 4
-    table[offset]     = base[0] + Math.round((primary[0] - base[0]) * t2)
-    table[offset + 1] = base[1] + Math.round((primary[1] - base[1]) * t2)
-    table[offset + 2] = base[2] + Math.round((primary[2] - base[2]) * t2)
-    table[offset + 3] = 255
-  }
-  return table
-}
+import { resolveThemeColors, buildColorTable } from "../lib/theme_colors.js"
 
 function readParamsFromDataset(el) {
   const out = {}
@@ -69,7 +33,7 @@ export const BoidsCanvas = {
       boids.start(initial.count, width, height)
       boids.setParams(initial)
 
-      const initialColors = resolveThemeColors(canvas)
+      const initialColors = resolveThemeColors()
       let colorTable = buildColorTable(initialColors.base, initialColors.primary)
       const pixelCount = width * height
       const rgba = new Uint8ClampedArray(pixelCount * 4)
@@ -79,14 +43,14 @@ export const BoidsCanvas = {
       const loop = () => {
         boids.step(1)
         if (++frameCount % 120 === 0) {
-          const fresh = resolveThemeColors(canvas)
+          const fresh = resolveThemeColors()
           colorTable = buildColorTable(fresh.base, fresh.primary)
         }
         const intensity = boids.getPixels()
         for (let i = 0; i < pixelCount; i++) {
           const c = intensity[i] * 4
           const o = i * 4
-          rgba[o]     = colorTable[c]
+          rgba[o] = colorTable[c]
           rgba[o + 1] = colorTable[c + 1]
           rgba[o + 2] = colorTable[c + 2]
           rgba[o + 3] = colorTable[c + 3]
@@ -96,7 +60,9 @@ export const BoidsCanvas = {
       }
       loop()
 
-      this._stopLoop = () => { if (rafId !== null) cancelAnimationFrame(rafId) }
+      this._stopLoop = () => {
+        if (rafId !== null) cancelAnimationFrame(rafId)
+      }
       this._width = width
       this._height = height
 

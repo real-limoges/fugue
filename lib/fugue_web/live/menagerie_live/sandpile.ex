@@ -1,4 +1,10 @@
 defmodule FugueWeb.MenagerieLive.Sandpile do
+  @moduledoc """
+  `/menagerie/sandpile` — Bak–Tang–Wiesenfeld self-organized criticality.
+  The simulation runs JS-side in `assets/js/hooks/sandpile_canvas.js`;
+  this LiveView only owns the parameter UI (mode, speed, reset) and
+  pushes events to the hook. No simulation state is held server-side.
+  """
   use FugueWeb, :live_view
 
   @speed_min 1

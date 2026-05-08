@@ -82,9 +82,12 @@ defmodule Fugue.MixProject do
       "assets.setup": [
         "tailwind.install --if-missing",
         "esbuild.install --if-missing",
+        "cmd npm --prefix assets install",
         "cmd sh -c 'mkdir -p priv/static/vendor/petri/wasm && cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/'",
         "cmd sh -c 'mkdir -p priv/static/vendor/glissando && cp assets/vendor/glissando/glissando_bg.wasm assets/vendor/glissando/glissando.js priv/static/vendor/glissando/'"
       ],
+      "assets.format": ["cmd npm --prefix assets run format"],
+      "assets.format.check": ["cmd npm --prefix assets run format:check"],
       "assets.build": [
         "compile",
         "cmd sh -c 'mkdir -p priv/static/vendor/petri/wasm && cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/'",
@@ -93,13 +96,20 @@ defmodule Fugue.MixProject do
         "esbuild fugue"
       ],
       "assets.deploy": [
+        "cmd npm --prefix assets install --omit=dev",
         "cmd sh -c 'mkdir -p priv/static/vendor/petri/wasm && cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/'",
         "cmd sh -c 'mkdir -p priv/static/vendor/glissando && cp assets/vendor/glissando/glissando_bg.wasm assets/vendor/glissando/glissando.js priv/static/vendor/glissando/'",
         "tailwind fugue --minify",
         "esbuild fugue --minify",
         "phx.digest"
       ],
-      precommit: ["compile --warnings-as-errors", "deps.unlock --unused", "format", "test"]
+      precommit: [
+        "compile --warnings-as-errors",
+        "deps.unlock --unused",
+        "format",
+        "assets.format.check",
+        "test"
+      ]
     ]
   end
 end

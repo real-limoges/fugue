@@ -24,7 +24,7 @@ export const ClusterAttractor = {
   mounted() {
     const raw = this.el.dataset.colors || "[]"
     try {
-      this.palette = JSON.parse(raw).filter(c => typeof c === "string" && c.length > 0)
+      this.palette = JSON.parse(raw).filter((c) => typeof c === "string" && c.length > 0)
     } catch {
       this.palette = []
     }
@@ -55,7 +55,10 @@ export const ClusterAttractor = {
   warmup() {
     let p = [0.1, 0.0, 0.0]
     const samples = []
-    let xMin = Infinity, xMax = -Infinity, yMin = Infinity, yMax = -Infinity
+    let xMin = Infinity,
+      xMax = -Infinity,
+      yMin = Infinity,
+      yMax = -Infinity
 
     for (let i = 0; i < WARMUP_STEPS; i++) {
       p = thomasStep(p)
@@ -73,7 +76,7 @@ export const ClusterAttractor = {
 
     const stride = Math.floor(samples.length / this.palette.length)
     this.basins = this.palette.map((color, i) => {
-      const s = samples[(i + 0.5) * stride | 0] || samples[0]
+      const s = samples[((i + 0.5) * stride) | 0] || samples[0]
       return { x: s[0], y: s[1], z: s[2], color }
     })
   },

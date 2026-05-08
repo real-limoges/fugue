@@ -3,6 +3,8 @@ defmodule Fugue.Color.SpectrumTest do
 
   alias Fugue.Color.Spectrum
 
+  doctest Fugue.Color.Spectrum
+
   test "returns a 7-character hex string" do
     for l <- 380..780//20 do
       hex = Spectrum.hex(l)
