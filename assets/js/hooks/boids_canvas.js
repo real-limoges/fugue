@@ -1,5 +1,6 @@
 import * as boids from "../../vendor/petri/js/boids.js"
 import { resolveThemeColors, buildColorTable } from "../lib/theme_colors.js"
+import { startRafLoop, createThemePoll, mapPixels } from "../lib/canvas_loop.js"
 
 function readParamsFromDataset(el) {
   const out = {}
@@ -35,34 +36,23 @@ export const BoidsCanvas = {
 
       const initialColors = resolveThemeColors()
       let colorTable = buildColorTable(initialColors.base, initialColors.primary)
-      const pixelCount = width * height
-      const rgba = new Uint8ClampedArray(pixelCount * 4)
+      const rgba = new Uint8ClampedArray(width * height * 4)
 
-      let rafId = null
-      let frameCount = 0
-      const loop = () => {
-        boids.step(1)
-        if (++frameCount % 120 === 0) {
+      const repollTheme = createThemePoll({
+        frames: 120,
+        onChange: () => {
           const fresh = resolveThemeColors()
           colorTable = buildColorTable(fresh.base, fresh.primary)
-        }
-        const intensity = boids.getPixels()
-        for (let i = 0; i < pixelCount; i++) {
-          const c = intensity[i] * 4
-          const o = i * 4
-          rgba[o] = colorTable[c]
-          rgba[o + 1] = colorTable[c + 1]
-          rgba[o + 2] = colorTable[c + 2]
-          rgba[o + 3] = colorTable[c + 3]
-        }
-        ctx.putImageData(new ImageData(rgba, width, height), 0, 0)
-        rafId = requestAnimationFrame(loop)
-      }
-      loop()
+        },
+      })
 
-      this._stopLoop = () => {
-        if (rafId !== null) cancelAnimationFrame(rafId)
-      }
+      this._loop = startRafLoop(() => {
+        boids.step(1)
+        repollTheme()
+        mapPixels(boids.getPixels(), colorTable, rgba)
+        ctx.putImageData(new ImageData(rgba, width, height), 0, 0)
+      })
+
       this._width = width
       this._height = height
 
@@ -81,6 +71,6 @@ export const BoidsCanvas = {
   },
 
   destroyed() {
-    if (this._stopLoop) this._stopLoop()
+    if (this._loop) this._loop.stop()
   },
 }

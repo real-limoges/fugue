@@ -1,3 +1,5 @@
+import { setupDprCanvas, attachResizeRedraw } from "../lib/canvas_figure.js"
+
 // Three occupation histograms overlaid: Maxwell-Boltzmann, Bose-Einstein,
 // Fermi-Dirac. Given N particles and L = 30 energy levels at ε_i = i, solve
 // for the chemical potential μ that conserves N under each statistics, then
@@ -97,14 +99,8 @@ function drawCurve(ctx, pts) {
 }
 
 function draw(canvas, T, N) {
+  const { dpr, cssWidth: cssW, cssHeight: cssH } = setupDprCanvas(canvas)
   const ctx = canvas.getContext("2d")
-  const dpr = window.devicePixelRatio || 1
-  const cssW = canvas.clientWidth
-  const cssH = canvas.clientHeight
-  if (canvas.width !== cssW * dpr || canvas.height !== cssH * dpr) {
-    canvas.width = cssW * dpr
-    canvas.height = cssH * dpr
-  }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, cssW, cssH)
 
@@ -279,12 +275,11 @@ export const QuantumStats = {
       this.render()
     })
 
-    this.resizeObserver = new ResizeObserver(() => this.render())
-    this.resizeObserver.observe(this.el)
+    this._resize = attachResizeRedraw(this.el, () => this.render())
   },
 
   destroyed() {
-    if (this.resizeObserver) this.resizeObserver.disconnect()
+    if (this._resize) this._resize.stop()
   },
 
   render() {

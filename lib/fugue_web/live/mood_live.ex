@@ -3,7 +3,7 @@ defmodule FugueWeb.MoodLive do
 
   use FugueWeb, :live_view
 
-  alias FugueWeb.MoodLive.{Annotations, DataTransforms, ExperiencePanel, Sections}
+  alias FugueWeb.MoodLive.{DataTransforms, ExperiencePanel, Focus, Sections, Snapshot}
   alias FugueWeb.MoodLive.Structs.{AnalysisResult, GapData}
   alias Fugue.Ish
 
@@ -29,34 +29,9 @@ defmodule FugueWeb.MoodLive do
           cluster_ids: []
         },
         gaps: nil,
-        highlighted_dates: [],
-        selected_gap: nil,
-        selected_cluster: nil,
-        selected_day: nil,
+        focus: :none,
         date_range: nil,
-        mood_transitions: [],
-        smoothed_daily: [],
-        stats: nil,
-        cluster_names: %{},
-        full_date_range: nil,
-        calendar_days: [],
-        transition_dates: [],
-        stream_series: [],
-        radar_centroids: [],
-        radar_dimensions: [],
-        ambiguity_bins: [],
-        ambiguity_threshold: 0.45,
-        timeline_segments: [],
-        season_months: [],
-        drift_dimensions: [],
-        mood_flowers_list: [],
-        flower_dimensions: [],
-        distribution_points: [],
-        distribution_clusters: [],
-        gap_transitions: [],
-        imputed_memberships: %{},
-        trajectory_points: [],
-        trajectory_annotations: []
+        snapshot: nil
       )
 
     if connected?(socket), do: send(self(), :load_data)
@@ -80,15 +55,18 @@ defmodule FugueWeb.MoodLive do
         gaps =
           raw_gaps |> GapData.from_api() |> DataTransforms.remap_gap_keys(analysis.name_to_id)
 
+        snapshot = Snapshot.from(entries, analysis, gaps)
+
         socket =
           socket
           |> assign(
             loading: false,
             entries: entries,
             analysis: analysis,
-            gaps: gaps
+            gaps: gaps,
+            snapshot: snapshot
           )
-          |> push_viz_data()
+          |> push_event("update-brush-timeline", %{dates: Enum.map(entries, & &1["date"])})
 
         {:noreply, socket}
 
@@ -98,246 +76,39 @@ defmodule FugueWeb.MoodLive do
   end
 
   def handle_event("day_selected", %{"date" => date}, socket) do
-    day_detail = DataTransforms.build_day_detail(date, socket.assigns)
-
-    {:noreply,
-     assign(socket, highlighted_dates: [date], selected_gap: nil, selected_day: day_detail)}
-  end
-
-  def handle_event("lasso_selected", %{"dates" => dates}, socket) do
-    {:noreply, assign(socket, highlighted_dates: dates)}
+    {:noreply, assign(socket, :focus, Focus.select_day(socket.assigns.focus, date))}
   end
 
   def handle_event("gap_selected", %{"start" => start, "length" => length}, socket) do
     gap = %{"start" => start, "length" => length}
-    {:noreply, assign(socket, selected_gap: gap, highlighted_dates: [])}
+    {:noreply, assign(socket, :focus, Focus.select_gap(socket.assigns.focus, gap))}
   end
 
   def handle_event("clear_highlights", _params, socket) do
-    {:noreply,
-     assign(socket,
-       highlighted_dates: [],
-       selected_gap: nil,
-       selected_cluster: nil,
-       selected_day: nil
-     )}
+    {:noreply, assign(socket, :focus, Focus.clear(socket.assigns.focus))}
   end
 
   def handle_event("cluster_selected", %{"cluster" => cluster}, socket) do
-    selected = if socket.assigns.selected_cluster == cluster, do: nil, else: cluster
-
-    socket =
-      socket
-      |> assign(selected_cluster: selected, highlighted_dates: [], selected_gap: nil)
-      |> push_gap_data_for_cluster(selected)
-
-    {:noreply, socket}
+    {:noreply, assign(socket, :focus, Focus.select_cluster(socket.assigns.focus, cluster))}
   end
 
   def handle_event("brush_changed", %{"start" => start, "end" => end_date}, socket)
       when is_binary(start) and start != "" and is_binary(end_date) and end_date != "" do
-    range = {start, end_date}
-    dates = dates_in_range(socket.assigns.entries, range)
-    {:noreply, assign(socket, date_range: range, highlighted_dates: dates, selected_gap: nil)}
+    {:noreply, assign(socket, :date_range, {start, end_date})}
   end
 
   def handle_event("brush_changed", _params, socket) do
     {:noreply,
      socket
-     |> assign(date_range: nil, highlighted_dates: [])
+     |> assign(:date_range, nil)
      |> push_event("clear-brush", %{})}
-  end
-
-  # --- Push helpers ---
-
-  defp push_viz_data(socket) do
-    %{entries: entries, analysis: analysis} = socket.assigns
-
-    smoothed_daily =
-      entries
-      |> DataTransforms.daily_dominants(analysis)
-      |> DataTransforms.smooth_runs()
-
-    dates = Enum.map(entries, & &1["date"])
-    sorted_dates = Enum.sort(dates)
-
-    date_range =
-      case sorted_dates do
-        [] -> nil
-        _ -> %{start: List.first(sorted_dates), end: List.last(sorted_dates)}
-      end
-
-    socket
-    |> assign(smoothed_daily: smoothed_daily, full_date_range: date_range)
-    |> push_mood_transitions()
-    |> assign_narrative_stats()
-    |> push_mood_trajectory()
-    |> push_calendar_data()
-    |> push_gap_data()
-    |> push_brush_data()
-    |> push_radar_data()
-    |> push_stream_data()
-    |> push_mood_flowers()
-    |> push_distribution_data()
-    |> push_seasonality_data()
-    |> push_ambiguity_data()
-    |> push_drift_data()
-  end
-
-  defp assign_narrative_stats(socket) do
-    assign(socket,
-      stats: DataTransforms.narrative_stats(socket.assigns),
-      cluster_names: socket.assigns.analysis.cluster_names
-    )
-  end
-
-  defp push_calendar_data(socket) do
-    %{entries: entries, analysis: analysis, gaps: gaps, smoothed_daily: daily} = socket.assigns
-    days = DataTransforms.build_calendar_days(entries, analysis, gaps)
-
-    transition_dates =
-      daily
-      |> Enum.chunk_every(2, 1, :discard)
-      |> Enum.filter(fn [a, b] -> a.cluster != b.cluster end)
-      |> Enum.map(fn [_a, b] -> b.date end)
-
-    assign(socket, calendar_days: days, transition_dates: transition_dates)
-  end
-
-  defp push_gap_data(socket) do
-    case socket.assigns.gaps do
-      nil ->
-        socket
-
-      %GapData{} = g ->
-        assign(socket, gap_transitions: g.transitions, imputed_memberships: g.imputed_memberships)
-    end
-  end
-
-  defp push_gap_data_for_cluster(socket, nil), do: push_gap_data(socket)
-
-  defp push_gap_data_for_cluster(socket, cluster) do
-    case socket.assigns.gaps do
-      nil ->
-        socket
-
-      %GapData{} = g ->
-        filtered =
-          Enum.filter(g.transitions, fn t ->
-            before = t["before"] || %{}
-            after_m = t["after"] || %{}
-            Map.get(before, cluster, 0) >= 0.3 or Map.get(after_m, cluster, 0) >= 0.3
-          end)
-
-        assign(socket, gap_transitions: filtered, imputed_memberships: g.imputed_memberships)
-    end
-  end
-
-  defp push_brush_data(socket) do
-    dates = Enum.map(socket.assigns.entries, & &1["date"])
-    push_event(socket, "update-brush-timeline", %{dates: dates})
-  end
-
-  defp push_radar_data(socket) do
-    centroids = DataTransforms.build_centroids(socket.assigns.analysis)
-    assign(socket, radar_centroids: centroids, radar_dimensions: DataTransforms.dimensions())
-  end
-
-  defp push_stream_data(socket) do
-    %{entries: entries, analysis: analysis} = socket.assigns
-
-    series =
-      entries
-      |> Enum.with_index()
-      |> Enum.map(fn {entry, idx} ->
-        mems =
-          DataTransforms.build_memberships(elem(analysis.membership, idx), analysis.clusters)
-
-        %{date: entry["date"], memberships: mems}
-      end)
-
-    assign(socket, stream_series: series)
-  end
-
-  defp push_mood_flowers(socket) do
-    %{entries: entries, smoothed_daily: daily} = socket.assigns
-    flowers = DataTransforms.build_mood_flowers(entries, daily)
-    assign(socket, mood_flowers_list: flowers, flower_dimensions: DataTransforms.dimensions())
-  end
-
-  defp push_mood_trajectory(socket) do
-    %{entries: entries, smoothed_daily: daily} = socket.assigns
-    points = DataTransforms.build_trajectory(entries, daily)
-
-    assign(socket,
-      trajectory_points: points,
-      trajectory_annotations: Annotations.all()
-    )
-  end
-
-  defp push_distribution_data(socket) do
-    %{entries: entries, analysis: analysis, smoothed_daily: daily} = socket.assigns
-    cluster_by_date = Map.new(daily, fn d -> {d.date, d.cluster} end)
-
-    points =
-      Enum.map(entries, fn e ->
-        %{
-          dimensions: e["dimensions"] || %{},
-          cluster: Map.get(cluster_by_date, e["date"])
-        }
-      end)
-
-    clusters =
-      Enum.map(analysis.clusters, fn c ->
-        %{
-          id: c["id"],
-          name: c["name"],
-          color: Map.get(analysis.cluster_colors, c["id"], "#666")
-        }
-      end)
-
-    assign(socket, distribution_points: points, distribution_clusters: clusters)
-  end
-
-  defp push_mood_transitions(socket) do
-    daily = socket.assigns.smoothed_daily
-
-    transitions =
-      daily
-      |> Enum.chunk_every(2, 1, :discard)
-      |> Enum.filter(fn [a, b] -> a.cluster != b.cluster end)
-      |> Enum.map(fn [a, b] -> %{date: b.date, from: a.cluster, to: b.cluster} end)
-
-    segments = DataTransforms.build_segments(daily)
-
-    assign(socket, mood_transitions: transitions, timeline_segments: segments)
-  end
-
-  defp push_seasonality_data(socket) do
-    assign(socket, season_months: DataTransforms.build_seasonality(socket.assigns.smoothed_daily))
-  end
-
-  defp push_ambiguity_data(socket) do
-    %{entries: entries, analysis: analysis} = socket.assigns
-    bins = DataTransforms.build_ambiguity_histogram(entries, analysis)
-    assign(socket, ambiguity_bins: bins, ambiguity_threshold: 0.45)
-  end
-
-  defp push_drift_data(socket) do
-    assign(socket, drift_dimensions: DataTransforms.build_drift(socket.assigns.entries))
-  end
-
-  # --- Helpers ---
-
-  defp dates_in_range(entries, {start, end_date}) do
-    entries
-    |> Enum.map(& &1["date"])
-    |> Enum.filter(fn d -> d >= start and d <= end_date end)
   end
 
   # --- Render ---
 
   def render(assigns) do
+    assigns = assign_focus_views(assigns)
+
     ~H"""
     <div id="mood-experience" class="mood-explorer p-4 mx-auto">
       <ExperiencePanel.ambient
@@ -358,71 +129,71 @@ defmodule FugueWeb.MoodLive do
         </div>
       <% end %>
 
-      <%= if @stats do %>
+      <%= if @snapshot do %>
         <Sections.hero
-          stats={@stats}
-          trajectory_points={@trajectory_points}
-          trajectory_annotations={@trajectory_annotations}
+          stats={@snapshot.stats}
+          trajectory_points={@snapshot.trajectory_points}
+          trajectory_annotations={@snapshot.trajectory_annotations}
           analysis={@analysis}
           selected_day={@selected_day}
         />
         <Sections.sticky_legend analysis={@analysis} selected_cluster={@selected_cluster} />
 
         <div class="max-w-3xl mx-auto">
-          <Sections.intro stats={@stats} />
+          <Sections.intro stats={@snapshot.stats} />
 
           <div id="mood-tour" phx-hook="MoodTour" phx-update="ignore"></div>
 
           <Sections.chapter_states
-            stats={@stats}
+            stats={@snapshot.stats}
             analysis={@analysis}
             selected_cluster={@selected_cluster}
-            radar_centroids={@radar_centroids}
-            radar_dimensions={@radar_dimensions}
-            ambiguity_bins={@ambiguity_bins}
-            ambiguity_threshold={@ambiguity_threshold}
+            radar_centroids={@snapshot.radar_centroids}
+            radar_dimensions={@snapshot.radar_dimensions}
+            ambiguity_bins={@snapshot.ambiguity_bins}
+            ambiguity_threshold={@snapshot.ambiguity_threshold}
           />
           <Sections.interstitial_after_states />
           <Sections.chapter_day_by_day
-            stats={@stats}
+            stats={@snapshot.stats}
             analysis={@analysis}
             date_range={@date_range}
             highlighted_dates={@highlighted_dates}
             selected_gap={@selected_gap}
             selected_cluster={@selected_cluster}
             selected_day={@selected_day}
-            calendar_days={@calendar_days}
-            transition_dates={@transition_dates}
-            stream_series={@stream_series}
-            season_months={@season_months}
+            calendar_days={@snapshot.calendar_days}
+            transition_dates={@snapshot.transition_dates}
+            stream_series={@snapshot.stream_series}
+            season_months={@snapshot.season_months}
           />
           <Sections.chapter_shifts
-            stats={@stats}
+            stats={@snapshot.stats}
             analysis={@analysis}
-            mood_transitions={@mood_transitions}
+            mood_transitions={@snapshot.mood_transitions}
             selected_cluster={@selected_cluster}
             highlighted_dates={@highlighted_dates}
-            cluster_names={@cluster_names}
-            timeline_segments={@timeline_segments}
+            cluster_names={@snapshot.cluster_names}
+            timeline_segments={@snapshot.timeline_segments}
           />
           <Sections.chapter_under_hood
-            stats={@stats}
-            drift_dimensions={@drift_dimensions}
+            stats={@snapshot.stats}
+            drift_dimensions={@snapshot.drift_dimensions}
             analysis={@analysis}
-            mood_flowers_list={@mood_flowers_list}
-            flower_dimensions={@flower_dimensions}
+            mood_flowers_list={@snapshot.mood_flowers_list}
+            flower_dimensions={@snapshot.flower_dimensions}
             selected_day={@selected_day}
-            distribution_points={@distribution_points}
-            distribution_clusters={@distribution_clusters}
+            distribution_points={@snapshot.distribution_points}
+            distribution_clusters={@snapshot.distribution_clusters}
           />
           <Sections.interstitial_before_gaps />
           <Sections.chapter_gaps
-            stats={@stats}
+            stats={@snapshot.stats}
             analysis={@analysis}
-            cluster_names={@cluster_names}
+            cluster_names={@snapshot.cluster_names}
             gap_transitions={@gap_transitions}
             imputed_memberships={@imputed_memberships}
-            full_date_range={@full_date_range}
+            full_date_range={@snapshot.full_date_range}
           />
           <Sections.afterword />
         </div>
@@ -430,4 +201,32 @@ defmodule FugueWeb.MoodLive do
     </div>
     """
   end
+
+  # Derive view-shape assigns from focus + brush + loaded data. Centralized
+  # so render-time consumers see one focus, not five parallel selection
+  # fields. Pure projection -- mutating focus is enough to rebuild these.
+  defp assign_focus_views(assigns) do
+    focus = assigns.focus
+    gaps = assigns.gaps
+
+    assigns
+    |> assign(:selected_day, day_detail(focus, assigns))
+    |> assign(:selected_cluster, focused_cluster(focus))
+    |> assign(:selected_gap, focused_gap(focus))
+    |> assign(:highlighted_dates, Focus.highlights(focus, assigns.date_range, assigns.entries))
+    |> assign(:gap_transitions, Focus.gap_transitions(gaps, focus))
+    |> assign(:imputed_memberships, imputed_memberships(gaps))
+  end
+
+  defp day_detail({:day, date}, assigns), do: DataTransforms.build_day_detail(date, assigns)
+  defp day_detail(_, _), do: nil
+
+  defp focused_cluster({:cluster, cluster}), do: cluster
+  defp focused_cluster(_), do: nil
+
+  defp focused_gap({:gap, gap}), do: gap
+  defp focused_gap(_), do: nil
+
+  defp imputed_memberships(%GapData{imputed_memberships: m}), do: m
+  defp imputed_memberships(_), do: %{}
 end
