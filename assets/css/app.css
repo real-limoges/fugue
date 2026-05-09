@@ -71,25 +71,6 @@
 
 /* This file is for your main application CSS */
 
-/* Blog prose overrides */
-.prose pre {
-  background-color: oklch(12% 0.04 300);
-  border: 1px solid oklch(25% 0.06 300);
-  border-radius: 0.375rem;
-}
-
-.prose code {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-  font-size: 0.875em;
-}
-
-.prose :not(pre) > code {
-  background-color: oklch(22% 0.05 300);
-  padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
-  border: 1px solid oklch(28% 0.05 300);
-}
-
 /* Glow effect for primary links on hover */
 .glow-hover:hover {
   box-shadow: 0 0 24px oklch(72% 0.25 330 / 0.35);
@@ -100,33 +81,6 @@
   border: none;
   height: 2px;
   background: oklch(72% 0.25 330);
-}
-
-/* Blog typography — Space Grotesk scoped to /blog pages */
-.blog-page,
-.blog-page .prose {
-  font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
-}
-
-.blog-page .prose {
-  font-size: 1.125rem;
-  line-height: 1.75;
-}
-
-.blog-page .prose h1,
-.blog-page .prose h2,
-.blog-page .prose h3 {
-  letter-spacing: -0.02em;
-}
-
-.blog-page .prose > p:first-of-type::first-letter {
-  float: left;
-  font-family: 'Space Grotesk', ui-sans-serif, sans-serif;
-  font-size: 3.75rem;
-  line-height: 0.85;
-  font-weight: 700;
-  padding: 0.35rem 0.6rem 0 0;
-  color: oklch(72% 0.25 330);
 }
 
 /* Shared tooltip card. Content is server-rendered HTML; the JS hook owns
