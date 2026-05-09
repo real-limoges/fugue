@@ -117,6 +117,23 @@ defmodule FugueWeb.MenagerieLive.AnimatedCardTest do
     end
   end
 
+  describe "handle_update_params/4" do
+    test "short-circuits without touching the socket when params haven't changed" do
+      sliders = [Slider.new(key: "speed", label: "Speed", min: 1, max: 200, cast: &trunc/1)]
+      socket = %Phoenix.LiveView.Socket{assigns: %{params: %{"speed" => 50}}}
+
+      assert {:noreply, returned} =
+               AnimatedCard.handle_update_params(
+                 %{"speed" => "50"},
+                 socket,
+                 sliders,
+                 "test:set_params"
+               )
+
+      assert returned == socket
+    end
+  end
+
   describe "slider_grid/1" do
     import Phoenix.LiveViewTest
 

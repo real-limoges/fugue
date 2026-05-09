@@ -87,7 +87,7 @@ defmodule FugueWeb.MenagerieLive.AnimatedCard do
     else
       {:noreply,
        socket
-       |> Phoenix.Component.assign(:params, new_params)
+       |> assign(:params, new_params)
        |> Phoenix.LiveView.push_event(event_name, new_params)}
     end
   end
@@ -100,7 +100,7 @@ defmodule FugueWeb.MenagerieLive.AnimatedCard do
   def handle_reset(socket, defaults, event_name) when is_binary(event_name) do
     {:noreply,
      socket
-     |> Phoenix.Component.assign(:params, defaults)
+     |> assign(:params, defaults)
      |> Phoenix.LiveView.push_event(event_name, defaults)}
   end
 
@@ -147,10 +147,5 @@ defmodule FugueWeb.MenagerieLive.AnimatedCard do
     end
   end
 
-  defp parse_number(_, fallback), do: fallback
-
-  defp clamp(val, lo, hi) when is_number(val) and is_number(lo) and is_number(hi),
-    do: val |> max(lo) |> min(hi)
-
-  defp clamp(val, _, _), do: val
+  defp clamp(val, lo, hi), do: val |> max(lo) |> min(hi)
 end
