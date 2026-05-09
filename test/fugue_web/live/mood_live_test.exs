@@ -106,7 +106,7 @@ defmodule FugueWeb.MoodLiveTest do
 
       # Pick whichever cluster actually has a segment rendered.
       cluster_id =
-        :sys.get_state(view.pid).socket.assigns.timeline_segments
+        :sys.get_state(view.pid).socket.assigns.snapshot.timeline_segments
         |> List.first()
         |> Map.fetch!(:cluster)
 
@@ -120,7 +120,7 @@ defmodule FugueWeb.MoodLiveTest do
       assert html =~ "Isolating"
 
       assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.selected_cluster == cluster_id
+      assert assigns.focus == {:cluster, cluster_id}
     end
 
     test "clicking a radar cell isolates the cluster", %{conn: conn} do
@@ -129,7 +129,7 @@ defmodule FugueWeb.MoodLiveTest do
       {:ok, view, _html} = live(conn, "/mood")
 
       cluster_id =
-        :sys.get_state(view.pid).socket.assigns.radar_centroids
+        :sys.get_state(view.pid).socket.assigns.snapshot.radar_centroids
         |> List.first()
         |> Map.fetch!(:id)
 
@@ -137,16 +137,16 @@ defmodule FugueWeb.MoodLiveTest do
       |> element(~s(.radar-cell[phx-click="cluster_selected"][phx-value-cluster="#{cluster_id}"]))
       |> render_click()
 
-      assert :sys.get_state(view.pid).socket.assigns.selected_cluster == cluster_id
+      assert :sys.get_state(view.pid).socket.assigns.focus == {:cluster, cluster_id}
     end
 
-    test "clicking a calendar day-cell selects the day and highlights it", %{conn: conn} do
+    test "clicking a calendar day-cell focuses the day", %{conn: conn} do
       stub_ish()
 
       {:ok, view, _html} = live(conn, "/mood")
 
       date =
-        :sys.get_state(view.pid).socket.assigns.calendar_days
+        :sys.get_state(view.pid).socket.assigns.snapshot.calendar_days
         |> Enum.find(&(&1.is_gap == false))
         |> Map.fetch!(:date)
 
@@ -154,13 +154,10 @@ defmodule FugueWeb.MoodLiveTest do
       |> element(~s(rect.day-cell[phx-value-date="#{date}"]))
       |> render_click()
 
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.highlighted_dates == [date]
-      assert assigns.selected_day != nil
-      assert assigns.selected_day.date == date
+      assert :sys.get_state(view.pid).socket.assigns.focus == {:day, date}
     end
 
-    test "clear_highlights resets every selection assign", %{conn: conn} do
+    test "clear_highlights collapses focus to :none", %{conn: conn} do
       stub_ish()
 
       {:ok, view, _html} = live(conn, "/mood")
@@ -179,11 +176,7 @@ defmodule FugueWeb.MoodLiveTest do
 
       render_click(view, "clear_highlights", %{})
 
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.selected_cluster == nil
-      assert assigns.selected_day == nil
-      assert assigns.selected_gap == nil
-      assert assigns.highlighted_dates == []
+      assert :sys.get_state(view.pid).socket.assigns.focus == :none
     end
 
     test "renders an error banner when Ish is unreachable", %{conn: conn} do

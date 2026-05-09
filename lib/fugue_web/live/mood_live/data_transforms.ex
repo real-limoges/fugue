@@ -586,11 +586,8 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   end
 
   @doc "Computes summary statistics for the narrative header."
-  def narrative_stats(assigns) do
-    entries = assigns.entries
-    analysis = assigns.analysis
-    transitions = assigns.mood_transitions
-    gaps = assigns.gaps
+  def narrative_stats(entries, analysis, smoothed_daily, mood_transitions, gaps) do
+    transitions = mood_transitions
 
     date_range =
       case entries do
@@ -602,7 +599,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
           {Enum.min(dates), Enum.max(dates)}
       end
 
-    daily = assigns.smoothed_daily
+    daily = smoothed_daily
 
     initial = %{counts: %{}, prev: nil, run: 0, longest: {nil, 0}, first: nil, last: nil}
 

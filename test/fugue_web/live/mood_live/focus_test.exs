@@ -50,7 +50,6 @@ defmodule FugueWeb.MoodLive.FocusTest do
         |> Focus.select_day("2024-01-01")
 
       assert focus == {:day, "2024-01-01"}
-      refute match?({:cluster, _}, focus)
     end
   end
 
