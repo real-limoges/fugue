@@ -1,3 +1,5 @@
+import { setupDprCanvas, attachResizeRedraw } from "../lib/canvas_figure.js"
+
 // Classical vs quantum random walk overlay with a decoherence slider.
 //
 // Classical: analytic binomial after N steps, P(k) = C(N,(N+k)/2) / 2^N.
@@ -102,16 +104,8 @@ function quantumDistribution(steps, decoherence) {
 }
 
 function draw(canvas, steps, classical, quantum) {
+  const { dpr, cssWidth, cssHeight } = setupDprCanvas(canvas)
   const ctx = canvas.getContext("2d")
-  const dpr = window.devicePixelRatio || 1
-  const cssWidth = canvas.clientWidth
-  const cssHeight = canvas.clientHeight
-
-  if (canvas.width !== cssWidth * dpr || canvas.height !== cssHeight * dpr) {
-    canvas.width = cssWidth * dpr
-    canvas.height = cssHeight * dpr
-  }
-
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, cssWidth, cssHeight)
 
@@ -234,12 +228,11 @@ export const QuantumWalk = {
       this.recompute()
     })
 
-    this.resizeObserver = new ResizeObserver(() => this.render())
-    this.resizeObserver.observe(this.el)
+    this._resize = attachResizeRedraw(this.el, () => this.render())
   },
 
   destroyed() {
-    if (this.resizeObserver) this.resizeObserver.disconnect()
+    if (this._resize) this._resize.stop()
   },
 
   recompute() {

@@ -1,6 +1,7 @@
 import * as sandpile from "../../vendor/petri/js/sandpile.js"
 import * as d3 from "d3"
 import { resolveThemeColors, buildColorTable } from "../lib/theme_colors.js"
+import { startRafLoop, createThemePoll, mapPixels } from "../lib/canvas_loop.js"
 
 function setupHistogram(container) {
   const margin = { top: 8, right: 12, bottom: 28, left: 36 }
@@ -110,8 +111,7 @@ export const SandpileCanvas = {
 
       const initialColors = resolveThemeColors()
       let colorTable = buildColorTable(initialColors.base, initialColors.primary)
-      const pixelCount = width * height
-      const rgba = new Uint8ClampedArray(pixelCount * 4)
+      const rgba = new Uint8ClampedArray(width * height * 4)
 
       // Avalanche size tracking
       const avalancheBins = new Map()
@@ -120,14 +120,20 @@ export const SandpileCanvas = {
       if (histContainer) histChart = setupHistogram(histContainer)
 
       let dropsPerFrame = 10
-      let rafId = null
-      let frameCount = 0
-      let totalGrains = 0
+      let frame = 0
       let histDirty = false
 
       const grainCounter = document.getElementById("sandpile-grain-count")
 
-      const loop = () => {
+      const repollTheme = createThemePoll({
+        frames: 120,
+        onChange: () => {
+          const fresh = resolveThemeColors()
+          colorTable = buildColorTable(fresh.base, fresh.primary)
+        },
+      })
+
+      this._loop = startRafLoop(() => {
         sandpile.step(dropsPerFrame)
 
         const avalSize = sandpile.getLastAvalancheSize()
@@ -136,37 +142,20 @@ export const SandpileCanvas = {
           histDirty = true
         }
 
-        totalGrains = sandpile.getTotalGrains()
-        if (grainCounter) grainCounter.textContent = totalGrains.toLocaleString()
+        if (grainCounter) grainCounter.textContent = sandpile.getTotalGrains().toLocaleString()
 
-        if (++frameCount % 120 === 0) {
-          const fresh = resolveThemeColors()
-          colorTable = buildColorTable(fresh.base, fresh.primary)
-        }
+        repollTheme()
 
         // Update histogram every 60 frames
-        if (histChart && histDirty && frameCount % 60 === 0) {
+        if (histChart && histDirty && ++frame % 60 === 0) {
           updateHistogram(histChart, avalancheBins)
           histDirty = false
         }
 
-        const intensity = sandpile.getPixels()
-        for (let i = 0; i < pixelCount; i++) {
-          const c = intensity[i] * 4
-          const o = i * 4
-          rgba[o] = colorTable[c]
-          rgba[o + 1] = colorTable[c + 1]
-          rgba[o + 2] = colorTable[c + 2]
-          rgba[o + 3] = colorTable[c + 3]
-        }
+        mapPixels(sandpile.getPixels(), colorTable, rgba)
         ctx.putImageData(new ImageData(rgba, width, height), 0, 0)
-        rafId = requestAnimationFrame(loop)
-      }
-      loop()
+      })
 
-      this._stopLoop = () => {
-        if (rafId !== null) cancelAnimationFrame(rafId)
-      }
       this._width = width
       this._height = height
 
@@ -191,7 +180,6 @@ export const SandpileCanvas = {
         sandpile.start(this._width, this._height)
         sandpile.setMode(mode === "random" ? 1 : 0)
         dropsPerFrame = speed || 10
-        totalGrains = 0
         avalancheBins.clear()
         if (histChart) updateHistogram(histChart, avalancheBins)
         if (grainCounter) grainCounter.textContent = "0"
@@ -202,6 +190,6 @@ export const SandpileCanvas = {
   },
 
   destroyed() {
-    if (this._stopLoop) this._stopLoop()
+    if (this._loop) this._loop.stop()
   },
 }
