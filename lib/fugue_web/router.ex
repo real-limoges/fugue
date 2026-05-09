@@ -15,6 +15,7 @@ defmodule FugueWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/about", PageController, :about
     live "/mood", MoodLive
     live "/menagerie", MenagerieLive.Index
     live "/menagerie/fuzzy", MenagerieLive.Fuzzy

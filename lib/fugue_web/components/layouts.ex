@@ -57,9 +57,14 @@ defmodule FugueWeb.Layouts do
     <footer class="border-t-2 border-primary/30 py-8 px-4 sm:px-6 lg:px-8">
       <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-base-content/40 font-mono">
         <span>&copy; {DateTime.utc_now().year} realcomplex.systems</span>
-        <a href="https://github.com/real-limoges" class="hover:text-primary transition-colors">
-          github
-        </a>
+        <div class="flex items-center gap-4">
+          <a href="/about" class="hover:text-primary transition-colors">
+            about
+          </a>
+          <a href="https://github.com/real-limoges" class="hover:text-primary transition-colors">
+            github
+          </a>
+        </div>
       </div>
     </footer>
 
