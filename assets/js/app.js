@@ -1,5 +1,6 @@
 import "phoenix_html"
 import { initSplash, simNames } from "./petri_splash"
+import { initLego3D } from "./lego_3d"
 import { Socket } from "phoenix"
 import { LiveSocket } from "phoenix_live_view"
 import topbar from "../vendor/topbar"
@@ -32,4 +33,8 @@ if (document.getElementById("petri-canvas")) {
       initSplash("petri-canvas", e.target.value, "sim-reading")
     })
   }
+}
+
+if (document.getElementById("lego-stack")) {
+  initLego3D("lego-stack")
 }
