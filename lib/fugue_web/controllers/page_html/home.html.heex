@@ -38,18 +38,4 @@
       <option value="oscillators">oscillators</option>
     </select>
   </div>
-
-  <%= if @latest_post do %>
-    <a
-      href={~p"/blog/#{@latest_post.slug}"}
-      class="group absolute bottom-6 right-6 flex items-center gap-2 font-mono text-[11px] text-white/70 hover:text-white transition-colors"
-    >
-      <span class="uppercase tracking-[0.2em]">blog</span>
-      <span class="text-white/40">·</span>
-      <span class="underline-offset-2 group-hover:underline">{@latest_post.title}</span>
-      <span aria-hidden="true" class="transition-transform group-hover:translate-x-0.5">
-        &rarr;
-      </span>
-    </a>
-  <% end %>
 </div>

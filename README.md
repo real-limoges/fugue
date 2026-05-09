@@ -100,23 +100,43 @@ Visit [`localhost:4000`](http://localhost:4000).
 ```
 fugue/
 ├── lib/
-│   ├── fugue/               # Service clients (Ish, etc.)
+│   ├── fugue/
+│   │   ├── color/           # Pure-Elixir color compute (paired with petri WASM)
+│   │   ├── menagerie/       # Static-card sim modules (e.g., fuzzy)
+│   │   └── ish.ex           # Service client(s)
 │   └── fugue_web/
-│       ├── live/            # LiveView modules
+│       ├── live/            # Chapters: mood, color, menagerie, relation, negation, lab
 │       ├── components/      # Shared UI components
+│       ├── controllers/
 │       └── router.ex
 ├── assets/
-│   ├── js/                  # app.js entry + hooks
+│   ├── js/                  # app.js + hooks (canvas hooks for animated cards)
 │   ├── css/
-│   └── vendor/
+│   └── vendor/petri/        # Vendor'd WASM (prism.wasm, cones.wasm)
 ├── config/
-├── priv/
+├── priv/static/
 └── docs/                    # Architecture & planning docs
 ```
 
 ## Related Repositories
 
-- Funktor, Ish, Garçon, Chirplet, Hazy, Chompsky — sibling repos in the realcomplex.systems family
+**Services**
+- [funktor](https://github.com/real-limoges/funktor) — generative jazz + Launchpad Mini (Haskell, Tone.js)
+- [ish](https://github.com/real-limoges/ish) — mood-tracking microservice (Haskell, Servant)
+- [garcon](https://github.com/real-limoges/garcon) — NLP + fuzzy HTTP wrapper (Haskell, Servant)
+- [chirplet](https://github.com/real-limoges/chirplet) — birdsong DSP (Julia + WASM/Rust)
+
+**Libraries**
+- [hazy](https://github.com/real-limoges/hazy) — fuzzy-logic library (Haskell), shared by ish + garcon
+- [chompsky](https://github.com/real-limoges/chompsky) — Lua-configured NLP parser, exposed via garcon
+
+**Vendor'd in this repo**
+- [petri](https://github.com/real-limoges/petri) — color-science WASM (`assets/vendor/petri/`)
+- [glissando](https://github.com/real-limoges/glissando) — GAM models with optional WASM backend (`assets/vendor/glissando/`)
+- [Timbre](https://github.com/real-limoges/Timbre) — WCS color-term aggregation (Python data prep)
+
+**Infrastructure**
+- [real-complex](https://github.com/real-limoges/real-complex) — Cloud Run deploy + prod env vars for the whole family
 
 ## Development
 

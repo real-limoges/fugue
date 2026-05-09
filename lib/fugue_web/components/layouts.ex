@@ -45,20 +45,6 @@ defmodule FugueWeb.Layouts do
             <span class="font-mono text-primary">&gt;</span> fugue
           </a>
         </div>
-        <div class="flex-none">
-          <ul class="flex px-1 space-x-1 items-center">
-            <li>
-              <a href="/blog" class="btn btn-ghost btn-sm font-mono text-xs tracking-wider uppercase">
-                Blog
-              </a>
-            </li>
-            <li>
-              <a href="/blog/feed.xml" class="btn btn-ghost btn-sm btn-square" title="RSS Feed">
-                <.icon name="hero-rss-micro" class="size-4" />
-              </a>
-            </li>
-          </ul>
-        </div>
       </nav>
     </header>
 
@@ -71,13 +57,9 @@ defmodule FugueWeb.Layouts do
     <footer class="border-t-2 border-primary/30 py-8 px-4 sm:px-6 lg:px-8">
       <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-base-content/40 font-mono">
         <span>&copy; {DateTime.utc_now().year} realcomplex.systems</span>
-        <div class="flex items-center gap-4">
-          <a href="/blog/feed.xml" class="hover:text-primary transition-colors">feed</a>
-          <span class="text-base-content/20">|</span>
-          <a href="https://github.com/real-limoges" class="hover:text-primary transition-colors">
-            github
-          </a>
-        </div>
+        <a href="https://github.com/real-limoges" class="hover:text-primary transition-colors">
+          github
+        </a>
       </div>
     </footer>
 

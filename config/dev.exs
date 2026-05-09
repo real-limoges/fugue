@@ -70,9 +70,6 @@ config :fugue, FugueWeb.Endpoint,
 # Enable dev routes for dashboard and mailbox
 config :fugue, dev_routes: true
 
-# Show draft blog posts in dev
-config :fugue, show_draft_posts: true
-
 # Do not include metadata nor timestamps in development logs
 config :logger, :default_formatter, format: "[$level] $message\n"
 
