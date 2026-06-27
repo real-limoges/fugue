@@ -54,6 +54,10 @@ node-compile-cache/
 CLAUDE.md
 **/CLAUDE.md
 
+# Local color-chapter scratch data (not loaded at runtime; runtime data is
+# inlined in Fugue.Color.* — see priv/color/CLAUDE.md)
+/priv/color/
+
 # Playwright MCP artifacts
 .playwright-mcp/
 mood-*.png
