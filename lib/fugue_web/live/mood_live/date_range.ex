@@ -3,7 +3,7 @@ defmodule FugueWeb.MoodLive.DateRange do
   Date-range helpers for /mood components. The mood data flows in as ISO-8601
   strings; surfaces consume either parsed `{Date.t(), Date.t()}` tuples (for
   axis math) or formatted strings (for prose). Both shapes lived inline as
-  ad-hoc helpers across stream_graph, dimension_drift, and sections — kept
+  ad-hoc helpers across stream_graph, dimension_drift, and sections, kept
   consistent here so the rendered span never disagrees with the axis bounds.
   """
 

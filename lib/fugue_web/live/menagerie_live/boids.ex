@@ -1,6 +1,6 @@
 defmodule FugueWeb.MenagerieLive.Boids do
   @moduledoc """
-  `/menagerie/boids` — flocking sim. Doubles as the site splash and
+  `/menagerie/boids`: flocking sim. Doubles as the site splash and
   is settled; see `lib/fugue_web/live/menagerie_live/CLAUDE.md` before
   proposing changes. Simulation runs in petri WASM via the
   `BoidsCanvas` hook; this LiveView only owns slider state and presets.
@@ -119,7 +119,7 @@ defmodule FugueWeb.MenagerieLive.Boids do
           Each bird follows three simple rules: steer away from crowded neighbors,
           turn toward the average heading of the flock, and drift toward the local
           center of mass. Small changes to any of the three produce wildly
-          different group behavior -- tight flocks, streaming schools, or ragged
+          different group behavior: tight flocks, streaming schools, or ragged
           chaos.
         </p>
       </div>

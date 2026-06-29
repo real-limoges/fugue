@@ -1,6 +1,6 @@
 defmodule FugueWeb.MenagerieLive.Index do
   @moduledoc """
-  Landing page for /menagerie -- a thin index that points at the individual
+  Landing page for /menagerie: a thin index that points at the individual
   math-exploration experiments.
   """
 
@@ -19,7 +19,7 @@ defmodule FugueWeb.MenagerieLive.Index do
         </p>
         <h1 class="text-2xl font-mono font-semibold text-base-content mb-3">Math playgrounds</h1>
         <p class="text-sm text-base-content/50 leading-relaxed max-w-2xl">
-          Self-contained experiments. Drag sliders, break things, see what falls out.
+          Self-contained experiments. Drag the sliders and watch what happens.
         </p>
       </header>
 
@@ -32,7 +32,7 @@ defmodule FugueWeb.MenagerieLive.Index do
         >
           Reshape triangular membership bands over four years of Melbourne daily
           temperatures. Every day holds partial membership in five overlapping
-          fuzzy sets at once -- drag the sliders to see the gradient reshape.
+          fuzzy sets at once. Drag the sliders to see the gradient reshape.
         </.card>
 
         <.card
@@ -52,7 +52,7 @@ defmodule FugueWeb.MenagerieLive.Index do
           title="Boids playground"
           accent="accent"
         >
-          Each bird follows three simple rules -- separate from neighbors, align
+          Each bird follows three simple rules: separate from neighbors, align
           with them, cohere toward the flock. Drag the force sliders and watch
           tight flocks form, schools stream past each other, or the whole crowd
           dissolve into chaos.
@@ -66,7 +66,7 @@ defmodule FugueWeb.MenagerieLive.Index do
         >
           Two walkers start at the center. The classical one drifts into a bell;
           the quantum one races out into two horns at the edges. A decoherence
-          slider blends one into the other -- the dial that turns quantum back
+          slider blends one into the other, the dial that turns quantum back
           into classical.
         </.card>
 
@@ -89,7 +89,7 @@ defmodule FugueWeb.MenagerieLive.Index do
           accent="warning"
         >
           Drop grains onto a grid. When a cell hits four it topples, cascading
-          to neighbors. The system tunes itself to a critical state -- avalanche
+          to neighbors. The system tunes itself to a critical state. Avalanche
           sizes follow a power law that nobody programmed in. Watch the
           log-log histogram converge to a straight line as grains accumulate.
         </.card>

@@ -1,7 +1,7 @@
 defmodule FugueWeb.MoodLive.DimensionDistributions do
   @moduledoc """
   Per-cluster ridge distributions: one row per dimension; each row shows
-  overlapping translucent KDE curves -- one per cluster -- plus an overall
+  overlapping translucent KDE curves (one per cluster) plus an overall
   reference. Replaces the former `DimensionDistributions` JS hook.
 
   KDE and basis smoothing run in Elixir; the SVG is responsive via viewBox.

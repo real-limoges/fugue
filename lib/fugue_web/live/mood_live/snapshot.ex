@@ -5,7 +5,7 @@ defmodule FugueWeb.MoodLive.Snapshot do
   The mood dataset is a snapshot, not a live pipeline (see
   `lib/fugue_web/live/mood_live/CLAUDE.md`). This module materializes
   every figure-shaped collection from a single triple of inputs --
-  entries, clustering analysis, and gap analysis -- in one pass.
+  entries, clustering analysis, and gap analysis, in one pass.
 
   `from/3` is the only entry point. `@enforce_keys` guarantees the
   constructor populates every field; missing one fails at compile.

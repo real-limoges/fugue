@@ -1,9 +1,9 @@
 defmodule FugueWeb.ColorLive do
   @moduledoc """
   Top-level LiveView for `/color`, the protanopia-threaded chapter on
-  color science. Owns the chapter's interactive state — protanope
+  color science. Owns the chapter's interactive state (protanope
   toggle, single-wavelength `lambda` slider, WCS chip-grid language,
-  and metamer-pair index — and renders the section bodies through
+  and metamer-pair index) and renders the section bodies through
   `FugueWeb.ColorLive.Splashes`.
   """
   use FugueWeb, :live_view
@@ -61,7 +61,7 @@ defmodule FugueWeb.ColorLive do
           Color.
         </h1>
         <p class="text-gray-500 mt-2 mb-10">
-          Three cones, mostly.
+          Three cones, give or take.
         </p>
       </header>
 
@@ -70,7 +70,7 @@ defmodule FugueWeb.ColorLive do
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           A cuttlefish presses against gravel and the gravel-color
-          happens in its skin. Not pigment -- geometry. Stacks of
+          happens in its skin. It's geometry, not pigment. Stacks of
           crystal layers inside the cells, interfering with whatever
           light hits them, picking which wavelengths bounce back.
           The morpho butterfly does the same trick from a
@@ -93,7 +93,7 @@ defmodule FugueWeb.ColorLive do
           Past red there's infrared, which is heat. Past violet
           there's ultraviolet, which is sunburn and skin cancer.
           Bees see the UV side. Snakes have a separate organ for
-          infrared -- a literal pit in their face that picks up
+          infrared, a literal pit in their face that picks up
           warm bodies in the dark. We get a strip in the middle,
           narrow, and we built every painting and every screen and
           every color word inside it.
@@ -117,8 +117,8 @@ defmodule FugueWeb.ColorLive do
           The cone curves overlap on purpose. A wavelength sitting
           in the seam between two of them lights both partly; the
           brain reads the ratio and assigns a name. Yellow is a
-          ratio. Drag the slider above and watch the dots move --
-          what you're seeing is how loud each cone is, which is the
+          ratio. Drag the slider above and watch the dots move.
+          What you're seeing is how loud each cone is, which is the
           only thing the brain ever sees.
         </p>
 
@@ -136,7 +136,7 @@ defmodule FugueWeb.ColorLive do
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           And three isn't even fundamental. Some women have <em>four</em>
-          cones -- they exist, there are studies, and they
+          cones. They exist, there are studies, and they
           apparently see distinctions in beige paint the rest of us
           can't. Mantis shrimp have sixteen, which presumably means
           they think the rest of the ocean is functionally blind.
@@ -152,13 +152,13 @@ defmodule FugueWeb.ColorLive do
         <p class="text-sm text-base-content/65 leading-relaxed">
           Two patches, two colors. Look at them. Now: underneath,
           the actual physical light coming off each patch is wildly
-          different -- different mixes of wavelengths, almost no
+          different. Different mixes of wavelengths, almost no
           overlap. Your eye runs the average through three cones,
           gets two different triples out, and the brain reports two
           colors. The mix itself never lands. If two completely
           different mixes happen to give the same triple, the brain
-          gets one color. Same patches, same eye, same brain --
-          there's just no way for the system to know there was
+          gets one color. Same patches, same eye, same brain.
+          There's just no way for the system to know there was
           anything to disagree about.
         </p>
 
@@ -171,7 +171,7 @@ defmodule FugueWeb.ColorLive do
           sitting next to each other in a ratio the eye averages
           into yellow. There is no actual yellow involved anywhere.
           The eye never notices. Your phone, your TV, every monitor
-          you've ever used -- the entire industry is built on a
+          you've ever used. The entire industry is built on a
           loophole in your retina.
         </p>
 
@@ -186,8 +186,8 @@ defmodule FugueWeb.ColorLive do
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Toggle the button above. The patches <em>were</em> two colors --
-          now they're one color, and they haven't moved. My cones
+          Toggle the button above. The patches <em>were</em> two colors.
+          Now they're one color, and they haven't moved. My cones
           run the average and the average lands in the same place
           for both. To a trichromat looking at this: two clearly
           different patches. To me looking at this: one patch,
@@ -199,11 +199,11 @@ defmodule FugueWeb.ColorLive do
         <Splashes.gamut_splash />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          The filled-in triangle is your screen -- the colors it
+          The filled-in triangle is your screen, the colors it
           knows how to mix. The rings around it are fancier screens.
           The whole horseshoe shape is the set of colors a real eye
           can actually have. Your screen, your phone, the most
-          expensive display you've ever sat in front of -- they all
+          expensive display you've ever sat in front of. They all
           reach in and grab a triangle. They never get the rest.
         </p>
 
@@ -224,7 +224,7 @@ defmodule FugueWeb.ColorLive do
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          That X is sitting at a real wavelength -- a deep spectral
+          That X is sitting at a real wavelength: a deep spectral
           red, around 700 nanometers. Your eye can see it. A sunset
           is partly made of it. No screen in your life is going to
           render it accurately. I marked it with a wide-gamut
@@ -238,7 +238,7 @@ defmodule FugueWeb.ColorLive do
         <p class="text-sm text-base-content/65 leading-relaxed">
           And the whole diagram is trichromat. The map of what your
           screen can't reach was drawn so your screen could draw
-          it. The chicken-and-egg there is on purpose -- it's
+          it. The chicken-and-egg there is on purpose. It's
           basically the whole rest of the chapter.
         </p>
       </.section>
@@ -246,8 +246,8 @@ defmodule FugueWeb.ColorLive do
       <.section number="5" id="language" title="Language carves it up">
         <p class="text-sm text-base-content/65 leading-relaxed">
           OK so cones cut up the wavelengths. Then language comes
-          in and cuts up the cones. And the kicker -- different
-          languages cut them up in completely different places. The
+          in and cuts up the cones. And different languages cut
+          them up in completely different places. The
           line your language drew is real to you and arguably
           invisible to someone whose language drew it somewhere
           else.
@@ -255,7 +255,7 @@ defmodule FugueWeb.ColorLive do
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           How many words does a language need for color? Up to the
-          language. English commits to eleven basic ones -- red,
+          language. English commits to eleven basic ones: red,
           orange, yellow, green, blue, purple, pink, brown, black,
           white, grey. Some languages get by with two: one warm
           word, one cool word. Both languages work fine. Both sets
@@ -292,7 +292,7 @@ defmodule FugueWeb.ColorLive do
           sky. Hungarian goes the other direction and
           splits red instead. None of these are translation
           problems. They're different cuts of the same continuous
-          ribbon, and every cut goes all the way down -- it
+          ribbon, and every cut goes all the way down. It
           changes how fast the speaker can tell two chips apart,
           which is wild if you sit with it.
         </p>
@@ -304,7 +304,7 @@ defmodule FugueWeb.ColorLive do
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          And then -- across hundreds of languages -- there's a
+          And then, across hundreds of languages, there's a
           rough order things show up in. A language with three
           basic color words always uses black, white, and red. Add
           a fourth and you get green or yellow. Add a fifth and
@@ -317,7 +317,7 @@ defmodule FugueWeb.ColorLive do
         <p class="text-sm text-base-content/65 leading-relaxed">
           Some languages skip abstract color words entirely. Yélî
           Dnye, on Rossel Island, names colors by what they remind
-          you of -- the night sky, ripe pandanus, burned wood,
+          you of: the night sky, ripe pandanus, burned wood,
           water at dusk. The comparison is doing the work the
           abstract word would do, and arguably doing it better;
           "burned wood" tells you more than "brown" if you've
@@ -338,7 +338,7 @@ defmodule FugueWeb.ColorLive do
         <p class="text-sm text-base-content/65 leading-relaxed">
           I learned the word "red" before I figured out I wasn't
           seeing whatever the word was pointing at. The word still
-          works fine for me -- I can buy red sweaters, mostly, on
+          works fine for me. I can usually buy red sweaters on
           the second try. Some of the lines on that chart above
           are real to their speakers and invisible to me. I'm
           trusting the chart.

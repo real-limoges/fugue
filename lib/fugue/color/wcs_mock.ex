@@ -9,8 +9,8 @@ defmodule Fugue.Color.WCSMock do
 
   Grid: 40 hue columns x 8 lightness rows (Munsell-like, chroma dropped).
   English categorization is the standard Berlin & Kay basic-color terms.
-  Berinmo categorization here is a *sketch* of the Roberson et al. findings
-  -- a wider yellow-green term (`wor`) and a cool-side term (`nol`) covering
+  Berinmo categorization here is a *sketch* of the Roberson et al. findings:
+  a wider yellow-green term (`wor`) and a cool-side term (`nol`) covering
   green-through-blue. Replace with real WCS data when Timbre ships.
   """
 
