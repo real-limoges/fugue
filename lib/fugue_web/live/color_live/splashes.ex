@@ -158,24 +158,31 @@ defmodule FugueWeb.ColorLive.Splashes do
   attr :language, :atom, required: true
 
   def wcs_splash(assigns) do
-    h_count = Fugue.Color.WCSMock.hue_count()
-    l_count = Fugue.Color.WCSMock.lightness_count()
+    lang = assigns.language
+    h_count = Fugue.Color.WCS.hue_count()
+    l_count = Fugue.Color.WCS.lightness_count()
 
     chips =
       for l <- 0..(l_count - 1), h <- 0..(h_count - 1) do
-        {term, consensus} = Fugue.Color.WCSMock.modal(assigns.language, h, l)
+        {code, consensus} = Fugue.Color.WCS.modal(lang, h, l)
 
         %{
           h: h,
           l: l,
-          base: Fugue.Color.WCSMock.chip_color(h, l),
-          term: term,
-          term_color: Fugue.Color.WCSMock.term_color(term),
+          base: Fugue.Color.WCS.chip_color(h, l),
+          label: Fugue.Color.WCS.term_label(lang, code),
+          term_color: Fugue.Color.WCS.term_color(lang, code),
           consensus: consensus
         }
       end
 
-    legend = Fugue.Color.WCSMock.terms(assigns.language)
+    legend =
+      for code <- Fugue.Color.WCS.terms(lang) do
+        %{
+          label: Fugue.Color.WCS.term_label(lang, code),
+          color: Fugue.Color.WCS.term_color(lang, code)
+        }
+      end
 
     assigns =
       assigns
@@ -186,6 +193,49 @@ defmodule FugueWeb.ColorLive.Splashes do
 
     ~H"""
     <figure class="space-y-3">
+      <div class="space-y-1.5">
+        <p class="font-mono text-xs uppercase tracking-widest text-base-content/40">
+          the chips
+        </p>
+        <div class="w-full rounded border border-base-content/10 bg-base-200/30 p-3">
+          <div
+            class="grid gap-px"
+            style={"grid-template-columns: repeat(#{@h_count}, minmax(0, 1fr));"}
+          >
+            <div
+              :for={c <- @chips}
+              class="aspect-square"
+              style={"background: #{c.base};"}
+            >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-center gap-2">
+        <button
+          type="button"
+          phx-click="cycle_wcs_language"
+          phx-value-dir="prev"
+          aria-label="previous language"
+          class="font-mono text-sm leading-none px-2 py-1.5 rounded border border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 transition-colors"
+        >
+          &lsaquo;
+        </button>
+        <span class="w-48 text-center truncate font-mono text-xs uppercase tracking-widest text-base-content/70">
+          {Fugue.Color.WCS.language_label(@language)}
+        </span>
+        <button
+          type="button"
+          phx-click="cycle_wcs_language"
+          phx-value-dir="next"
+          aria-label="next language"
+          class="font-mono text-sm leading-none px-2 py-1.5 rounded border border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 transition-colors"
+        >
+          &rsaquo;
+        </button>
+      </div>
+
       <div class="w-full rounded border border-base-content/10 bg-base-200/30 p-3">
         <div
           class="grid gap-px"
@@ -193,39 +243,24 @@ defmodule FugueWeb.ColorLive.Splashes do
         >
           <div
             :for={c <- @chips}
-            class="aspect-square relative"
-            style={"background: #{c.base};"}
-            title={"#{c.term} (consensus #{Float.round(c.consensus, 2)})"}
+            class="aspect-square relative bg-base-content/10"
+            title={"#{c.label} (consensus #{Float.round(c.consensus, 2)})"}
           >
             <div
               class="absolute inset-0"
-              style={"background: #{c.term_color}; opacity: #{Float.round(c.consensus * 0.55, 3)};"}
+              style={"background: #{c.term_color}; opacity: #{Float.round(c.consensus, 3)};"}
             >
             </div>
           </div>
         </div>
       </div>
 
-      <div class="flex items-center justify-between gap-4 flex-wrap">
-        <ul class="flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-base-content/65">
-          <li :for={t <- @legend} class="flex items-center gap-1.5">
-            <span
-              class="inline-block w-3 h-3 rounded-sm"
-              style={"background: #{Fugue.Color.WCSMock.term_color(t)};"}
-            >
-            </span>
-            <span>{t}</span>
-          </li>
-        </ul>
-
-        <button
-          type="button"
-          phx-click="cycle_wcs_language"
-          class="font-mono text-xs uppercase tracking-widest px-3 py-1.5 rounded border border-base-content/20 hover:border-base-content/40 hover:bg-base-200/40 transition-colors whitespace-nowrap"
-        >
-          {Fugue.Color.WCSMock.language_label(@language)} / next
-        </button>
-      </div>
+      <ul class="flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs text-base-content/65">
+        <li :for={t <- @legend} class="flex items-center gap-1.5">
+          <span class="inline-block w-3 h-3 rounded-sm" style={"background: #{t.color};"}></span>
+          <span>{t.label}</span>
+        </li>
+      </ul>
 
       <figcaption class="font-mono text-xs text-base-content/45 leading-relaxed not-italic">
         Each chip painted with the name most speakers gave it. Faded means

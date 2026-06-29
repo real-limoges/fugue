@@ -220,8 +220,7 @@ defmodule FugueWeb.MoodLive.Sections do
 
       <p class="text-sm text-gray-400 mb-6 leading-relaxed">
         <%= if @stats.most_common do %>
-          The one I live in most is
-          <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.most_common.id, "#aaa")}"}>
+          The one I live in most is <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.most_common.id, "#aaa")}"}>
             {@stats.most_common.name}
           </span>: {@stats.most_common.days} days, about {div(
             @stats.most_common.days * 100,
@@ -265,8 +264,7 @@ defmodule FugueWeb.MoodLive.Sections do
       </div>
       <%= if @selected_cluster do %>
         <div class="text-xs text-gray-400 mt-2">
-          Isolating
-          <span
+          Isolating <span
             class="font-semibold"
             style={"color: #{Map.get(@analysis.cluster_colors, @selected_cluster, "#aaa")}"}
           >
