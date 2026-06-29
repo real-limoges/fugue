@@ -20,7 +20,7 @@ defmodule FugueWeb.ColorLive do
      )
      |> assign(:protanope, false)
      |> assign(:lambda, 540.0)
-     |> assign(:wcs_language, :english)
+     |> assign(:wcs_language, :tarahumara)
      |> assign(:metamer_index, 0)}
   end
 
@@ -46,11 +46,19 @@ defmodule FugueWeb.ColorLive do
     {:noreply, assign(socket, :metamer_index, new_i)}
   end
 
-  def handle_event("cycle_wcs_language", _params, socket) do
-    langs = Fugue.Color.WCSMock.languages()
-    current = socket.assigns.wcs_language
-    next = Enum.at(langs, rem(Enum.find_index(langs, &(&1 == current)) + 1, length(langs)))
-    {:noreply, assign(socket, :wcs_language, next)}
+  def handle_event("cycle_wcs_language", %{"dir" => dir}, socket) do
+    langs = Fugue.Color.WCS.languages()
+    n = length(langs)
+    i = Enum.find_index(langs, &(&1 == socket.assigns.wcs_language))
+
+    new_i =
+      case dir do
+        "next" -> rem(i + 1, n)
+        "prev" -> rem(i - 1 + n, n)
+        _ -> i
+      end
+
+    {:noreply, assign(socket, :wcs_language, Enum.at(langs, new_i))}
   end
 
   def render(assigns) do
@@ -274,12 +282,16 @@ defmodule FugueWeb.ColorLive do
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Berinmo cuts the green-yellow region in a place English
-          doesn't. Berinmo speakers tell colors across that line
-          apart faster than colors sitting on the same side of it.
-          English speakers do the same thing across the green-blue
-          line. The line your language drew did some actual work
-          inside your head. The chip on the chart didn't change; <em>you</em>
+          The toggle cycles four languages from the survey, and
+          none of them carve it the way English does. Nafaanra runs
+          the whole grid on three words. Tarahumara has one word,
+          siyó, stretched across green and blue together, a single
+          color where English insists on two. Whether the seam
+          between green and blue is one thing or two isn't in the
+          chips; it's in the speaker. English speakers tell two
+          chips apart faster when a name-boundary falls between
+          them, so the boundary did some actual work inside the
+          head. The chip on the chart didn't change; <em>you</em>
           did, when you learned the word for it.
         </p>
 

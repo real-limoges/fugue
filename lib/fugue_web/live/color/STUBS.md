@@ -37,15 +37,17 @@ red the screen can't fully reach. No longer the cut candidate.
 
 Mock prose; iterate as desired.
 
-- Splash 5a (WCS chip grid) uses mock English + Berinmo modal-term data via
-  `Fugue.Color.WCSMock`. Real WCS aggregation is blocked on the Timbre repo
-  bootstrapping (chip_id -> modal_term + consensus). Language toggle button
-  cycles English / Berinmo.
+- Splash 5a (WCS chip grid) uses real World Color Survey modal-term data via
+  `Fugue.Color.WCS`, generated from Timbre's `priv/color/wcs/*.json` by
+  `mix fugue.color.gen` (regenerate after Timbre changes; `priv/color/` is
+  gitignored scratch, the `.ex` is committed). Language toggle cycles
+  Tarahumara / Kalam / Nafaanra / Walpiri. Chip titles and the legend show
+  native transcriptions decoded from the WCS term codes.
 - Splash 5b (multi-group language partition splash) is shipped with five
   groups: blue splits, red splits, green-blue meet, where the lines don't
   match (Berinmo nol/wor), and the warm side (Himba dumbu/serandu). English
   baselines per group. Native scripts where applicable.
-- Open: drop one personal beat if both crowd; data sourcing for §5a (Timbre).
+- Open: drop one personal beat if both crowd.
 
 ## Section 6: What I can't show you
 
