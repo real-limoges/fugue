@@ -1,5 +1,5 @@
 defmodule FugueWeb.MoodLive do
-  @moduledoc "Mood journal explorer -- fuzzy-clustering visualization of daily mood entries."
+  @moduledoc "Mood journal explorer: fuzzy-clustering visualization of daily mood entries."
 
   use FugueWeb, :live_view
 
@@ -204,7 +204,7 @@ defmodule FugueWeb.MoodLive do
 
   # Derive view-shape assigns from focus + brush + loaded data. Centralized
   # so render-time consumers see one focus, not five parallel selection
-  # fields. Pure projection -- mutating focus is enough to rebuild these.
+  # fields. Pure projection; mutating focus is enough to rebuild these.
   defp assign_focus_views(assigns) do
     focus = assigns.focus
     gaps = assigns.gaps

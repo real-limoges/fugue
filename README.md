@@ -1,43 +1,43 @@
 # Fugue
 
-The orchestration layer and public face of [realcomplex.systems](http://realcomplex.systems) — a multi-service portfolio that demonstrates emergent complexity through interactive computational systems.
+The orchestration layer and public face of [realcomplex.systems](http://realcomplex.systems), a multi-service portfolio that demonstrates emergent complexity through interactive computational systems.
 
 Fugue is a Phoenix/Elixir application that serves the website and coordinates six independent services, each built in the language best suited to its domain. The name borrows from the musical form: independent voices entering one at a time, each self-contained, building toward something larger than any individual part.
 
 ## Services
 
-### Funktor — Algorithmic Jazz
+### Funktor: Algorithmic Jazz
 Generative jazz composition with Launchpad Mini hardware integration.
 
 - **Stack:** Haskell (Servant API, music generation), Tone.js (browser audio), CoreMIDI → C bridge → Haskell (hardware input)
 - **Frontend:** Virtual Launchpad Mini grid in browser
 - **Status:** ~50% complete
 
-### Ish — Mood Tracking
+### Ish: Mood Tracking
 The gravitational center of the system. A mood tracking microservice that uses fuzzy logic to model emotional states as gradients rather than categories. Fugue consumes it via the `/mood` LiveView, which turns four years of the author's own daily self-ratings into a multi-chapter visual essay.
 
 - **Stack:** Haskell (Servant API), Hazy (fuzzy logic library)
-- **Frontend:** `/mood` explorer — PCA trajectory hero (one scribble for the whole run), interactive fuzzy-clustering sandbox, calendar heatmap with transition borders, hysteresis-smoothed transition timeline and sankey, per-month "mood flower" radars, and a breath timeline of silences
+- **Frontend:** `/mood` explorer: PCA trajectory hero (one scribble for the whole run), interactive fuzzy-clustering sandbox, calendar heatmap with transition borders, hysteresis-smoothed transition timeline and sankey, per-month "mood flower" radars, and a breath timeline of silences
 - **Status:** Live. Ish backend exposes `/data`, `/cluster`, `/gaps`; Fugue handles all visualization client-side via D3
 
-### Garçon — NLP + Fuzzy Logic API
+### Garçon: NLP + Fuzzy Logic API
 A Haskell Servant wrapper that exposes Chompsky (NLP parser) and Hazy (fuzzy logic) as HTTP endpoints.
 
 - **Stack:** Haskell (Servant), Chompsky (Lua-configured parser), Hazy
 - **Status:** In progress
 
-### Chirplet — Birdsong Dialect Analysis
+### Chirplet: Birdsong Dialect Analysis
 DSP analysis of bird vocalizations using xeno-canto field recording data.
 
 - **Stack:** Julia (signal processing, spectrogram generation), xeno-canto API
 - **Status:** Not started
 
-### Hazy — Fuzzy Logic Library
+### Hazy: Fuzzy Logic Library
 Shared Haskell dependency used by Ish and Garçon. Models continuous/gradient states rather than binary ones.
 
-- **Status:** Essentially done
+- **Status:** Effectively done
 
-### Chompsky — NLP Parser
+### Chompsky: NLP Parser
 Lua-configured natural language parser, exposed through Garçon.
 
 - **Status:** Done
@@ -46,7 +46,7 @@ Lua-configured natural language parser, exposed through Garçon.
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│              Fugue — Phoenix/Elixir                  │
+│              Fugue: Phoenix/Elixir                   │
 │         (Routing, LiveView UI, API Gateway)          │
 └────────────────┬────────┬────────┬─────────┬────────┘
                  │        │        │         │
@@ -64,7 +64,7 @@ Lua-configured natural language parser, exposed through Garçon.
                          └──────────────┘
 ```
 
-Each service is isolated — developed and deployed independently. Cross-service connections (Ish mood state shaping Funktor's jazz parameters, etc.) are aspirational and expected to emerge from use rather than upfront design.
+Each service is isolated, developed and deployed independently. Cross-service connections (Ish mood state shaping Funktor's jazz parameters, etc.) are aspirational and expected to emerge from use rather than upfront design.
 
 ## Tech Stack
 
@@ -121,22 +121,22 @@ fugue/
 ## Related Repositories
 
 **Services**
-- [funktor](https://github.com/real-limoges/funktor) — generative jazz + Launchpad Mini (Haskell, Tone.js)
-- [ish](https://github.com/real-limoges/ish) — mood-tracking microservice (Haskell, Servant)
-- [garcon](https://github.com/real-limoges/garcon) — NLP + fuzzy HTTP wrapper (Haskell, Servant)
-- [chirplet](https://github.com/real-limoges/chirplet) — birdsong DSP (Julia + WASM/Rust)
+- [funktor](https://github.com/real-limoges/funktor): generative jazz + Launchpad Mini (Haskell, Tone.js)
+- [ish](https://github.com/real-limoges/ish): mood-tracking microservice (Haskell, Servant)
+- [garcon](https://github.com/real-limoges/garcon): NLP + fuzzy HTTP wrapper (Haskell, Servant)
+- [chirplet](https://github.com/real-limoges/chirplet): birdsong DSP (Julia + WASM/Rust)
 
 **Libraries**
-- [hazy](https://github.com/real-limoges/hazy) — fuzzy-logic library (Haskell), shared by ish + garcon
-- [chompsky](https://github.com/real-limoges/chompsky) — Lua-configured NLP parser, exposed via garcon
+- [hazy](https://github.com/real-limoges/hazy): fuzzy-logic library (Haskell), shared by ish + garcon
+- [chompsky](https://github.com/real-limoges/chompsky): Lua-configured NLP parser, exposed via garcon
 
 **Vendor'd in this repo**
-- [petri](https://github.com/real-limoges/petri) — color-science WASM (`assets/vendor/petri/`)
-- [glissando](https://github.com/real-limoges/glissando) — GAM models with optional WASM backend (`assets/vendor/glissando/`)
-- [Timbre](https://github.com/real-limoges/Timbre) — WCS color-term aggregation (Python data prep)
+- [petri](https://github.com/real-limoges/petri): color-science WASM (`assets/vendor/petri/`)
+- [glissando](https://github.com/real-limoges/glissando): GAM models with optional WASM backend (`assets/vendor/glissando/`)
+- [Timbre](https://github.com/real-limoges/Timbre): WCS color-term aggregation (Python data prep)
 
 **Infrastructure**
-- [real-complex](https://github.com/real-limoges/real-complex) — Cloud Run deploy + prod env vars for the whole family
+- [real-complex](https://github.com/real-limoges/real-complex): Cloud Run deploy + prod env vars for the whole family
 
 ## Development
 

@@ -262,7 +262,7 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
         <p class="mt-3 max-w-3xl text-xs leading-snug text-gray-500">
           Top row shows each input fuzzified into its term set, with a dashed
           crisp line and dots marking the degree of membership at that input.
-          Middle shows each rule's firing strength -- colored by the fan speed
+          Middle shows each rule's firing strength, colored by the fan speed
           term it votes for. Bottom layers each rule's clipped consequent
           underneath the aggregated envelope; the white marker is the centroid.
         </p>

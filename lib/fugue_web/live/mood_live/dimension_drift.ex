@@ -1,6 +1,6 @@
 defmodule FugueWeb.MoodLive.DimensionDrift do
   @moduledoc """
-  Small-multiples sparklines -- 90-day rolling average per dimension, showing
+  Small-multiples sparklines: 90-day rolling average per dimension, showing
   long-term drift. Replaces the former `DimensionDrift` JS hook.
   """
 

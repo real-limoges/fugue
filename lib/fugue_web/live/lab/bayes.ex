@@ -1,6 +1,6 @@
 defmodule FugueWeb.LabLive.Bayes do
   @moduledoc """
-  Three small Bayesian demos -- search, rate, decision -- that all end with
+  Three small Bayesian demos (search, rate, decision) that all end with
   a posterior. Rendering is fully server-side: no JS hooks, no push_event.
   """
 
@@ -172,7 +172,7 @@ defmodule FugueWeb.LabLive.Bayes do
           Three small problems. Each one ends with a probability distribution
           over the thing you didn't know. Whatever you want to know after that
           is just an integral over it. The framework I work on at my day job
-          dresses this up; the dressing is mostly so the same trick scales up
+          dresses this up; the dressing is there so the same trick scales up
           to models that don't fit on a page.
         </p>
       </header>
@@ -347,7 +347,7 @@ defmodule FugueWeb.LabLive.Bayes do
         <code class="text-gray-400">
           Gamma({Float.round(@prior_alpha, 1)}, {Float.round(@prior_beta, 1)})
         </code>
-        prior times a Poisson likelihood is another Gamma -- <code class="text-primary/70">Gamma({Float.round(@post_alpha, 1)}, {Float.round(@post_beta, 1)})</code>.
+        prior times a Poisson likelihood is another Gamma, <code class="text-primary/70">Gamma({Float.round(@post_alpha, 1)}, {Float.round(@post_beta, 1)})</code>.
         Same shape, sharper. For models without a clean conjugate, the framework
         does the same thing numerically; the answer is the same kind of object
         either way.

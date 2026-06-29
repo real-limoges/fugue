@@ -60,7 +60,7 @@ defmodule FugueWeb.MoodLive.ExperiencePanel do
 
         <%= if @selected_day.dominant do %>
           <div style={"color: #{cluster_color(@selected_day, @selected_day.dominant.id)}; font-size: 13px; font-weight: 600; margin-bottom: 16px;"}>
-            {@selected_day.dominant.name} -- {percent(@selected_day.dominant.weight)}% membership
+            {@selected_day.dominant.name}: {percent(@selected_day.dominant.weight)}% membership
           </div>
         <% end %>
 

@@ -7,6 +7,10 @@ defmodule FugueWeb.PageController do
   end
 
   def about(conn, _params) do
-    render(conn, :about)
+    render(conn, :about,
+      page_title: "About",
+      meta_description:
+        "Who runs realcomplex.systems: Real Limoges, a machine learning engineer who builds emergent things out of unusual parts."
+    )
   end
 end

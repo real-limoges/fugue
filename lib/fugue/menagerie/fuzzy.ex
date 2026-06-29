@@ -1,7 +1,7 @@
 defmodule Fugue.Menagerie.Fuzzy do
   @moduledoc """
   Pure triangular membership functions for the menagerie fuzzy-math experiments.
-  No state, no I/O -- just math that the LiveView re-runs when parameters change.
+  No state, no I/O. Just math that the LiveView re-runs when parameters change.
   """
 
   # {name, default_peak_celsius, hex color}. Palette picked for maximum hue
@@ -59,7 +59,7 @@ defmodule Fugue.Menagerie.Fuzzy do
   @doc """
   Sample a single MF across `[lo, hi]` at `steps + 1` evenly-spaced x values.
   Returns a list of `[x, y]` pairs suitable for d3 line/area generators on
-  the client -- clients don't re-derive triangles, they just render.
+  the client; clients don't re-derive triangles, they just render.
   """
   def sample_shape(mf, lo, hi, steps \\ 80)
       when is_number(lo) and is_number(hi) and is_integer(steps) and steps > 0 do

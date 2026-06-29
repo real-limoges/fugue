@@ -1,7 +1,7 @@
 defmodule FugueWeb.ColorLive.Splashes do
   @moduledoc """
   Function components for each /color section's splash figure. Pure
-  Phoenix.Component — no LiveView state. State lives in `FugueWeb.ColorLive`
+  Phoenix.Component with no LiveView state. State lives in `FugueWeb.ColorLive`
   and flows in via attrs (protanope toggle, lambda, metamer index, WCS
   language).
   """
@@ -29,7 +29,7 @@ defmodule FugueWeb.ColorLive.Splashes do
     {"#5e4c6c", "#0b546c", "deep slate"}
   ]
 
-  # Section 6 pins to a single pair from @metamer_pairs (no carousel -- it's
+  # Section 6 pins to a single pair from @metamer_pairs (no carousel; it's
   # the echo of section 3, not a re-cycle). Index into the list above.
   @remainder_pair_index 7
 

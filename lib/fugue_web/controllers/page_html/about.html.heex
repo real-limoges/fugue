@@ -6,28 +6,42 @@
           About.
         </h1>
         <p class="text-gray-500 mt-2">
-          Who's running this thing.
+          Who's running this thing, and what it is.
         </p>
       </header>
 
       <div class="space-y-5">
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Hey! I'm Real Limoges. Nominally a software engineer;
-          I design machine learning systems for a living.
+          Hey! I'm Real Limoges. Software engineer by title; what I
+          actually do all day is design machine learning systems.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          This site is where I think out loud. Emergent things,
-          mostly -- color, moods, flocks, that sort of thing.
+          This site is where I think out loud. I'm drawn to emergent
+          things, the way a handful of simple rules pile up into
+          something nobody put there on purpose: color, moods, flocks
+          of birds. A lot of what's here started as a question I
+          couldn't stop poking at.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          I describe my code as lego blocks. Mine are unconventional
-          ones: WASM, Haskell, Elixir, that sort of thing.
+          I think about code the way you'd think about lego: a small
+          set of pieces that snap together into something bigger than
+          any one of them. Mine are unconventional pieces: WASM,
+          Haskell, Elixir.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Sharing it is more fun than not. Glad you stopped by!
+          Two things in particular shape what I build here. I'm
+          colorblind, which is why there's a whole chapter trying to
+          pin down what color even is. And I have bipolar disorder; the
+          mood journal is four years of my own nightly data, turned
+          into something I can finally stand back and look at.
+        </p>
+
+        <p class="text-sm text-base-content/65 leading-relaxed">
+          Sharing all of it is more fun than keeping it to myself.
+          Glad you stopped by.
         </p>
 
         <p class="text-sm text-base-content/65 italic mt-8">
@@ -36,13 +50,142 @@
       </div>
     </div>
 
-    <div class="md:col-span-1 flex justify-center md:justify-start">
+    <div class="md:col-span-1 flex items-start justify-center md:justify-start md:sticky md:top-24">
       <canvas
         id="lego-stack"
-        class="w-full max-w-[320px] aspect-square"
+        class="w-full max-w-[320px] aspect-square self-start"
         aria-hidden="true"
       >
       </canvas>
     </div>
   </div>
+
+  <section class="mt-20">
+    <h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/85 mb-5">
+      What's here
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <a
+        href="/mood"
+        class="group block rounded-lg border-t-2 border-primary bg-base-200 p-6 transition hover:bg-base-300"
+      >
+        <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-primary/70 mb-3">
+          Mood
+        </p>
+        <h3 class="text-lg font-semibold text-base-content mb-2">My mood journal</h3>
+        <p class="text-sm text-base-content/50 leading-relaxed">
+          Four years of nightly self-ratings, fuzzy-clustered into
+          states and laid out as a visual essay.
+        </p>
+        <p class="mt-4 font-mono text-[11px] text-primary/50 group-hover:text-primary/90 transition">
+          explore &rarr;
+        </p>
+      </a>
+
+      <a
+        href="/color"
+        class="group block rounded-lg border-t-2 border-accent bg-base-200 p-6 transition hover:bg-base-300"
+      >
+        <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-accent/70 mb-3">
+          Color
+        </p>
+        <h3 class="text-lg font-semibold text-base-content mb-2">A chapter on color</h3>
+        <p class="text-sm text-base-content/50 leading-relaxed">
+          What color actually is, written by someone who sees less of
+          it than you do.
+        </p>
+        <p class="mt-4 font-mono text-[11px] text-accent/50 group-hover:text-accent/90 transition">
+          explore &rarr;
+        </p>
+      </a>
+
+      <a
+        href="/menagerie"
+        class="group block rounded-lg border-t-2 border-secondary bg-base-200 p-6 transition hover:bg-base-300"
+      >
+        <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-secondary/70 mb-3">
+          Menagerie
+        </p>
+        <h3 class="text-lg font-semibold text-base-content mb-2">Math playgrounds</h3>
+        <p class="text-sm text-base-content/50 leading-relaxed">
+          Self-contained toys: boids, sandpiles, quantum walks, fuzzy
+          logic. Drag the sliders and watch what happens.
+        </p>
+        <p class="mt-4 font-mono text-[11px] text-secondary/50 group-hover:text-secondary/90 transition">
+          explore &rarr;
+        </p>
+      </a>
+
+      <a
+        href="/lab"
+        class="group block rounded-lg border-t-2 border-warning bg-base-200 p-6 transition hover:bg-base-300"
+      >
+        <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-warning/70 mb-3">
+          Lab
+        </p>
+        <h3 class="text-lg font-semibold text-base-content mb-2">Statistical experiments</h3>
+        <p class="text-sm text-base-content/50 leading-relaxed">
+          Small pieces, each one going after a single thing about a
+          model: GAMs, Bayesian demos.
+        </p>
+        <p class="mt-4 font-mono text-[11px] text-warning/50 group-hover:text-warning/90 transition">
+          explore &rarr;
+        </p>
+      </a>
+
+      <a
+        href="/clouds"
+        class="group block rounded-lg border-t-2 border-primary bg-base-200 p-6 transition hover:bg-base-300 md:col-span-2"
+      >
+        <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-primary/70 mb-3">
+          Clouds
+        </p>
+        <h3 class="text-lg font-semibold text-base-content mb-2">Pixel-art clouds</h3>
+        <p class="text-sm text-base-content/50 leading-relaxed">
+          A quiet one. Worley noise drifting across a canvas, no knobs
+          to turn.
+        </p>
+        <p class="mt-4 font-mono text-[11px] text-primary/50 group-hover:text-primary/90 transition">
+          explore &rarr;
+        </p>
+      </a>
+    </div>
+  </section>
+
+  <section class="mt-16">
+    <h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/85 mb-5">
+      Elsewhere
+    </h2>
+    <ul class="text-sm text-base-content/65 leading-relaxed space-y-2">
+      <li>
+        Code lives on
+        <a
+          href="https://github.com/real-limoges"
+          class="text-amber-300 hover:text-amber-200 underline decoration-dotted underline-offset-4"
+        >
+          GitHub
+        </a>.
+      </li>
+      <li>
+        This page is one corner of
+        <a
+          href="https://realcomplex.systems"
+          class="text-amber-300 hover:text-amber-200 underline decoration-dotted underline-offset-4"
+        >
+          realcomplex.systems
+        </a>, a small family of services that talk to each other.
+      </li>
+    </ul>
+  </section>
+
+  <section class="mt-16">
+    <h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/85 mb-5">
+      Colophon
+    </h2>
+    <p class="font-mono text-xs text-base-content/45 leading-relaxed max-w-2xl">
+      Built with Phoenix and Elixir, LiveView for the interactive bits,
+      D3 for the dataviz, and a few WASM and Haskell services doing the
+      heavier lifting. The lego blocks, basically.
+    </p>
+  </section>
 </article>
