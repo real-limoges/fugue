@@ -226,7 +226,8 @@ defmodule FugueWeb.LabLive.Bayes do
         Twenty-five rooms. The shading is where you think you left them --
         your prior. Click a room to look. If they're not in there, the
         room's mass collapses to zero and the rest of the grid soaks it up.
-        Same total probability, rearranged. Bayes' rule is the rearrangement.
+        Bayes' rule is that rearrangement: the total never changes, it just
+        moves.
       </p>
 
       <div class="flex flex-col md:flex-row md:items-start gap-6">
@@ -289,7 +290,7 @@ defmodule FugueWeb.LabLive.Bayes do
             This is the rule that found the USS Scorpion in 1968 and
             Air France 447 in 2011. A prior over the ocean floor, narrowed
             by every place the search team looked and didn't find anything.
-            Same trick, fewer rooms.
+            The same thing you just did to the grid, on a much bigger grid.
           </p>
         </div>
       </div>
@@ -315,7 +316,7 @@ defmodule FugueWeb.LabLive.Bayes do
       <p class="text-gray-400 text-sm mb-4 max-w-2xl">
         Earthquakes per year in the Bay Area, where I live; not a textbook
         example for me. Each year is a draw from <code class="text-primary/70">Poisson(rate)</code>; the rate itself
-        is what you actually want, and you don't know it. The dim curve is
+        is the thing you want, and you don't know it. The dim curve is
         what you'd guess about it before any data shows up. Click <em>observe a year</em>
         and watch the bright curve narrow as the
         years stack up.
@@ -373,9 +374,8 @@ defmodule FugueWeb.LabLive.Bayes do
       <p class="text-gray-400 text-sm mb-4 max-w-2xl">
         You have a posterior; the section above made one. Reducing it to a
         single number ("the rate is 3.5") throws away most of what's there.
-        The real questions usually look more like: <em>is it above some threshold I care about?</em>
-        The posterior
-        already knows. Move the threshold; read the integral off the curve.
+        Usually what you want to know is more like <em>is it above some threshold I care about?</em>
+        The posterior already has that. Move the threshold; read the integral off the curve.
       </p>
 
       <.density_chart chart={@chart} />

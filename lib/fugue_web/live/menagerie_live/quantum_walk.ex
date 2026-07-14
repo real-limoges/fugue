@@ -67,8 +67,8 @@ defmodule FugueWeb.MenagerieLive.QuantumWalk do
         </p>
         <p class="text-sm text-gray-400 mt-3 max-w-3xl leading-relaxed">
           Drag decoherence. At zero, the quantum walker stays weird. Turn it up
-          and the weirdness drains out step by step until you're back to the bell.
-          The slider is the dial that turns quantum into classical.
+          and the weirdness drains out step by step until you're back to the
+          bell curve the classical walker was in the whole time.
         </p>
       </div>
 

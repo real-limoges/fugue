@@ -82,18 +82,17 @@ defmodule FugueWeb.ColorLive do
           crystal layers inside the cells, interfering with whatever
           light hits them, picking which wavelengths bounce back.
           The morpho butterfly does the same trick from a
-          completely different phylum. Oil on a puddle, same
-          trick. The color isn't in the thing.
+          completely different phylum. Oil on a puddle, same trick.
+          Move your head and the color moves with you.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          Before going further: I can't actually see most of the
-          colors I'm about to walk you through. I have two cones
-          where standard issue is three. Christmas trees and their
-          ornaments tend to merge on me; I read stoplights by
-          position. I'm also bipolar and lefthanded, neither of
-          which is relevant, but you're going to be in here a while
-          and may as well know what kind of person you're following
+          Before going further: I can't see most of the colors I'm
+          about to walk you through. I have two cones where standard
+          issue is three. Christmas trees and their ornaments tend to
+          merge on me; I read stoplights by position. I'm also
+          bipolar and lefthanded, neither of which is relevant, but
+          you may as well know what kind of person you're following
           around.
         </p>
 
@@ -102,9 +101,9 @@ defmodule FugueWeb.ColorLive do
           there's ultraviolet, which is sunburn and skin cancer.
           Bees see the UV side. Snakes have a separate organ for
           infrared, a literal pit in their face that picks up
-          warm bodies in the dark. We get a strip in the middle,
-          narrow, and we built every painting and every screen and
-          every color word inside it.
+          warm bodies in the dark. We get a narrow strip in the
+          middle, roughly 400 to 700 nanometers, and that strip is
+          what the rest of this is about.
         </p>
       </.section>
 
@@ -117,17 +116,18 @@ defmodule FugueWeb.ColorLive do
           light hits the retina, three excitement levels come out,
           and those three numbers are everything your brain is ever
           going to be told about what's there. Thousands of
-          distinguishable wavelengths in the world, smashed into a
-          triple. That triple is your color. That's all you get.
+          distinguishable wavelengths in the world get smashed down
+          into a triple, and the triple is what you end up calling
+          the color.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           The cone curves overlap on purpose. A wavelength sitting
-          in the seam between two of them lights both partly; the
-          brain reads the ratio and assigns a name. Yellow is a
-          ratio. Drag the slider above and watch the dots move.
-          What you're seeing is how loud each cone is, which is the
-          only thing the brain ever sees.
+          in the seam between two of them lights both partly, and
+          the brain reads the ratio and assigns a name. Yellow is
+          a ratio, not something your eye has a dedicated sensor
+          for. Drag the slider above and watch the dots move. The
+          height of each dot is how loud that cone is.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -135,11 +135,10 @@ defmodule FugueWeb.ColorLive do
           supposed to make "red" feel like a different flavor than
           "green." Without it my brain is running two channels
           where it's supposed to be running three, and the two it
-          has are arguing about a problem that needs a third
-          opinion. The argument keeps landing in roughly the same
-          place. Christmas trees from across the room: fine. Up
-          close, the ornaments and the needles agree about the
-          color in a way they're not supposed to.
+          has keep landing in roughly the same place on a question
+          that needs a third opinion. Christmas trees from across
+          the room: fine. Up close, the ornaments and the needles
+          agree about the color in a way they're not supposed to.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -148,39 +147,36 @@ defmodule FugueWeb.ColorLive do
           apparently see distinctions in beige paint the rest of us
           can't. Mantis shrimp have sixteen, which presumably means
           they think the rest of the ocean is functionally blind.
-          Bees have three but their middle one is in the
-          ultraviolet, and flowers turn out to have whole patterns
-          painted on them in UV that we don't know are there.
-          Snakes have an entirely separate organ for infrared.
-          Snakes can see warm.
+          Bees have three but their middle one sits in the
+          ultraviolet, so flowers have whole patterns painted on
+          them (landing strips, bullseyes) that we don't know
+          are there.
         </p>
       </.section>
 
       <.section number="3" id="metamerism" title="Two colors, same color">
         <p class="text-sm text-base-content/65 leading-relaxed">
           Two patches, two colors. Look at them. Now: underneath,
-          the actual physical light coming off each patch is wildly
+          the physical light coming off each patch is wildly
           different. Different mixes of wavelengths, almost no
-          overlap. Your eye runs the average through three cones,
-          gets two different triples out, and the brain reports two
-          colors. The mix itself never lands. If two completely
-          different mixes happen to give the same triple, the brain
-          gets one color. Same patches, same eye, same brain.
-          There's just no way for the system to know there was
-          anything to disagree about.
+          overlap. Your eye runs each mix through three cones, gets
+          two different triples out, and reports two colors. The mix
+          itself never reaches you; only the triple does. So if two
+          completely different mixes happen to produce the same
+          triple, you get one color, and nothing downstream has any
+          way of knowing there was ever anything to disagree about.
         </p>
 
         <Splashes.metamer_splash protanope={@protanope} index={@metamer_index} />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          This is the trick your screen runs on. Every color it
-          shows you is a fake. The yellow on this page isn't yellow
-          light coming off the screen, it's red and green pixels
-          sitting next to each other in a ratio the eye averages
-          into yellow. There is no actual yellow involved anywhere.
-          The eye never notices. Your phone, your TV, every monitor
-          you've ever used. The entire industry is built on a
-          loophole in your retina.
+          This is what your screen runs on. The yellow on this page
+          isn't yellow light coming off the glass, it's red and
+          green pixels sitting next to each other in a ratio your
+          eye averages into yellow. No yellow is involved anywhere
+          and your eye doesn't notice. Your phone is doing it, your
+          TV is doing it, every monitor you've ever used has been
+          doing it.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -188,18 +184,16 @@ defmodule FugueWeb.ColorLive do
           different one at home. The lights in the store and the
           lights in your kitchen are different spectra, hitting the
           same shirt, getting averaged through your cones into
-          different triples. The shirt didn't change. The light
-          changed and your eye changed its mind. (Buy clothes
-          outdoors.)
+          different triples. The shirt never changed; the light did.
+          (Buy clothes outdoors.)
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           Toggle the button above. The patches <em>were</em> two colors.
           Now they're one color, and they haven't moved. My cones
-          run the average and the average lands in the same place
-          for both. To a trichromat looking at this: two clearly
-          different patches. To me looking at this: one patch,
-          twice.
+          run the average and it lands in the same place for both.
+          What you'd call two clearly different patches is, on my
+          end, the same patch shown twice.
         </p>
       </.section>
 
@@ -209,10 +203,10 @@ defmodule FugueWeb.ColorLive do
         <p class="text-sm text-base-content/65 leading-relaxed">
           The filled-in triangle is your screen, the colors it
           knows how to mix. The rings around it are fancier screens.
-          The whole horseshoe shape is the set of colors a real eye
-          can actually have. Your screen, your phone, the most
-          expensive display you've ever sat in front of. They all
-          reach in and grab a triangle. They never get the rest.
+          The whole horseshoe is the set of colors a real eye can
+          have. Every display ever built reaches into that horseshoe
+          and grabs a triangle out of it, and the rim is always left
+          over.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -227,48 +221,46 @@ defmodule FugueWeb.ColorLive do
           sRGB is what most monitors are doing. DCI-P3 is what
           newer phones and recent Apple laptops do. Rec.2020 is
           what high-end TV manufacturers gesture at and almost
-          nobody actually owns. Bigger triangle, bigger triangle,
-          bigger triangle. Still a triangle. Still missing the rim.
+          nobody owns. Each one is a bigger triangle than the last,
+          and each one is still a triangle.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           That X is sitting at a real wavelength: a deep spectral
-          red, around 700 nanometers. Your eye can see it. A sunset
-          is partly made of it. No screen in your life is going to
-          render it accurately. I marked it with a wide-gamut
+          red, around 700 nanometers. Your eye can see it, a sunset
+          is partly made of it, and no screen in your life is going
+          to render it accurately. I marked it with a wide-gamut
           color request, so on a fancier display it might look a
-          touch more saturated than its surroundings; on a normal
-          display it just gets clamped down to the closest red the
-          monitor has. Either way, what you're looking at is the
-          closest the box could come.
+          touch more saturated than its surroundings. On a normal
+          display it gets clamped down to the closest red the
+          monitor has, which is probably what you're looking at.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           And the whole diagram is trichromat. The map of what your
-          screen can't reach was drawn so your screen could draw
-          it. The chicken-and-egg there is on purpose. It's
-          basically the whole rest of the chapter.
+          screen can't reach was itself drawn to be drawable by
+          your screen. The horseshoe you're looking at is already a
+          compromise.
         </p>
       </.section>
 
       <.section number="5" id="language" title="Language carves it up">
         <p class="text-sm text-base-content/65 leading-relaxed">
           OK so cones cut up the wavelengths. Then language comes
-          in and cuts up the cones. And different languages cut
-          them up in completely different places. The
-          line your language drew is real to you and arguably
-          invisible to someone whose language drew it somewhere
-          else.
+          in and cuts up the cones, and different languages cut them
+          in completely different places. The line your language
+          drew feels obvious to you and can be invisible to someone
+          whose language drew it somewhere else.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          How many words does a language need for color? Up to the
-          language. English commits to eleven basic ones: red,
-          orange, yellow, green, blue, purple, pink, brown, black,
-          white, grey. Some languages get by with two: one warm
-          word, one cool word. Both languages work fine. Both sets
-          of speakers are seeing the same wavelengths. Each one
-          thinks its own partition is the obvious one.
+          There's no fixed number of color words a language needs.
+          English commits to eleven basic ones: red, orange,
+          yellow, green, blue, purple, pink, brown, black, white,
+          grey. Some languages get by with two: one warm word, one
+          cool word. Both work fine for the people speaking them,
+          and both sets of speakers are looking at the same
+          wavelengths.
         </p>
 
         <Splashes.wcs_splash language={@wcs_language} />
@@ -277,8 +269,8 @@ defmodule FugueWeb.ColorLive do
           Each chip up there is painted with whichever term most
           speakers reached for; the opacity is how often they
           agreed on it. The faded chips are the ones the speakers
-          argued about, which is itself information about where
-          the language is firm and where it's improvising.
+          argued about, the places where the language hasn't
+          settled.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -304,9 +296,8 @@ defmodule FugueWeb.ColorLive do
           sky. Hungarian goes the other direction and
           splits red instead. None of these are translation
           problems. They're different cuts of the same continuous
-          ribbon, and every cut goes all the way down. It
-          changes how fast the speaker can tell two chips apart,
-          which is wild if you sit with it.
+          ribbon, and the cut reaches all the way down into how
+          fast the speaker can tell two chips apart.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -320,9 +311,9 @@ defmodule FugueWeb.ColorLive do
           rough order things show up in. A language with three
           basic color words always uses black, white, and red. Add
           a fourth and you get green or yellow. Add a fifth and
-          you get the other one. Blue shows up late. Possibly
-          because blue is genuinely uncommon in nature outside the
-          sky and even <em>that</em> took a while for various languages
+          you get the other one. Blue shows up late, possibly
+          because blue is uncommon in nature outside the sky, and
+          even <em>that</em> took a while for various languages
           to commit to as a separate thing.
         </p>
 
@@ -330,21 +321,19 @@ defmodule FugueWeb.ColorLive do
           Some languages skip abstract color words entirely. Yélî
           Dnye, on Rossel Island, names colors by what they remind
           you of: the night sky, ripe pandanus, burned wood,
-          water at dusk. The comparison is doing the work the
-          abstract word would do, and arguably doing it better;
-          "burned wood" tells you more than "brown" if you've
-          actually seen burned wood. Whose system is the weird one,
-          exactly.
+          water at dusk. The comparison does the work the abstract
+          word would do, and it carries more with it; "burned wood"
+          tells you more than "brown" does, assuming you've seen
+          burned wood.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           And new color words are still being made up, right now.
           Crayola named Macaroni and Cheese, Razzmatazz, Outer
           Space. Pantone declared Living Coral the Color of the
-          Year in 2019, like an emperor naming a province. New
-          categories take when enough people use them and don't
-          when they don't. Whatever chart of basic terms exists is
-          still being argued over.
+          Year in 2019, like an emperor naming a province. A few of
+          these stick and most of them don't, and the list of basic
+          terms is still being argued over.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -370,32 +359,32 @@ defmodule FugueWeb.ColorLive do
           looking at this page. (To me, this is a paragraph about
           two grey patches.) That simulation up there is a
           trichromat's guess at what dichromat experience is like,
-          calculated in trichromat math, rendered on a trichromat
-          screen. It can't actually be right. It's the closest the
-          machinery knows how to come.
+          calculated in trichromat math and rendered on a
+          trichromat screen. Nobody who built it has seen the thing
+          it's trying to show you.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           And it goes the other direction too. You can measure the
-          wavelength off a tomato. The cones, mine and yours. The
-          screen. The word your language drops it into. All of
-          that's on the table. The actual <em>seeing</em> of it, while
-          you're inside your seeing of it, isn't.
+          wavelength coming off a tomato, model the cones that catch
+          it, characterize the screen, name the word your language
+          drops it into. All of that is on the table. The <em>seeing</em>
+          of it, while you're inside your seeing of it, isn't.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           There's a smaller problem and a bigger one. The smaller
           one is that the simulation can't show you what I see. The
           bigger one is that nothing on this page can show you what <em>you</em>
-          see. Your seeing is happening somewhere this page
-          doesn't reach, and it's never going to. That's where the
-          chapter ends.
+          see. Your seeing is happening somewhere this page doesn't
+          reach.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           There's a thought experiment about a scientist who learns
           everything there is to know about red and then sees it
-          for the first time. This is the inverse.
+          for the first time. I've been running it backwards my
+          whole life.
         </p>
       </.section>
 
@@ -408,10 +397,10 @@ defmodule FugueWeb.ColorLive do
 
         <p class="text-sm text-base-content/65 leading-relaxed">
           You can probably play Lite Brite without consulting
-          anyone. You can probably read a stoplight from a block
-          away. Those events are landing inside you differently
-          than they would inside me, and either way, what it's
-          actually like for them to land at all isn't on this page.
+          anyone, and read a stoplight from a block away without
+          checking which lamp is lit. Those events land inside you
+          differently than they'd land inside me. What it's like for
+          them to land at all was never going to fit on this page.
         </p>
       </.section>
     </article>
