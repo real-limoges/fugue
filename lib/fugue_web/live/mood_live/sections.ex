@@ -58,7 +58,7 @@ defmodule FugueWeb.MoodLive.Sections do
               Every night before bed for four years; five numbers about how the day went. This is all of them, flattened onto 2D by PCA. Five dimensions don't fit on a screen and two do, so some of it is gone.
             </p>
             <p>
-              One dot per day, connected in the order they happened. Colors come from clustering, painted back onto the path after the fact. I didn't pick the shape it makes.
+              One dot per day, connected in the order they happened. Colors come from clustering, painted back onto the path after the fact. I didn't pick the shape it makes. I can't tell you where it goes next.
             </p>
           </div>
         </div>
@@ -129,7 +129,7 @@ defmodule FugueWeb.MoodLive.Sections do
           <em>the data</em>
           thought my states were, instead of what a diagnostic manual said they should be. The algorithm I ended up using lets a day belong
           <em>partly</em>
-          to more than one state, which is closer to how they show up.
+          to more than one state. Closer to how the days actually arrive.
         </p>
         <p class="text-sm text-gray-300 leading-relaxed">
           If "fuzzy clustering" doesn't mean anything yet, drag the dot below.
@@ -286,7 +286,7 @@ defmodule FugueWeb.MoodLive.Sections do
 
       <p class="text-sm text-gray-400 leading-relaxed mt-6 mb-4">
         Those are the shapes. Some days <em>didn't</em>
-        commit to any of them: {@stats.ambiguity.count} ({@stats.ambiguity.pct}%), with no single state owning more than 45%. A hard clustering model would have to shove each one into a box anyway.
+        commit to any of them: {@stats.ambiguity.count} ({@stats.ambiguity.pct}%), with no single state owning more than 45%. A hard clustering model would shove each one into a box. Fuzzy doesn't have to.
       </p>
 
       <div class="bg-base-200 rounded-lg p-4 mt-4">
@@ -418,7 +418,7 @@ defmodule FugueWeb.MoodLive.Sections do
         <span>How my moods shift</span>
       </h2>
       <p class="text-sm text-gray-400 mb-4 leading-relaxed">
-        The transitions carry more than the states do. Some hand-offs are well-worn paths; others basically never happen. Knowing the state I'm in tells you less than knowing the one I just left. From the inside, most of bipolar is the moving around.
+        The transitions carry more than the states do. Some hand-offs are well-worn paths; others basically never happen. Knowing the state I'm in tells you less than knowing the one I just left. From the inside, most of bipolar is the moving around; the states are just where the motion idles.
       </p>
       <p class="text-sm text-gray-400 mb-6 leading-relaxed">
         The dominant state flipped {@stats.transition_count} times across {@stats.entry_count} days, about once every {div(
@@ -475,7 +475,7 @@ defmodule FugueWeb.MoodLive.Sections do
         <div class="bg-base-200 rounded-lg p-4 flex flex-col h-full">
           <h3 class="text-sm font-semibold text-gray-200 mb-2">Phase space, without the diary</h3>
           <p class="text-sm text-gray-300 mb-3 leading-relaxed">
-            A Thomas attractor in the palette above; three coupled equations looping a bounded region forever, never quite repeating. States as gravity wells, with the path never settling into any of them. It's decoration, not a model of me.
+            A Thomas attractor in the palette above; three coupled equations looping a bounded region forever, never quite repeating. States as gravity wells, with the path never settling into any of them. The math doesn't know it's a metaphor.
           </p>
           <div
             id="cluster-attractor"
@@ -519,10 +519,10 @@ defmodule FugueWeb.MoodLive.Sections do
       </h2>
       <p class="text-sm text-gray-400 mb-4 leading-relaxed">
         So far you've been seeing the <em>output</em>
-        of the model: the named states, how they ebb, how they hand off. This section is the <em>input</em>. Five numbers a night, before anything else happens to them. Sleep, anxiety, sensitivity, outlook, speed; each on its own scale.
+        of the model: the named states, how they ebb, how they hand off. This section is the <em>input</em>. Five numbers a night, before anything else happens to them. Sleep, anxiety, sensitivity, outlook, speed; each on its own scale. The whole picture above is built out of that one habit.
       </p>
       <p class="text-sm text-gray-400 mb-6 leading-relaxed">
-        The clustering doesn't see anything else about me; every shape further up the page is downstream of these five. Here's what they each do on their own: how they drift across {@stats.entry_count} days; how the distributions shift once the model splits the days into states. A couple of them surprised me.
+        The clustering doesn't see anything else about me; every shape further up the page is downstream of these five. Here's what they each do on their own: how they drift across {@stats.entry_count} days; how the distributions shift once the model splits the days into states. Some of it I expected. The rest is why the model was worth the trouble.
       </p>
 
       <div class="bg-base-200 rounded-lg p-4">
@@ -546,7 +546,7 @@ defmodule FugueWeb.MoodLive.Sections do
       <div class="mt-8">
         <h3 class="text-sm font-semibold text-gray-200 mb-2">Has anything drifted?</h3>
         <p class="text-xs text-gray-500 mb-3">
-          A 90-day rolling average for each of the five raw inputs. If a line tilts, my baseline shifted.
+          A 90-day rolling average for each of the five raw inputs. If a line tilts, my baseline shifted. Slow changes like that are basically invisible while you're in them.
         </p>
         <DimensionDrift.drift dimensions={@drift_dimensions} />
       </div>
@@ -648,7 +648,7 @@ defmodule FugueWeb.MoodLive.Sections do
     ~H"""
     <aside class="my-8 max-w-xl mx-auto">
       <p class="text-sm text-gray-300 leading-relaxed">
-        Quick pause. The shapes by themselves are just buckets: bins the days fell into, with names I made up once I could see them. The more interesting part is what the bins do once you put them back in chronological order.
+        Quick pause. The shapes by themselves are just buckets: bins the days fell into, with names I made up once I could see them. You can bin anything. What the bins do once you put them back in chronological order is where it gets weird.
       </p>
     </aside>
     """

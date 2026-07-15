@@ -102,8 +102,8 @@ defmodule FugueWeb.ColorLive do
           Bees see the UV side. Snakes have a separate organ for
           infrared, a literal pit in their face that picks up
           warm bodies in the dark. We get a narrow strip in the
-          middle, roughly 400 to 700 nanometers, and that strip is
-          what the rest of this is about.
+          middle, roughly 400 to 700 nanometers, and we built every
+          painting and every screen and every color word inside it.
         </p>
       </.section>
 
@@ -116,9 +116,9 @@ defmodule FugueWeb.ColorLive do
           light hits the retina, three excitement levels come out,
           and those three numbers are everything your brain is ever
           going to be told about what's there. Thousands of
-          distinguishable wavelengths in the world get smashed down
-          into a triple, and the triple is what you end up calling
-          the color.
+          distinguishable wavelengths in the world, smashed down
+          into a triple. That triple is your color. That's all you
+          get.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -149,8 +149,9 @@ defmodule FugueWeb.ColorLive do
           they think the rest of the ocean is functionally blind.
           Bees have three but their middle one sits in the
           ultraviolet, so flowers have whole patterns painted on
-          them (landing strips, bullseyes) that we don't know
-          are there.
+          them (landing strips, bullseyes) that we don't know are
+          there. Snakes have an entirely separate organ for
+          infrared. Snakes can see warm.
         </p>
       </.section>
 
@@ -170,13 +171,14 @@ defmodule FugueWeb.ColorLive do
         <Splashes.metamer_splash protanope={@protanope} index={@metamer_index} />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          This is what your screen runs on. The yellow on this page
-          isn't yellow light coming off the glass, it's red and
-          green pixels sitting next to each other in a ratio your
-          eye averages into yellow. No yellow is involved anywhere
-          and your eye doesn't notice. Your phone is doing it, your
-          TV is doing it, every monitor you've ever used has been
-          doing it.
+          This is what your screen runs on. Every color it shows you
+          is a fake. The yellow on this page isn't yellow light
+          coming off the glass, it's red and green pixels sitting
+          next to each other in a ratio your eye averages into
+          yellow. No yellow is involved anywhere and your eye
+          doesn't notice. Your phone is doing it, your TV is doing
+          it, every monitor you've ever used has been doing it. The
+          entire industry is built on a loophole in your retina.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -192,8 +194,8 @@ defmodule FugueWeb.ColorLive do
           Toggle the button above. The patches <em>were</em> two colors.
           Now they're one color, and they haven't moved. My cones
           run the average and it lands in the same place for both.
-          What you'd call two clearly different patches is, on my
-          end, the same patch shown twice.
+          To a trichromat looking at this: two clearly different
+          patches. To me looking at this: one patch, twice.
         </p>
       </.section>
 
@@ -205,8 +207,7 @@ defmodule FugueWeb.ColorLive do
           knows how to mix. The rings around it are fancier screens.
           The whole horseshoe is the set of colors a real eye can
           have. Every display ever built reaches into that horseshoe
-          and grabs a triangle out of it, and the rim is always left
-          over.
+          and grabs a triangle. None of them get the rest.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -221,8 +222,8 @@ defmodule FugueWeb.ColorLive do
           sRGB is what most monitors are doing. DCI-P3 is what
           newer phones and recent Apple laptops do. Rec.2020 is
           what high-end TV manufacturers gesture at and almost
-          nobody owns. Each one is a bigger triangle than the last,
-          and each one is still a triangle.
+          nobody owns. Bigger triangle, bigger triangle, bigger
+          triangle. Still a triangle. Still missing the rim.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -254,13 +255,14 @@ defmodule FugueWeb.ColorLive do
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          There's no fixed number of color words a language needs.
-          English commits to eleven basic ones: red, orange,
-          yellow, green, blue, purple, pink, brown, black, white,
-          grey. Some languages get by with two: one warm word, one
-          cool word. Both work fine for the people speaking them,
-          and both sets of speakers are looking at the same
-          wavelengths.
+          How many words does a language need for color? Up to the
+          language. English commits to eleven basic ones: red,
+          orange, yellow, green, blue, purple, pink, brown, black,
+          white, grey. Some languages get by with two: one warm
+          word, one cool word. Both work fine for the people
+          speaking them, and both sets of speakers are looking at
+          the same wavelengths. Each one thinks its own partition is
+          the obvious one.
         </p>
 
         <Splashes.wcs_splash language={@wcs_language} />
@@ -296,8 +298,9 @@ defmodule FugueWeb.ColorLive do
           sky. Hungarian goes the other direction and
           splits red instead. None of these are translation
           problems. They're different cuts of the same continuous
-          ribbon, and the cut reaches all the way down into how
-          fast the speaker can tell two chips apart.
+          ribbon, and every cut goes all the way down. It changes
+          how fast the speaker can tell two chips apart, which is
+          wild if you sit with it.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -324,7 +327,7 @@ defmodule FugueWeb.ColorLive do
           water at dusk. The comparison does the work the abstract
           word would do, and it carries more with it; "burned wood"
           tells you more than "brown" does, assuming you've seen
-          burned wood.
+          burned wood. Whose system is the weird one, exactly.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">

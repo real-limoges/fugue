@@ -226,8 +226,7 @@ defmodule FugueWeb.LabLive.Bayes do
         Twenty-five rooms. The shading is where you think you left them --
         your prior. Click a room to look. If they're not in there, the
         room's mass collapses to zero and the rest of the grid soaks it up.
-        Bayes' rule is that rearrangement: the total never changes, it just
-        moves.
+        Same total probability, rearranged. Bayes' rule is the rearrangement.
       </p>
 
       <div class="flex flex-col md:flex-row md:items-start gap-6">
