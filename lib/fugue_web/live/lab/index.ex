@@ -35,7 +35,8 @@ defmodule FugueWeb.LabLive.Index do
         >
           Four datasets, one habit: stack a line, a GAM, and a GAMLSS over the
           same points and watch what each layer can and can't say. The line is
-          the floor; the GAM bends; the GAMLSS lets the spread bend with it.
+          the floor; the GAM bends to the mean; the GAMLSS lets the spread bend
+          with it.
         </.card>
 
         <.card
@@ -44,9 +45,9 @@ defmodule FugueWeb.LabLive.Index do
           title="Three problems, three posteriors"
           accent="accent"
         >
-          A search, a rate, a decision. Each ends with a distribution over the
-          thing you didn't know, and any question you had is now an integral
-          over it. That's the whole framework.
+          A search, a rate, a decision. Each one ends with a distribution over
+          the thing you didn't know, and any question you had about it becomes
+          an integral over that distribution. That's the whole framework.
         </.card>
       </div>
     </div>

@@ -11,7 +11,7 @@ defmodule FugueWeb.LabLive.GamDatasets do
       label: "Sale price vs floor area",
       title: "Floor area and sale price",
       blurb:
-        "Sale prices against floor area, on a market that includes 700-square-foot starters and 4,500-square-foot custom builds. The mean rises with size, and so does the spread. A 4,000-sqft house has a lot more room to be cheap or expensive than a 700-sqft one does. A straight line gets the slope and loses everything else.",
+        "Sale prices against floor area, on a market that includes 700-square-foot starters and 4,500-square-foot custom builds. The mean rises with size, and so does the spread. A 4,000-sqft house has a lot more room to be cheap or expensive than a 700-sqft one does. A straight line can only report the slope.",
       layers: [
         %{id: "linear", label: "-- Linear", accent: :white_dash},
         %{id: "gam", label: "⌇ GAM (Normal)", accent: :gray},
@@ -22,19 +22,19 @@ defmodule FugueWeb.LabLive.GamDatasets do
           glyph: "--",
           accent: :white_dim,
           text:
-            "A line averages a market that scatters very differently at each scale: off at the small end, off at the large end, indifferent about why."
+            "A line averages a market that scatters very differently at each scale, so it sits off the data at the small end and off it again at the large end."
         },
         %{
           glyph: "⌇",
           accent: :gray,
           text:
-            "Normal GAM bends to the actual mean, but holds spread constant across the whole market. The gray band is the same width at 800 sqft as at 4,000, wrong in both directions."
+            "Normal GAM bends to the mean, but holds spread constant across the whole market. The gray band is the same width at 800 sqft as it is at 4,000."
         },
         %{
           glyph: "◈",
           accent: :primary,
           text:
-            "Gamma GAMLSS lets the spread ride along with the mean. The orange band fans out at the high end where prices genuinely vary, and tightens at the low end where they don't."
+            "Gamma GAMLSS lets the spread ride along with the mean. The orange band fans out at the high end where prices vary a lot, and tightens at the low end where they don't."
         }
       ]
     },
@@ -60,13 +60,13 @@ defmodule FugueWeb.LabLive.GamDatasets do
           glyph: "⌇",
           accent: :gray,
           text:
-            "Poisson GAM finds the bimodal shape, but Poisson forces variance equal to the mean. Its band is too tight at the peaks, where the day-to-day variation is actually much bigger."
+            "Poisson GAM finds the bimodal shape, but Poisson forces variance equal to the mean. Its band is too tight at the peaks, where the day-to-day variation is much bigger than that."
         },
         %{
           glyph: "◈",
           accent: :primary,
           text:
-            "Negative Binomial lets variance grow faster than the mean. The orange band widens at the peaks and the model stops surprising itself."
+            "Negative Binomial lets variance grow faster than the mean, so the orange band widens at the peaks to match how much one rush hour differs from the next."
         }
       ]
     },
@@ -98,7 +98,7 @@ defmodule FugueWeb.LabLive.GamDatasets do
           glyph: "◈",
           accent: :primary,
           text:
-            "Student-t expects the occasional disaster and treats it as a tail event. The orange band stays narrow where most deliveries actually behave."
+            "Student-t expects the occasional disaster and treats it as a tail event, so the orange band stays narrow across the distances where most deliveries behave."
         }
       ]
     },
@@ -107,7 +107,7 @@ defmodule FugueWeb.LabLive.GamDatasets do
       label: "Shot success vs distance",
       title: "Shooting accuracy and distance from the basket",
       blurb:
-        "Shot success rate against distance from the rim. Layups go in almost every time; half-court heaves go in almost never. The response is a proportion, pinned to (0, 1) by definition. A Normal band can't see the walls and walks straight through them. Beta with a logit link knows where they are. (I have a Warriors season pass. Steph Curry, statistically, is not supposed to be making 35-footers. He keeps making 35-footers.)",
+        "Shot success rate against distance from the rim. Layups go in almost every time; half-court heaves go in almost never. The response is a proportion, pinned to (0, 1) by definition, and a Normal band can't see those walls; it walks straight through them. Beta with a logit link knows where they are. (I have a Warriors season pass. Steph Curry, statistically, is not supposed to be making 35-footers. He keeps making 35-footers.)",
       layers: [
         %{id: "linear", label: "-- Linear (Normal)", accent: :white_dash},
         %{id: "gam", label: "⌇ Normal GAM", accent: :gray},
@@ -118,19 +118,19 @@ defmodule FugueWeb.LabLive.GamDatasets do
           glyph: "--",
           accent: :white_dim,
           text:
-            "Linear regression doesn't know the response is bounded; it predicts negative shooting percentages and shrugs."
+            "Linear regression doesn't know the response is bounded, so it happily predicts negative shooting percentages out past half court."
         },
         %{
           glyph: "⌇",
           accent: :gray,
           text:
-            "Normal GAM bends to the shape, but its band can still punch through 0 or 1. Normal doesn't have edges built in."
+            "Normal GAM bends to the shape, but its band can still punch through 0 or 1, because Normal doesn't have edges built into it."
         },
         %{
           glyph: "◈",
           accent: :primary,
           text:
-            "Beta on a logit link respects the bounds. The orange band squeezes asymmetrically near 0 and 1: when you're pinned against a wall, uncertainty stops being symmetric."
+            "Beta on a logit link respects the bounds. The orange band squeezes asymmetrically near 0 and 1, which is what uncertainty looks like when it's pinned against a wall."
         }
       ]
     }

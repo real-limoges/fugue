@@ -65,9 +65,8 @@ defmodule FugueWeb.MenagerieLive.Index do
           accent="secondary"
         >
           Two walkers start at the center. The classical one drifts into a bell;
-          the quantum one races out into two horns at the edges. A decoherence
-          slider blends one into the other, the dial that turns quantum back
-          into classical.
+          the quantum one races out into two horns at the edges. Drag the
+          decoherence slider to drain the weirdness back out.
         </.card>
 
         <.card
