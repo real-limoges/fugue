@@ -19,7 +19,9 @@ defmodule Fugue.Mood.DataFrame do
 
   def fill_missing_dates(entries) do
     by_date = Map.new(entries, &{&1.date, &1})
-    {min_date, max_date} = entries |> Enum.map(& &1.date) |> Enum.min_max(Date)
+    dates = Enum.map(entries, & &1.date)
+    min_date = Enum.min(dates, Date)
+    max_date = Enum.max(dates, Date)
 
     for date <- Date.range(min_date, max_date) do
       case Map.get(by_date, date) do
