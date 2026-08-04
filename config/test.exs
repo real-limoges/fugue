@@ -23,10 +23,3 @@ config :phoenix,
 
 # Skip CozoDB in test — no tests require it yet
 config :fugue, start_db: false
-
-# Stub Ish HTTP calls with Req.Test. Tests use `Req.Test.stub(Fugue.Ish, fn)`
-# to define responses per-test. Any unstubbed call fails loudly.
-config :fugue, Fugue.Ish,
-  url: "http://ish.test",
-  gcp_auth: false,
-  plug: {Req.Test, Fugue.Ish}

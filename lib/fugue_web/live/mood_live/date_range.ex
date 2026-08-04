@@ -23,9 +23,9 @@ defmodule FugueWeb.MoodLive.DateRange do
   end
 
   @doc """
-  Format a `{from, to}` tuple of ISO strings (as produced by `Fugue.Ish`) for
-  inline display. Returns an empty string when the range is missing so callers
-  can interpolate it unconditionally.
+  Format a `{from, to}` tuple of ISO strings (as produced by `Fugue.Mood.Wire`)
+  for inline display. Returns an empty string when the range is missing so
+  callers can interpolate it unconditionally.
 
       iex> FugueWeb.MoodLive.DateRange.format({"2022-04-01", "2026-03-30"})
       "2022-04-01 – 2026-03-30"

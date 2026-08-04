@@ -2,23 +2,17 @@
 
 The orchestration layer and public face of [realcomplex.systems](http://realcomplex.systems), a multi-service portfolio that demonstrates emergent complexity through interactive computational systems.
 
-Fugue is a Phoenix/Elixir application that serves the website and coordinates six independent services, each built in the language best suited to its domain. The name borrows from the musical form: independent voices entering one at a time, each self-contained, building toward something larger than any individual part.
+Fugue is a Phoenix/Elixir application that serves the website and coordinates three independent services, each built in the language best suited to its domain, plus its own in-process fuzzy-logic/mood-analysis math. The name borrows from the musical form: independent voices entering one at a time, each self-contained, building toward something larger than any individual part.
+
+## Mood Tracking (in-process, ported from Ish/Hazy)
+
+The gravitational center of the site: a fuzzy-logic model of emotional states as gradients rather than categories, driving the `/mood` LiveView, which turns four years of the author's own daily self-ratings into a multi-chapter visual essay. This used to be a separate Haskell microservice (Ish, wrapping the Hazy fuzzy-logic library) called over HTTP; it's now `Fugue.Fuzzy`/`Fugue.Mood`, plain Elixir running in-process against a bundled dataset.
+
+- **Stack:** Elixir (ported from Haskell/Hazy/Ish)
+- **Frontend:** `/mood` explorer: PCA trajectory hero (one scribble for the whole run), interactive fuzzy-clustering sandbox, calendar heatmap with transition borders, hysteresis-smoothed transition timeline and sankey, per-month "mood flower" radars, and a breath timeline of silences
+- **Status:** Live. `Fugue.Mood.Wire` computes clustering/gaps in-process; Fugue handles all visualization client-side via D3
 
 ## Services
-
-### Funktor: Algorithmic Jazz
-Generative jazz composition with Launchpad Mini hardware integration.
-
-- **Stack:** Haskell (Servant API, music generation), Tone.js (browser audio), CoreMIDI → C bridge → Haskell (hardware input)
-- **Frontend:** Virtual Launchpad Mini grid in browser
-- **Status:** ~50% complete
-
-### Ish: Mood Tracking
-The gravitational center of the system. A mood tracking microservice that uses fuzzy logic to model emotional states as gradients rather than categories. Fugue consumes it via the `/mood` LiveView, which turns four years of the author's own daily self-ratings into a multi-chapter visual essay.
-
-- **Stack:** Haskell (Servant API), Hazy (fuzzy logic library)
-- **Frontend:** `/mood` explorer: PCA trajectory hero (one scribble for the whole run), interactive fuzzy-clustering sandbox, calendar heatmap with transition borders, hysteresis-smoothed transition timeline and sankey, per-month "mood flower" radars, and a breath timeline of silences
-- **Status:** Live. Ish backend exposes `/data`, `/cluster`, `/gaps`; Fugue handles all visualization client-side via D3
 
 ### Garçon: NLP + Fuzzy Logic API
 A Haskell Servant wrapper that exposes Chompsky (NLP parser) and Hazy (fuzzy logic) as HTTP endpoints.
@@ -33,7 +27,7 @@ DSP analysis of bird vocalizations using xeno-canto field recording data.
 - **Status:** Not started
 
 ### Hazy: Fuzzy Logic Library
-Shared Haskell dependency used by Ish and Garçon. Models continuous/gradient states rather than binary ones.
+Haskell dependency used by Garçon. Models continuous/gradient states rather than binary ones. (Fugue no longer depends on it directly -- `Fugue.Fuzzy` is a from-scratch Elixir port, not a client of this repo.)
 
 - **Status:** Effectively done
 
@@ -45,26 +39,26 @@ Lua-configured natural language parser, exposed through Garçon.
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│              Fugue: Phoenix/Elixir                   │
-│         (Routing, LiveView UI, API Gateway)          │
-└────────────────┬────────┬────────┬─────────┬────────┘
-                 │        │        │         │
-                 ▼        ▼        ▼         ▼
-              ┌───────┐ ┌────┐ ┌───────┐ ┌────────┐
-              │Funktor│ │Ish │ │Garçon │ │Chirplet│
-              │Haskell│ │HSK │ │Haskell│ │Julia   │
-              │+Tone  │ │    │ │       │ │        │
-              └───────┘ └──┬─┘ └──┬────┘ └────────┘
-                            │      │
-                            ▼      ▼
-                         ┌──────────────┐
-                         │  Hazy        │
-                         │  (fuzzy logic)│
-                         └──────────────┘
+┌─────────────────────────────────────────────┐
+│              Fugue: Phoenix/Elixir           │
+│  (Routing, LiveView UI, in-process Fuzzy/    │
+│   Mood math ported from Hazy/Ish, API GW)    │
+└──────────────────────┬──────────┬───────────┘
+                       │          │
+                       ▼          ▼
+                   ┌───────┐ ┌────────┐
+                   │Garçon │ │Chirplet│
+                   │Haskell│ │Julia   │
+                   └──┬────┘ └────────┘
+                      │
+                      ▼
+                   ┌──────────────┐
+                   │  Hazy        │
+                   │  (fuzzy logic)│
+                   └──────────────┘
 ```
 
-Each service is isolated, developed and deployed independently. Cross-service connections (Ish mood state shaping Funktor's jazz parameters, etc.) are aspirational and expected to emerge from use rather than upfront design.
+Each service is isolated, developed and deployed independently. Cross-service connections are aspirational and expected to emerge from use rather than upfront design.
 
 ## Tech Stack
 
@@ -72,8 +66,7 @@ Each service is isolated, developed and deployed independently. Cross-service co
 |-------|-----------|
 | Web framework | Phoenix 1.8 / Elixir, LiveView |
 | HTTP server | Bandit |
-| Jazz generation | Funktor (Haskell), Tone.js, Launchpad Mini |
-| Mood tracking | Ish (Haskell), Hazy (fuzzy logic) |
+| Mood tracking | `Fugue.Fuzzy` / `Fugue.Mood` (Elixir, ported from Hazy/Ish) |
 | NLP | Chompsky (Lua-configured parser), Garçon (Haskell Servant) |
 | Birdsong DSP | Chirplet (Julia), xeno-canto |
 | Color data prep | Timbre (Python), World Color Survey |
@@ -103,8 +96,9 @@ fugue/
 ├── lib/
 │   ├── fugue/
 │   │   ├── color/           # Pure-Elixir color compute (petri WASM + Timbre-generated WCS data)
-│   │   ├── menagerie/       # Static-card sim modules (e.g., fuzzy)
-│   │   └── ish.ex           # Service client(s)
+│   │   ├── fuzzy/           # Fuzzy-logic math, ported from Hazy (Haskell)
+│   │   ├── mood/            # Mood-analysis math, ported from Ish (Haskell)
+│   │   └── menagerie/       # Static-card sim modules (e.g., fuzzy)
 │   ├── fugue_web/
 │   │   ├── live/            # Chapters: mood, color, menagerie, relation, negation, lab
 │   │   ├── components/      # Shared UI components
@@ -124,13 +118,11 @@ fugue/
 ## Related Repositories
 
 **Services**
-- [funktor](https://github.com/real-limoges/funktor): generative jazz + Launchpad Mini (Haskell, Tone.js)
-- [ish](https://github.com/real-limoges/ish): mood-tracking microservice (Haskell, Servant)
 - [garcon](https://github.com/real-limoges/garcon): NLP + fuzzy HTTP wrapper (Haskell, Servant)
 - [chirplet](https://github.com/real-limoges/chirplet): birdsong DSP (Julia + WASM/Rust)
 
 **Libraries**
-- [hazy](https://github.com/real-limoges/hazy): fuzzy-logic library (Haskell), shared by ish + garcon
+- [hazy](https://github.com/real-limoges/hazy): fuzzy-logic library (Haskell), used by garcon. `Fugue.Fuzzy` is a from-scratch Elixir port, not a client of this repo.
 - [chompsky](https://github.com/real-limoges/chompsky): Lua-configured NLP parser, exposed via garcon
 
 **Vendor'd in this repo**

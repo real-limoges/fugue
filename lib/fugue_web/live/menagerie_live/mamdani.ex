@@ -1,15 +1,13 @@
 defmodule FugueWeb.MenagerieLive.Mamdani do
   @moduledoc """
   Mamdani fan controller. Two crisp inputs get fuzzified, seven rules
-  fire server-side through Hazy via the Ish `/inference/mamdani` endpoint, and
-  the aggregated output shape is defuzzified into a crisp fan speed.
+  fire server-side through `Fugue.Fuzzy` (ported from Hazy), and the
+  aggregated output shape is defuzzified into a crisp fan speed.
   """
 
   use FugueWeb, :live_view
 
-  require Logger
-
-  alias Fugue.Ish
+  alias Fugue.Fuzzy.Inference.Wire
   alias Fugue.Menagerie.Mamdani, as: MamdaniLogic
 
   def mount(_params, _session, socket) do
@@ -18,9 +16,7 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
         mamdani_temperature: MamdaniLogic.default_temperature(),
         mamdani_humidity: MamdaniLogic.default_humidity(),
         mamdani_response: nil,
-        mamdani_crisp: nil,
-        mamdani_error: nil,
-        mamdani_gen: 0
+        mamdani_crisp: nil
       )
 
     {:ok, socket}
@@ -51,92 +47,32 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
     end
   end
 
-  def handle_info({:mamdani_result, gen, result, t, h}, socket) do
-    if gen != socket.assigns.mamdani_gen do
-      {:noreply, socket}
-    else
-      case result do
-        {:ok, response} ->
-          {:noreply, apply_mamdani_result(socket, response, t, h)}
-
-        {:error, reason} ->
-          Logger.error("Ish mamdani call failed: #{inspect(reason)}")
-          {:noreply, assign(socket, mamdani_error: "inference service unavailable")}
-      end
-    end
-  end
-
   defp refresh_mamdani(socket) do
     %{mamdani_temperature: t, mamdani_humidity: h} = socket.assigns
-    request = MamdaniLogic.request(t, h)
-    gen = socket.assigns.mamdani_gen + 1
-
-    pid = self()
-
-    Task.start_link(fn ->
-      send(pid, {:mamdani_result, gen, Ish.mamdani(request), t, h})
-    end)
-
-    assign(socket, mamdani_gen: gen)
+    response = Wire.run_request(MamdaniLogic.request(t, h))
+    apply_mamdani_result(socket, response, t, h)
   end
 
   defp apply_mamdani_result(socket, response, t, h) do
-    summaries = MamdaniLogic.rule_summaries()
-
-    strengths =
-      response
-      |> Map.get("rule_strengths", [])
-      |> pad_strengths(length(summaries))
-
     rules =
-      summaries
-      |> Enum.zip(strengths)
+      MamdaniLogic.rule_summaries()
+      |> Enum.zip(response["rule_strengths"])
       |> Enum.map(fn {%{text: text, output_term: term}, strength} ->
         %{text: text, output_term: term, strength: strength}
       end)
 
-    crisp = Map.get(response, "crisp", %{})
+    crisp = response["crisp"]
 
     socket
-    |> assign(
-      mamdani_response: response,
-      mamdani_crisp: Map.get(crisp, "fan_speed"),
-      mamdani_error: nil
-    )
+    |> assign(mamdani_response: response, mamdani_crisp: crisp["fan_speed"])
     |> push_event("update-mamdani", %{
       mfs: MamdaniLogic.mfs(),
       rules: rules,
       inputs: %{temperature: t, humidity: h},
-      input_degrees: Map.get(response, "input_degrees", %{}),
-      output_curves: Map.get(response, "output_curves", %{}),
+      input_degrees: response["input_degrees"],
+      output_curves: response["output_curves"],
       crisp: crisp
     })
-  end
-
-  defp pad_strengths(strengths, expected) when is_list(strengths) do
-    actual = length(strengths)
-
-    cond do
-      actual == expected ->
-        strengths
-
-      actual < expected ->
-        Logger.warning(
-          "Ish returned #{actual} rule strengths, expected #{expected}; padding with zeros"
-        )
-
-        strengths ++ List.duplicate(0.0, expected - actual)
-
-      true ->
-        Logger.warning("Ish returned #{actual} rule strengths, expected #{expected}; truncating")
-
-        Enum.take(strengths, expected)
-    end
-  end
-
-  defp pad_strengths(_other, expected) do
-    Logger.warning("Ish returned non-list rule_strengths; using zeros")
-    List.duplicate(0.0, expected)
   end
 
   defp parse_float(str, default) do
@@ -169,9 +105,9 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
           of that aggregated shape is the crisp fan speed.
         </p>
         <p class="text-xs text-gray-500 mt-3 max-w-3xl">
-          Math runs server-side through Hazy (Haskell) via the Ish
-          <code class="text-gray-400">/inference/mamdani</code>
-          endpoint. Drag the sliders to watch the rule firings, output shape, and
+          Math runs server-side through <code class="text-gray-400">Fugue.Fuzzy</code>
+          (ported from Hazy, the Haskell fuzzy-logic library this used to call out to
+          over HTTP). Drag the sliders to watch the rule firings, output shape, and
           defuzzified crisp value respond.
         </p>
       </div>
@@ -223,20 +159,6 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
           </label>
         </div>
       </form>
-
-      <%= if @mamdani_error do %>
-        <div class="mb-4 flex items-center gap-3 rounded-lg border border-amber-900/50 bg-amber-950/30 px-4 py-3 text-sm text-amber-200">
-          <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-amber-400">
-            inference offline
-          </span>
-          <span class="text-amber-100/80">
-            {@mamdani_error}
-            <%= if @mamdani_response do %>
-              · showing last result
-            <% end %>
-          </span>
-        </div>
-      <% end %>
 
       <%= if @mamdani_crisp do %>
         <div class="mb-4 flex items-baseline gap-4 rounded-lg border border-white/5 bg-base-200 px-6 py-3">

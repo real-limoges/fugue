@@ -5,7 +5,7 @@ defmodule FugueWeb.MoodLive do
 
   alias FugueWeb.MoodLive.{DataTransforms, ExperiencePanel, Focus, Sections, Snapshot}
   alias FugueWeb.MoodLive.Structs.{AnalysisResult, GapData}
-  alias Fugue.Ish
+  alias Fugue.Mood.Wire
 
   @default_k 3
   @default_m 1.5
@@ -18,7 +18,6 @@ defmodule FugueWeb.MoodLive do
     socket =
       assign(socket,
         loading: true,
-        error: nil,
         entries: [],
         analysis: %AnalysisResult{
           clusters: [],
@@ -40,39 +39,38 @@ defmodule FugueWeb.MoodLive do
   end
 
   def handle_info(:load_data, socket) do
+    # Fugue.Mood.Wire computes from the bundled dataset in-process (no I/O,
+    # can't fail the way an Ish HTTP call could) -- still parallelized via
+    # Task since clustering + gap analysis are genuine CPU work over ~1000
+    # points, run twice independently (see Fugue.Mood.Wire's moduledoc).
     tasks = %{
-      data: Task.async(fn -> Ish.data(@from, @to) end),
-      analysis: Task.async(fn -> Ish.cluster(@default_k, @default_m, @from, @to) end),
-      gaps: Task.async(fn -> Ish.gaps(@from, @to) end)
+      data: Task.async(fn -> Wire.data(@from, @to) end),
+      analysis: Task.async(fn -> Wire.cluster(@default_k, @default_m, @from, @to) end),
+      gaps: Task.async(fn -> Wire.gaps(@from, @to) end)
     }
 
     results = Map.new(tasks, fn {key, task} -> {key, Task.await(task, 15_000)} end)
 
-    case {results.data, results.analysis, results.gaps} do
-      {{:ok, entries}, {:ok, raw_analysis}, {:ok, raw_gaps}} ->
-        analysis = DataTransforms.parse_analysis(raw_analysis, entries)
+    {:ok, entries} = results.data
+    {:ok, raw_analysis} = results.analysis
+    {:ok, raw_gaps} = results.gaps
 
-        gaps =
-          raw_gaps |> GapData.from_api() |> DataTransforms.remap_gap_keys(analysis.name_to_id)
+    analysis = DataTransforms.parse_analysis(raw_analysis, entries)
+    gaps = raw_gaps |> GapData.from_api() |> DataTransforms.remap_gap_keys(analysis.name_to_id)
+    snapshot = Snapshot.from(entries, analysis, gaps)
 
-        snapshot = Snapshot.from(entries, analysis, gaps)
+    socket =
+      socket
+      |> assign(
+        loading: false,
+        entries: entries,
+        analysis: analysis,
+        gaps: gaps,
+        snapshot: snapshot
+      )
+      |> push_event("update-brush-timeline", %{dates: Enum.map(entries, & &1["date"])})
 
-        socket =
-          socket
-          |> assign(
-            loading: false,
-            entries: entries,
-            analysis: analysis,
-            gaps: gaps,
-            snapshot: snapshot
-          )
-          |> push_event("update-brush-timeline", %{dates: Enum.map(entries, & &1["date"])})
-
-        {:noreply, socket}
-
-      _ ->
-        {:noreply, assign(socket, loading: false, error: "Could not connect to Ish API")}
-    end
+    {:noreply, socket}
   end
 
   def handle_event("day_selected", %{"date" => date}, socket) do
@@ -117,11 +115,6 @@ defmodule FugueWeb.MoodLive do
         cluster_colors={@analysis.cluster_colors}
       />
       <ExperiencePanel.panel selected_day={@selected_day} />
-      <%= if @error do %>
-        <div class="bg-red-900/50 border border-red-500 text-red-200 px-4 py-3 rounded mb-4">
-          {@error}
-        </div>
-      <% end %>
 
       <%= if @loading do %>
         <div class="flex items-center justify-center h-64">

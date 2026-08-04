@@ -63,3 +63,6 @@ CLAUDE.md
 mood-*.png
 color-*.png
 menagerie-*.png
+
+# the annoying MacOS thing
+.DS_Store
