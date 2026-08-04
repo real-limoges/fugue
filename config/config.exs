@@ -7,8 +7,6 @@
 # General application configuration
 import Config
 
-config :fugue, Fugue.Ish, url: System.get_env("ISH_URL", "http://localhost:7333")
-
 # Configure the endpoint
 config :fugue, FugueWeb.Endpoint,
   url: [host: "localhost"],

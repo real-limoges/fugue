@@ -11,7 +11,6 @@ defmodule Fugue.Application do
       FugueWeb.Telemetry,
       {DNSCluster, query: Application.get_env(:fugue, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Fugue.PubSub},
-      Fugue.IshCache,
       FugueWeb.Endpoint
     ]
 

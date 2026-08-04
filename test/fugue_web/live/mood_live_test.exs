@@ -1,18 +1,8 @@
 defmodule FugueWeb.MoodLiveTest do
-  use FugueWeb.ConnCase, async: false
-
-  alias Fugue.{IshCache, IshFixtures}
-
-  setup %{conn: conn} do
-    Req.Test.set_req_test_to_shared()
-    IshCache.invalidate_all()
-    %{conn: conn}
-  end
+  use FugueWeb.ConnCase, async: true
 
   describe "mount" do
-    test "renders past the loading state when Ish is available", %{conn: conn} do
-      stub_ish()
-
+    test "renders past the loading state, loaded from the bundled dataset", %{conn: conn} do
       {:ok, view, _html} = live(conn, "/mood")
       html = render(view)
 
@@ -20,14 +10,11 @@ defmodule FugueWeb.MoodLiveTest do
 
       assigns = :sys.get_state(view.pid).socket.assigns
       assert assigns.loading == false
-      assert assigns.error == nil
       assert assigns.entries != []
       assert assigns.analysis.clusters != []
     end
 
     test "renders a cross-link to /menagerie in chapter 1", %{conn: conn} do
-      stub_ish()
-
       {:ok, view, _html} = live(conn, "/mood")
       html = render(view)
 
@@ -36,8 +23,6 @@ defmodule FugueWeb.MoodLiveTest do
     end
 
     test "renders the isolation hint above the cluster chips", %{conn: conn} do
-      stub_ish()
-
       {:ok, view, _html} = live(conn, "/mood")
       html = render(view)
 
@@ -45,8 +30,6 @@ defmodule FugueWeb.MoodLiveTest do
     end
 
     test "shows an isolation banner after a cluster is selected", %{conn: conn} do
-      stub_ish()
-
       {:ok, view, _html} = live(conn, "/mood")
 
       # Pick the first cluster id from the loaded analysis.
@@ -66,8 +49,6 @@ defmodule FugueWeb.MoodLiveTest do
     end
 
     test "every ported chapter component renders its server-side SVG", %{conn: conn} do
-      stub_ish()
-
       {:ok, view, _html} = live(conn, "/mood")
       html = render(view)
 
@@ -100,22 +81,19 @@ defmodule FugueWeb.MoodLiveTest do
     end
 
     test "clicking a transition-timeline segment isolates the cluster", %{conn: conn} do
-      stub_ish()
-
       {:ok, view, _html} = live(conn, "/mood")
 
-      # Pick whichever cluster actually has a segment rendered.
+      # Pick whichever cluster actually has a segment rendered. The real
+      # (non-fixture) dataset spans ~4 years, so a dominant cluster can
+      # recur across many non-contiguous segments -- simulate the click
+      # event directly rather than requiring a single unique DOM match,
+      # since every one of that cluster's segments fires the same event.
       cluster_id =
         :sys.get_state(view.pid).socket.assigns.snapshot.timeline_segments
         |> List.first()
         |> Map.fetch!(:cluster)
 
-      html =
-        view
-        |> element(
-          ~s(.tl-segment[phx-click="cluster_selected"][phx-value-cluster="#{cluster_id}"])
-        )
-        |> render_click()
+      html = render_click(view, "cluster_selected", %{"cluster" => cluster_id})
 
       assert html =~ "Isolating"
 
@@ -124,8 +102,6 @@ defmodule FugueWeb.MoodLiveTest do
     end
 
     test "clicking a radar cell isolates the cluster", %{conn: conn} do
-      stub_ish()
-
       {:ok, view, _html} = live(conn, "/mood")
 
       cluster_id =
@@ -141,8 +117,6 @@ defmodule FugueWeb.MoodLiveTest do
     end
 
     test "clicking a calendar day-cell focuses the day", %{conn: conn} do
-      stub_ish()
-
       {:ok, view, _html} = live(conn, "/mood")
 
       date =
@@ -158,8 +132,6 @@ defmodule FugueWeb.MoodLiveTest do
     end
 
     test "clear_highlights collapses focus to :none", %{conn: conn} do
-      stub_ish()
-
       {:ok, view, _html} = live(conn, "/mood")
 
       # Prime some selection state.
@@ -178,31 +150,5 @@ defmodule FugueWeb.MoodLiveTest do
 
       assert :sys.get_state(view.pid).socket.assigns.focus == :none
     end
-
-    test "renders an error banner when Ish is unreachable", %{conn: conn} do
-      Req.Test.stub(Fugue.Ish, fn conn -> Plug.Conn.send_resp(conn, 500, "boom") end)
-
-      {:ok, view, _html} = live(conn, "/mood")
-      html = render(view)
-
-      assert html =~ "Could not connect to Ish API"
-
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.loading == false
-      assert assigns.error =~ "Could not connect"
-    end
-  end
-
-  # -- helpers --
-
-  defp stub_ish do
-    Req.Test.stub(Fugue.Ish, fn conn ->
-      case {conn.method, conn.request_path} do
-        {"GET", "/data"} -> Req.Test.json(conn, IshFixtures.entries())
-        {"POST", "/cluster"} -> Req.Test.json(conn, IshFixtures.cluster_response(3))
-        {"GET", "/gaps"} -> Req.Test.json(conn, IshFixtures.gaps_response())
-        _ -> Plug.Conn.send_resp(conn, 404, "unmatched")
-      end
-    end)
   end
 end

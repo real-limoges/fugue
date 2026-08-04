@@ -3,8 +3,6 @@ defmodule FugueWeb.MenagerieLiveTest do
 
   import Phoenix.LiveViewTest
 
-  alias Fugue.IshFixtures
-
   describe "index" do
     test "lists the experiments and links to their pages", %{conn: conn} do
       {:ok, _view, html} = live(conn, "/menagerie")
@@ -110,7 +108,6 @@ defmodule FugueWeb.MenagerieLiveTest do
       assert assigns.mamdani_temperature == 22.0
       assert assigns.mamdani_humidity == 50.0
       assert assigns.mamdani_response == nil
-      assert assigns.mamdani_error == nil
     end
   end
 
@@ -160,26 +157,19 @@ defmodule FugueWeb.MenagerieLiveTest do
   end
 
   describe "Mamdani playground" do
-    test "menagerie:mamdani_ready stores the inference response and clears error",
+    test "menagerie:mamdani_ready computes the inference response synchronously",
          %{conn: conn} do
-      stub_mamdani()
-
       {:ok, view, _html} = live(conn, "/menagerie/mamdani")
       render_hook(view, "menagerie:mamdani_ready", %{})
 
-      # Wait for the async Task to deliver :mamdani_result
-      Process.sleep(200)
-      _ = render(view)
-
       assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.mamdani_response == IshFixtures.mamdani_response()
-      assert assigns.mamdani_error == nil
+      assert %{"crisp" => %{"fan_speed" => crisp}} = assigns.mamdani_response
+      assert assigns.mamdani_crisp == crisp
+      assert crisp >= 0.0 and crisp <= 100.0
     end
 
     test "update_mamdani_inputs reassigns inputs and refreshes the response",
          %{conn: conn} do
-      stub_mamdani()
-
       {:ok, view, _html} = live(conn, "/menagerie/mamdani")
       render_hook(view, "menagerie:mamdani_ready", %{})
 
@@ -187,19 +177,13 @@ defmodule FugueWeb.MenagerieLiveTest do
       |> element("form[phx-change=update_mamdani_inputs]")
       |> render_change(%{"temperature" => "30.0", "humidity" => "75"})
 
-      # Wait for the async Task to deliver :mamdani_result
-      Process.sleep(200)
-      _ = render(view)
-
       assigns = :sys.get_state(view.pid).socket.assigns
       assert assigns.mamdani_temperature == 30.0
       assert assigns.mamdani_humidity == 75.0
-      assert assigns.mamdani_response == IshFixtures.mamdani_response()
+      assert %{"crisp" => %{"fan_speed" => _}} = assigns.mamdani_response
     end
 
     test "no-op when the inputs haven't moved", %{conn: conn} do
-      stub_mamdani()
-
       {:ok, view, _html} = live(conn, "/menagerie/mamdani")
       render_hook(view, "menagerie:mamdani_ready", %{})
 
@@ -212,22 +196,6 @@ defmodule FugueWeb.MenagerieLiveTest do
       after_ = :sys.get_state(view.pid).socket.assigns
       assert before.mamdani_temperature == after_.mamdani_temperature
       assert before.mamdani_humidity == after_.mamdani_humidity
-    end
-
-    test "surfaces an error banner when Ish is unreachable", %{conn: conn} do
-      Req.Test.stub(Fugue.Ish, fn conn -> Plug.Conn.send_resp(conn, 500, "boom") end)
-
-      {:ok, view, _html} = live(conn, "/menagerie/mamdani")
-      render_hook(view, "menagerie:mamdani_ready", %{})
-
-      # Wait for the async Task to deliver :mamdani_result
-      Process.sleep(200)
-
-      html = render(view)
-      assert html =~ "inference service unavailable"
-
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.mamdani_error =~ "unavailable"
     end
   end
 
@@ -289,18 +257,6 @@ defmodule FugueWeb.MenagerieLiveTest do
     test "build_mfs/2 with defaults matches default_mfs/0" do
       assert Fuzzy.build_mfs(0.0, 1.0) == Fuzzy.default_mfs()
     end
-  end
-
-  defp stub_mamdani do
-    Req.Test.stub(Fugue.Ish, fn conn ->
-      case {conn.method, conn.request_path} do
-        {"POST", "/inference/mamdani"} ->
-          Req.Test.json(conn, IshFixtures.mamdani_response())
-
-        _ ->
-          Plug.Conn.send_resp(conn, 404, "not stubbed")
-      end
-    end)
   end
 
   describe "mount /menagerie/boids" do
