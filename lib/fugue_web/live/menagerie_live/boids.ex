@@ -146,6 +146,11 @@ defmodule FugueWeb.MenagerieLive.Boids do
         </canvas>
       </div>
 
+      <.figure_source
+        note="Three steering rules (separation, alignment, cohesion) over a neighbor query, stepped in C and compiled to WASM. The sliders write straight into the kernel's parameter struct; nothing round-trips to the server."
+        repo="petri"
+      />
+
       <div class="flex flex-wrap gap-2 mb-4">
         <button
           type="button"
@@ -172,6 +177,8 @@ defmodule FugueWeb.MenagerieLive.Boids do
       </div>
 
       <AnimatedCard.slider_grid sliders={@sliders} params={@params} />
+
+      <.source_link repos={["petri", {"fugue", "lib/fugue_web/live/menagerie_live/boids.ex"}]} />
     </div>
     """
   end

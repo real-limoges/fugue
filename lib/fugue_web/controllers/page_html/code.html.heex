@@ -1,0 +1,68 @@
+<article class="px-4 py-8 max-w-4xl mx-auto">
+  <header class="mb-12">
+    <h1 class="text-3xl font-bold tracking-tight text-base-content">
+      Code.
+    </h1>
+    <p class="text-gray-500 mt-2">
+      What's underneath, and where to read it.
+    </p>
+  </header>
+
+  <div class="space-y-5 max-w-2xl">
+    <p class="text-sm text-base-content/65 leading-relaxed">
+      This site is a front end. The interesting parts are separate repos
+      that got pulled in here once they worked, and all of them are
+      public.
+    </p>
+
+    <p class="text-sm text-base-content/65 leading-relaxed">
+      I pick a language by the job rather than by what's already in the
+      directory. Anything with a hot loop in it goes to Rust or C and
+      comes back as WASM; the layer holding the pieces together is
+      Elixir. Makes for a scattered-looking list of repos.
+    </p>
+  </div>
+
+  <section class="mt-16">
+    <h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/85 mb-5">
+      Running right now
+    </h2>
+    <ul class="space-y-6">
+      <.repo_row :for={repo <- running()} repo={repo} />
+    </ul>
+  </section>
+
+  <section class="mt-16">
+    <h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/85 mb-2">
+      In the shop
+    </h2>
+    <p class="text-sm text-base-content/50 leading-relaxed max-w-2xl mb-5">
+      Real and public, but nothing here is running yet.
+    </p>
+    <ul class="space-y-6">
+      <.repo_row :for={repo <- in_the_shop()} repo={repo} />
+    </ul>
+  </section>
+
+  <section class="mt-16">
+    <h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/85 mb-5">
+      Reading it
+    </h2>
+    <p class="text-sm text-base-content/65 leading-relaxed max-w-2xl">
+      Every page here ends with a
+      <span class="font-mono text-xs text-base-content/50">source</span>
+      line pointing at the code that draws it, usually straight to the
+      directory rather than the repo root. If something on this site
+      looks like it shouldn't work, that's the fastest way to check
+      whether it does.
+    </p>
+    <p class="mt-4 text-sm text-base-content/65 leading-relaxed max-w-2xl">
+      The rest is on <a
+        href="https://github.com/real-limoges"
+        class="text-amber-300 hover:text-amber-200 underline decoration-dotted underline-offset-4"
+      >
+        GitHub
+      </a>, including a fair amount that never made it here.
+    </p>
+  </section>
+</article>

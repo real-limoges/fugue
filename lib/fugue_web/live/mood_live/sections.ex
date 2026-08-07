@@ -8,6 +8,8 @@ defmodule FugueWeb.MoodLive.Sections do
 
   use Phoenix.Component
 
+  import FugueWeb.CoreComponents, only: [figure_source: 1]
+
   alias FugueWeb.MoodLive.{
     AmbiguityHistogram,
     CalendarGrid,
@@ -63,6 +65,10 @@ defmodule FugueWeb.MoodLive.Sections do
           </div>
         </div>
       </div>
+      <.figure_source
+        note="Four years of nightly self-ratings on five dimensions, drawn as one continuous path and colored by whichever cluster each night leans toward. Rendered server-side as SVG, all at once; there is no draw-in animation."
+        repo={{"fugue", "lib/fugue/mood/analysis.ex"}}
+      />
     </section>
     """
   end
@@ -293,6 +299,10 @@ defmodule FugueWeb.MoodLive.Sections do
         <h3 class="text-sm font-semibold text-gray-200 mb-2">Days in-between</h3>
         <AmbiguityHistogram.histogram bins={@ambiguity_bins} threshold={@ambiguity_threshold} />
       </div>
+      <.figure_source
+        note="Fuzzy c-means with k=3 and m=1.5: every night holds a partial membership in all three states rather than getting one label. The in-between days are the ones no state claims past the threshold, which is most of why I went fuzzy instead of k-means."
+        repo={{"fugue", "lib/fugue/fuzzy/fcm.ex"}}
+      />
     </section>
     """
   end
@@ -398,6 +408,10 @@ defmodule FugueWeb.MoodLive.Sections do
           selected_cluster={@selected_cluster}
         />
       </div>
+      <.figure_source
+        note="One cell per night on a date spine that includes the nights I never filled in, so the holes stay visible instead of closing up silently."
+        repo={{"fugue", "lib/fugue/mood/dataframe.ex"}}
+      />
     </section>
     """
   end
@@ -450,13 +464,13 @@ defmodule FugueWeb.MoodLive.Sections do
 
       <p class="text-sm text-gray-400 leading-relaxed mt-6 mb-4">
         Above: which transitions happened, when.<br />
-        Below: which ones tend to happen <em>at all</em>, summed across the four years: the well-worn paths next to the ones that almost never light up.
+        Below: which ones tend to happen <em>at all</em>, summed across the four years: the routes I actually take, next to the ones that almost never light up.
       </p>
 
       <div class="bg-base-200 rounded-lg p-4 mt-4">
         <h3 class="text-sm font-semibold text-gray-200 mb-2">Where do I go from here?</h3>
         <p class="text-xs text-gray-500 mb-3">
-          Once I'm in a state, where does it usually go next? Thicker bands are the well-worn paths.
+          Once I'm in a state, where does it usually go next? Thicker bands mean it happens more.
         </p>
         <TransitionSankey.sankey
           transitions={@mood_transitions}
@@ -475,7 +489,7 @@ defmodule FugueWeb.MoodLive.Sections do
         <div class="bg-base-200 rounded-lg p-4 flex flex-col h-full">
           <h3 class="text-sm font-semibold text-gray-200 mb-2">Phase space, without the diary</h3>
           <p class="text-sm text-gray-300 mb-3 leading-relaxed">
-            A Thomas attractor in the palette above; three coupled equations looping a bounded region forever, never quite repeating. States as gravity wells, with the path never settling into any of them. The math doesn't know it's a metaphor.
+            A Thomas attractor in the palette above; three coupled equations looping a bounded region forever, never quite repeating. States as gravity wells, with the path never settling into any of them.
           </p>
           <div
             id="cluster-attractor"
@@ -497,6 +511,10 @@ defmodule FugueWeb.MoodLive.Sections do
           highlighted_dates={@highlighted_dates}
         />
       </div>
+      <.figure_source
+        note="Transitions counted between consecutive nights, weighted by how strongly each night belonged to the state it was leaving and the one it was arriving in."
+        repo={{"fugue", "lib/fugue/mood/analysis.ex"}}
+      />
     </section>
     """
   end
@@ -567,6 +585,10 @@ defmodule FugueWeb.MoodLive.Sections do
           clusters={@distribution_clusters}
         />
       </div>
+      <.figure_source
+        note="The five dimensions do not share a scale (sleep runs 0-15, outlook and speed 0-10, anxiety and sensitivity 0-5), so each one gets its own membership functions before anything is compared."
+        repo={{"fugue", "lib/fugue/mood/fuzzify.ex"}}
+      />
     </section>
     """
   end
@@ -604,6 +626,10 @@ defmodule FugueWeb.MoodLive.Sections do
         date_range={@full_date_range}
         cluster_colors={@analysis.cluster_colors}
         cluster_names={@cluster_names}
+      />
+      <.figure_source
+        note="What the missing nights were probably like, inferred from the states on either side of each gap. Skipping a week tends to say something about the week."
+        repo={{"fugue", "lib/fugue/mood/gaps.ex"}}
       />
     </section>
     """
@@ -672,7 +698,7 @@ defmodule FugueWeb.MoodLive.Sections do
         A four-year snapshot, and no promise of a fifth. Resolution this fine wasn't the goal; it's just what fell out of doing the chart every night.
       </p>
       <p class="text-sm text-gray-300 mb-5 leading-relaxed">
-        None of this is a recommendation, or a method, or a diagnosis. Just higher resolution than two words allow, on the question of what bipolar is doing inside one specific head over four years. The numbers sit alongside the words, and once in a while they catch something the words miss.
+        I'm not recommending this to anyone, and it certainly isn't a diagnosis. Just higher resolution than two words allow, on the question of what bipolar is doing inside one specific head over four years. The numbers sit alongside the words, and once in a while they catch something the words miss.
       </p>
       <p class="text-sm text-gray-300 leading-relaxed">
         If you read this far, thanks. If anything landed, or you've made something like this from your own data, I'd like to hear about it.

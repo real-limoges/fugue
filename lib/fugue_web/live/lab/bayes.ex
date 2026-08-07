@@ -185,6 +185,11 @@ defmodule FugueWeb.LabLive.Bayes do
         found={@search_found}
       />
 
+      <.figure_source
+        note="Bayes' rule done by hand on a grid: a prior over where the thing is, times the likelihood of not having found it where you already looked, renormalized after every search."
+        repo={{"fugue", "lib/fugue_web/live/lab/bayes.ex"}}
+      />
+
       <.rate_section
         prior_alpha={@prior_alpha}
         prior_beta={@prior_beta}
@@ -195,6 +200,11 @@ defmodule FugueWeb.LabLive.Bayes do
         observed_count={@observed_count}
       />
 
+      <.figure_source
+        note="Poisson likelihood against a Gamma prior. Gamma is conjugate to Poisson, so the posterior is just another Gamma with updated parameters: closed form, no sampler, no WASM."
+        repo={{"fugue", "lib/fugue_web/live/lab/charts.ex"}}
+      />
+
       <.decision_section
         post_alpha={@post_alpha}
         post_beta={@post_beta}
@@ -203,6 +213,13 @@ defmodule FugueWeb.LabLive.Bayes do
         threshold_max={@threshold_max}
         threshold_step={@threshold_step}
       />
+
+      <.figure_source
+        note="The same posterior as above, integrated past a threshold. That tail area is the whole decision; dragging the line moves the bound on the integral, not the model."
+        repo={{"fugue", "lib/fugue_web/live/lab/bayes.ex"}}
+      />
+
+      <.source_link repos={[{"fugue", "lib/fugue_web/live/lab/bayes.ex"}]} />
     </div>
     """
   end

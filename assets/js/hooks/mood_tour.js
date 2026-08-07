@@ -8,7 +8,7 @@ const STEPS = [
   {
     id: "mood-chapter-1",
     title: "Here are my states",
-    body: "The fuzzy clustering found these on its own — no labels given. Each one is a shape my days tend to fall into, more gravity well than box.",
+    body: "The fuzzy clustering found these on its own; no labels given. Each one is a shape my days tend to fall into, more gravity well than box.",
   },
   {
     id: "mood-chapter-2",
@@ -23,7 +23,7 @@ const STEPS = [
   {
     id: "mood-chapter-5",
     title: "And where I missed",
-    body: "I'm not perfect at this. A lot of the time the state I came back in wasn't the one I left in — that's its own kind of signal.",
+    body: "I'm not perfect at this. A lot of the time the state I came back in wasn't the one I left in; that's its own kind of signal.",
   },
   {
     id: "mood-param-controls",

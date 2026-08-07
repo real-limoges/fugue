@@ -3,7 +3,7 @@ import { setupDprCanvas, attachResizeRedraw } from "../lib/canvas_figure.js"
 // Three occupation histograms overlaid: Maxwell-Boltzmann, Bose-Einstein,
 // Fermi-Dirac. Given N particles and L = 30 energy levels at ε_i = i, solve
 // for the chemical potential μ that conserves N under each statistics, then
-// plot n_i(T, μ). MB has a closed form. BE and FD use bisection — the sum
+// plot n_i(T, μ). MB has a closed form. BE and FD use bisection; the sum
 // Σ n_i(μ) is monotonic in μ, so bisection converges quickly.
 //
 // Y-axis is log-scaled. MB's exponential decay becomes a straight line
@@ -190,14 +190,14 @@ function draw(canvas, T, N) {
   const bePts = toPts(nBE)
   const fdPts = toPts(nFD)
 
-  // MB — classical baseline: gray dashed
+  // MB, classical baseline: gray dashed
   ctx.strokeStyle = MB_COLOR
   ctx.lineWidth = 1.25
   ctx.setLineDash([4, 4])
   drawCurve(ctx, mbPts)
   ctx.setLineDash([])
 
-  // FD — thin cyan solid with dot markers at each level
+  // FD, thin cyan solid with dot markers at each level
   ctx.strokeStyle = QUANTUM_COLOR
   ctx.lineWidth = 1.25
   drawCurve(ctx, fdPts)
@@ -209,7 +209,7 @@ function draw(canvas, T, N) {
     ctx.fill()
   }
 
-  // BE — thick cyan solid
+  // BE, thick cyan solid
   ctx.strokeStyle = QUANTUM_COLOR
   ctx.lineWidth = 2.5
   ctx.lineJoin = "round"
@@ -231,7 +231,7 @@ function draw(canvas, T, N) {
   ctx.lineTo(lx + lineLen, ly + 6)
   ctx.stroke()
   ctx.fillStyle = LABEL_COLOR
-  ctx.fillText("Bose–Einstein", lx + lineLen + 8, ly + 10)
+  ctx.fillText("Bose-Einstein", lx + lineLen + 8, ly + 10)
 
   // Fermi-Dirac: thin cyan with dots
   ctx.strokeStyle = QUANTUM_COLOR
@@ -248,7 +248,7 @@ function draw(canvas, T, N) {
     ctx.fill()
   }
   ctx.fillStyle = LABEL_COLOR
-  ctx.fillText("Fermi–Dirac", lx + lineLen + 8, ly + rowH + 10)
+  ctx.fillText("Fermi-Dirac", lx + lineLen + 8, ly + rowH + 10)
 
   // Maxwell-Boltzmann: gray dashed
   ctx.strokeStyle = MB_COLOR
@@ -260,7 +260,7 @@ function draw(canvas, T, N) {
   ctx.stroke()
   ctx.setLineDash([])
   ctx.fillStyle = LABEL_COLOR
-  ctx.fillText("Maxwell–Boltzmann", lx + lineLen + 8, ly + rowH * 2 + 10)
+  ctx.fillText("Maxwell-Boltzmann", lx + lineLen + 8, ly + rowH * 2 + 10)
 }
 
 export const QuantumStats = {

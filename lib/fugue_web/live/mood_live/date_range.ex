@@ -28,11 +28,11 @@ defmodule FugueWeb.MoodLive.DateRange do
   callers can interpolate it unconditionally.
 
       iex> FugueWeb.MoodLive.DateRange.format({"2022-04-01", "2026-03-30"})
-      "2022-04-01 – 2026-03-30"
+      "2022-04-01 to 2026-03-30"
 
       iex> FugueWeb.MoodLive.DateRange.format(nil)
       ""
   """
   def format(nil), do: ""
-  def format({from, to}), do: "#{from} – #{to}"
+  def format({from, to}), do: "#{from} to #{to}"
 end

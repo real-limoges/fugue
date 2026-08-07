@@ -181,6 +181,10 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
           style="min-height: 640px;"
         >
         </div>
+        <.figure_source
+          note="A full Mamdani controller: fuzzify, fire every rule, clip each consequent, aggregate the envelope, then defuzzify by centroid. The rule set is plain data, so changing a rule doesn't mean changing any code."
+          repo={{"fugue", "lib/fugue/fuzzy/inference/mamdani.ex"}}
+        />
         <p class="mt-3 max-w-3xl text-xs leading-snug text-gray-500">
           Top row shows each input fuzzified into its term set, with a dashed
           crisp line and dots marking the degree of membership at that input.
@@ -189,6 +193,8 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
           underneath the aggregated envelope; the white marker is the centroid.
         </p>
       </div>
+
+      <.source_link repos={[{"fugue", "lib/fugue/fuzzy/inference"}]} />
     </div>
     """
   end

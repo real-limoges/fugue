@@ -49,7 +49,7 @@ function genHousePrice() {
   const data = []
   for (let i = 0; i < 65; i++) {
     const sqft = 600 + ((4500 - 600) * i) / 64 + (rng() - 0.5) * 80
-    // Price in $K; mildly concave-up — mean grows with size at an accelerating rate.
+    // Price in $K; mildly concave-up: mean grows with size at an accelerating rate.
     const mean = 70 + 0.18 * sqft + 0.00006 * sqft * sqft
     // CV climbs from ~0.10 (starter homes priced tightly) to ~0.30 (luxury, wildly variable).
     const cv = 0.1 + (0.2 * (sqft - 600)) / (4500 - 600)
@@ -87,7 +87,7 @@ function genPizza() {
   const data = []
   for (let i = 0; i < 60; i++) {
     const dist = 0.5 + (i / 59) * 8 + (rng() - 0.5) * 0.3
-    // Slight quadratic — fixed cooking baseline plus drive time + traffic.
+    // Slight quadratic: fixed cooking baseline plus drive time + traffic.
     const truth = 12 + 3.2 * dist + 0.18 * dist * dist
     data.push([dist, Math.max(6, truth + N(0, 2.5))])
   }
@@ -115,7 +115,7 @@ function genShotSuccess() {
 
 // ---- Band computation per family ------------------------------------------
 
-// Symmetric ±Z·sigma. Used for Gaussian and StudentT (StudentT ignores nu —
+// Symmetric ±Z·sigma. Used for Gaussian and StudentT (StudentT ignores nu;
 // the t-quantile widening is small at our sample sizes and the visual lesson
 // is about heavy-tailed likelihood, not band width).
 function bandSymmetricSigma(pred) {
@@ -183,7 +183,7 @@ const INTERCEPT = Object.freeze({ Intercept: null })
 const FIT_CONFIG = JSON.stringify({ max_iterations: 80, tolerance: 0.005 })
 
 // mode: "linear" (intercept + linear mu) | "smooth_mu" (smooth mu, intercept spread)
-//     | "smooth_spread" (smooth mu, smooth spread parameter — sigma or phi)
+//     | "smooth_spread" (smooth mu, smooth spread parameter: sigma or phi)
 function makeFormula(family, col, mode) {
   const params = FAMILY_PARAMS[family]
   const muTerms =
@@ -379,7 +379,7 @@ export const LabGam = {
     container.style.position = "relative"
     container.innerHTML = ""
     const loading = document.createElement("div")
-    loading.textContent = "Loading…"
+    loading.textContent = "Loading..."
     loading.style.cssText = "color:#888;font-size:13px;padding:12px;font-family:monospace"
     container.appendChild(loading)
     this._loading = loading
@@ -412,7 +412,7 @@ export const LabGam = {
       for (let i = 0; i < order.length; i++) {
         if (this._destroyed) return
         const id = order[i]
-        this.showStatus(`Fitting (${i + 1}/${order.length})…`)
+        this.showStatus(`Fitting (${i + 1}/${order.length})...`)
         await yieldToBrowser()
         if (this._destroyed) return
 
@@ -483,7 +483,7 @@ export const LabGam = {
     // loop will pick it up the moment the cache is populated.
     if (!this._cache[id]) {
       this._pending = id
-      this.showStatus("Fitting…")
+      this.showStatus("Fitting...")
       return
     }
 
@@ -566,7 +566,7 @@ export const LabGam = {
     this._svg = svg
   },
 
-  // Layer ids are fixed across all datasets — every dataset declares exactly
+  // Layer ids are fixed across all datasets; every dataset declares exactly
   // these three slots. Toggle state in the LiveView mirrors this.
   applyLayers() {
     if (!this._svg) return

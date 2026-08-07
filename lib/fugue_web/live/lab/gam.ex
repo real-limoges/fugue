@@ -100,6 +100,11 @@ defmodule FugueWeb.LabLive.Gam do
         style="min-height: 420px;"
       />
 
+      <.figure_source
+        note="Penalized splines fit by REML in Rust, compiled to WASM and loaded on demand. Switching family or dataset refits in the tab; there is no model server behind this."
+        repo="glissando"
+      />
+
       <div class="mt-4 flex flex-wrap gap-3">
         <button
           :for={layer <- @current.layers}
@@ -120,6 +125,8 @@ defmodule FugueWeb.LabLive.Gam do
           {cap.text}
         </p>
       </div>
+
+      <.source_link repos={["glissando", {"fugue", "lib/fugue_web/live/lab/gam.ex"}]} />
     </div>
     """
   end

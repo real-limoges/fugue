@@ -31,12 +31,19 @@ defmodule FugueWeb.CloudsLive do
         </canvas>
       </div>
 
+      <.figure_source
+        note="Worley (cellular) noise thresholded into hard pixel bands, drifting on a slow offset. The banding is what you get when you round a distance field off hard and skip antialiasing entirely."
+        repo="petri"
+      />
+
       <img
         src={~p"/images/clouds_preseed.png"}
         alt="pre-rendered pixel-art clouds reference"
         class="block w-full mt-4"
         style="aspect-ratio: 2 / 1; image-rendering: pixelated; image-rendering: crisp-edges;"
       />
+
+      <.source_link repos={["petri", {"fugue", "lib/fugue_web/live/clouds_live.ex"}]} />
     </div>
     """
   end

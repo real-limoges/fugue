@@ -1,6 +1,6 @@
 // Interactive sandbox for teaching fuzzy clustering.
 // Self-contained: fake centers, a draggable point, live-computed memberships.
-// No server round-trips — everything is client-side.
+// No server round-trips; everything is client-side.
 
 const VB_W = 500
 const VB_H = 150

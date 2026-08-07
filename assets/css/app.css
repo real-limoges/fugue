@@ -21,7 +21,7 @@
   curl -sLO https://github.com/saadeghi/daisyui/releases/latest/download/daisyui-theme.js
   We ship with two themes, a light one inspired on Phoenix colors and a dark one inspired
   on Elixir colors. Build your own at: https://daisyui.com/theme-generator/ */
-/* Synthwave — neon on deep purple-black */
+/* Synthwave: neon on deep purple-black */
 @plugin "../vendor/daisyui-theme" {
   name: "dark";
   default: true;
@@ -76,7 +76,7 @@
   box-shadow: 0 0 24px oklch(72% 0.25 330 / 0.35);
 }
 
-/* Accent divider — neon pink rule */
+/* Accent divider: neon pink rule */
 .divider-accent {
   border: none;
   height: 2px;

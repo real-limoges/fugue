@@ -8,6 +8,8 @@ defmodule FugueWeb.ColorLive.Splashes do
 
   use Phoenix.Component
 
+  import FugueWeb.CoreComponents, only: [figure_source: 1]
+
   alias FugueWeb.ColorLive.ConeMath
 
   # Protan-metameric pairs for sections 3 + 6. Each {a, b, label} has been
@@ -54,6 +56,10 @@ defmodule FugueWeb.ColorLive.Splashes do
         style="aspect-ratio: 5 / 3;"
       >
       </canvas>
+      <.figure_source
+        note="thin-film interference over a Voronoi thickness map; cursor proximity is the viewing angle. WebGL2, no WASM and no shader build step."
+        repo={{"fugue", "assets/js/hooks/iridescence.js"}}
+      />
     </figure>
     """
   end
@@ -118,6 +124,10 @@ defmodule FugueWeb.ColorLive.Splashes do
       <figcaption class="font-mono text-xs uppercase tracking-widest text-base-content/50">
         Light.
       </figcaption>
+      <.figure_source
+        note="Every 2nm band from 380 to 700 converted to sRGB in a module attribute, so the whole strip is computed at compile time and costs nothing at render."
+        repo={{"fugue", "lib/fugue/color/spectrum.ex"}}
+      />
     </figure>
     """
   end
@@ -149,6 +159,10 @@ defmodule FugueWeb.ColorLive.Splashes do
           />
         </svg>
       </div>
+      <.figure_source
+        note="The same wavelength-to-sRGB table as the opener, run back at a coarser step. Each band is a specific wavelength rather than an interpolation between two of them."
+        repo={{"fugue", "lib/fugue/color/spectrum.ex"}}
+      />
     </figure>
     """
   end
@@ -266,6 +280,10 @@ defmodule FugueWeb.ColorLive.Splashes do
         Each chip painted with the name most speakers gave it. Faded means
         they didn't agree.
       </figcaption>
+      <.figure_source
+        note="Real World Color Survey fieldwork: 40 hues x 8 lightnesses, each chip carrying the modal term and the fraction of speakers who agreed. Aggregated offline, then generated into an Elixir module rather than queried at runtime."
+        repo="Timbre"
+      />
     </figure>
     """
   end
@@ -383,6 +401,10 @@ defmodule FugueWeb.ColorLive.Splashes do
         Each group is one spectrum, cut different ways. English rows are
         baselines. Placements are approximate; the splits themselves are real.
       </figcaption>
+      <.figure_source
+        note="Hand-curated boundaries, unlike the chip grid above. Each language is a list of cut points along one spectrum, which is the honest way to show a split nobody has surveyed at chip resolution."
+        repo={{"fugue", "lib/fugue_web/live/color_live/splashes.ex"}}
+      />
     </figure>
     """
   end
@@ -636,6 +658,10 @@ defmodule FugueWeb.ColorLive.Splashes do
           {if @protanope, do: "show three cones", else: "show two cones"}
         </button>
       </div>
+      <.figure_source
+        note="Stockman &amp; Sharpe 2-deg cone fundamentals. The toggle slides L 15nm toward M rather than deleting the curve, because that is what anomalous trichromacy actually does."
+        repo={{"fugue", "lib/fugue/color/cones.ex"}}
+      />
     </figure>
     """
   end
@@ -780,6 +806,10 @@ defmodule FugueWeb.ColorLive.Splashes do
         Filled: your screen. Rings beyond: what fancier ones reach. The
         whole shell: an eye.
       </figcaption>
+      <.figure_source
+        note="sRGB and Rec.2020 primaries as triangles in CIE xy, clipped against the spectral locus. Every wavelength-to-coordinate step is a pure function, which is why it is testable without booting a socket."
+        repo={{"fugue", "lib/fugue_web/live/color_live/cone_math.ex"}}
+      />
     </figure>
     """
   end
@@ -810,6 +840,10 @@ defmodule FugueWeb.ColorLive.Splashes do
         aria-label="protanope-simulated patch B"
       >
       </div>
+      <.figure_source
+        note="One pair from section 3, pinned. Both patches run through the Machado severity-1.0 protanope matrix and land within 2 RGB units of each other."
+        repo={{"fugue", "lib/fugue/color/daltonize.ex"}}
+      />
     </figure>
     """
   end
@@ -910,6 +944,10 @@ defmodule FugueWeb.ColorLive.Splashes do
           </button>
         </div>
       </div>
+      <.figure_source
+        note="Twelve pairs, none of them guessed: each was found by stepping along the null vector of the Machado matrix in linear RGB, then verified to collapse within 2 RGB units."
+        repo={{"fugue", "lib/fugue/color/daltonize.ex"}}
+      />
     </figure>
     """
   end

@@ -61,6 +61,9 @@ defmodule FugueWeb.Layouts do
           <a href="/about" class="hover:text-primary transition-colors">
             about
           </a>
+          <a href="/code" class="hover:text-primary transition-colors">
+            code
+          </a>
           <a href="https://github.com/real-limoges" class="hover:text-primary transition-colors">
             github
           </a>
