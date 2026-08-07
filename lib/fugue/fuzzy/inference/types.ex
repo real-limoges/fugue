@@ -2,7 +2,7 @@ defmodule Fugue.Fuzzy.Inference.Types do
   @moduledoc """
   Shape reference for the plain maps passed around `Fugue.Fuzzy.Inference.*`,
   ported from Hazy's `Hazy.Inference.Types`. These are documentation-only
-  typespecs, not structs — this codebase favors plain maps for wire-shaped
+  typespecs, not structs; this codebase favors plain maps for wire-shaped
   data (see `Fugue.Menagerie.Mamdani`, `Fugue.Menagerie.Fuzzy`).
 
   - `fuzzy_set`: `%{name: String.t(), mf: (float -> float), universe: {float, float}}`

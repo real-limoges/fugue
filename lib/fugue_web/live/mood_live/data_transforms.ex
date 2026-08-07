@@ -380,7 +380,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
 
   @doc """
   Builds monthly mood flowers: averaged dimensions per month plus the modal
-  smoothed cluster for that month. Values are normalized 0.2–1.0 against the
+  smoothed cluster for that month. Values are normalized 0.2 to 1.0 against the
   per-dimension range across all months so each flower's spoke length reflects
   that month's value relative to the user's full history.
   """

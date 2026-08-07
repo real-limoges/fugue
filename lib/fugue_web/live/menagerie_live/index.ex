@@ -93,6 +93,8 @@ defmodule FugueWeb.MenagerieLive.Index do
           log-log histogram converge to a straight line as grains accumulate.
         </.card>
       </div>
+
+      <.source_link repos={["petri", {"fugue", "lib/fugue_web/live/menagerie_live"}]} />
     </div>
     """
   end

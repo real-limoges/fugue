@@ -1,6 +1,6 @@
 defmodule FugueWeb.MenagerieLive.Sandpile do
   @moduledoc """
-  `/menagerie/sandpile`: Bak–Tang–Wiesenfeld self-organized criticality.
+  `/menagerie/sandpile`: Bak-Tang-Wiesenfeld self-organized criticality.
   The simulation runs JS-side in `assets/js/hooks/sandpile_canvas.js`;
   this LiveView only owns the parameter UI (mode, speed, reset) and
   pushes events to the hook. No simulation state is held server-side.
@@ -75,6 +75,10 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
             style="height: 512px;"
           >
           </canvas>
+          <.figure_source
+            note="Abelian sandpile: drop a grain, and any cell reaching 4 topples one grain to each neighbor, cascading until stable. The avalanche sizes go power-law without anyone tuning them there."
+            repo="petri"
+          />
         </div>
 
         <div class="space-y-4">
@@ -115,7 +119,7 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
           <div class="bg-base-200 rounded-lg p-4">
             <div class="mb-2">
               <span class="text-xs font-semibold text-gray-300">Avalanche sizes</span>
-              <span class="text-[10px] text-gray-500 ml-1">(log–log)</span>
+              <span class="text-[10px] text-gray-500 ml-1">(log-log)</span>
             </div>
             <div id="sandpile-histogram" phx-update="ignore"></div>
           </div>
@@ -125,6 +129,8 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
           </button>
         </div>
       </div>
+
+      <.source_link repos={["petri", {"fugue", "lib/fugue_web/live/menagerie_live/sandpile.ex"}]} />
     </div>
     """
   end

@@ -117,7 +117,7 @@ function draw(canvas, steps, classical, quantum) {
   const plotH = cssHeight - padT - padB
 
   // Find shared y-scale (only odd parity slots are populated for both walks
-  // when steps is even, and even parity when steps is odd — they share the
+  // when steps is even, and even parity when steps is odd; they share the
   // same support).
   let maxP = 0
   for (let i = 0; i < classical.length; i++) {

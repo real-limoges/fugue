@@ -91,6 +91,11 @@ defmodule FugueWeb.MenagerieLive.QuantumStats do
         </canvas>
       </div>
 
+      <.figure_source
+        note="Bose-Einstein, Fermi-Dirac and Maxwell-Boltzmann occupancy over the same ladder of states. The only difference in the code is whether particles are allowed to share a level."
+        repo={{"fugue", "assets/js/hooks/quantum_stats.js"}}
+      />
+
       <div class="flex flex-wrap gap-2 mb-4">
         <button type="button" phx-click="reset" class="btn btn-xs btn-ghost">
           Reset
@@ -102,6 +107,8 @@ defmodule FugueWeb.MenagerieLive.QuantumStats do
         params={@params}
         class="grid grid-cols-1 sm:grid-cols-2 gap-4"
       />
+
+      <.source_link repos={[{"fugue", "lib/fugue_web/live/menagerie_live/quantum_stats.ex"}]} />
     </div>
     """
   end

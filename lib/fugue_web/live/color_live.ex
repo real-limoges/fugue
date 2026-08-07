@@ -117,8 +117,7 @@ defmodule FugueWeb.ColorLive do
           and those three numbers are everything your brain is ever
           going to be told about what's there. Thousands of
           distinguishable wavelengths in the world, smashed down
-          into a triple. That triple is your color. That's all you
-          get.
+          into a triple. That triple is your color.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -327,7 +326,7 @@ defmodule FugueWeb.ColorLive do
           water at dusk. The comparison does the work the abstract
           word would do, and it carries more with it; "burned wood"
           tells you more than "brown" does, assuming you've seen
-          burned wood. Whose system is the weird one, exactly.
+          burned wood. Whose system is the weird one.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -406,6 +405,8 @@ defmodule FugueWeb.ColorLive do
           them to land at all was never going to fit on this page.
         </p>
       </.section>
+
+      <.source_link repos={["Timbre", {"fugue", "lib/fugue_web/live/color_live"}]} />
     </article>
     """
   end

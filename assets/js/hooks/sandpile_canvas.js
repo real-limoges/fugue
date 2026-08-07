@@ -55,7 +55,7 @@ function setupHistogram(container) {
 }
 
 function updateHistogram(chart, bins) {
-  // bins: Map<size, count> — filter to size >= 1
+  // bins: Map<size, count>; filter to size >= 1
   const data = []
   for (const [size, count] of bins) {
     if (size >= 1 && count >= 1) data.push({ size, count })

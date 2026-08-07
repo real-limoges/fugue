@@ -87,7 +87,7 @@ export const MamdaniPlayground = {
 
       panelEl
         .select(".input-crisp-readout")
-        .text(typeof crispValue === "number" ? d3.format(".1f")(crispValue) : "—")
+        .text(typeof crispValue === "number" ? d3.format(".1f")(crispValue) : "-")
 
       const g = panelEl.select("svg g")
       this._renderInputDynamics(g, varDef, crispValue, degrees[varDef.name] || {}, scales)
@@ -159,7 +159,7 @@ export const MamdaniPlayground = {
 
   render() {
     if (!this.data) {
-      this.el.innerHTML = `<div class="py-12 text-center text-xs italic text-gray-500">awaiting inference…</div>`
+      this.el.innerHTML = `<div class="py-12 text-center text-xs italic text-gray-500">awaiting inference...</div>`
       return
     }
 
@@ -208,7 +208,7 @@ export const MamdaniPlayground = {
 
       panelEl
         .select(".input-crisp-readout")
-        .text(typeof inputs[varDef.name] === "number" ? d3.format(".1f")(inputs[varDef.name]) : "—")
+        .text(typeof inputs[varDef.name] === "number" ? d3.format(".1f")(inputs[varDef.name]) : "-")
 
       const g = panelEl.select("svg g")
       this._renderInputDynamics(
@@ -257,7 +257,7 @@ export const MamdaniPlayground = {
         "class",
         "input-crisp-readout font-mono text-lg font-semibold tabular-nums text-gray-100"
       )
-      .text("—")
+      .text("-")
 
     const panelW = 400
     const panelH = 176

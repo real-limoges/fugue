@@ -34,7 +34,7 @@ export const BandsHover = {
   },
 
   updated() {
-    // Server re-rendered (slider change) — refresh cached data.
+    // Server re-rendered (slider change); refresh cached data.
     this.svg = this.el.querySelector("#bands-svg")
     if (!this.svg) return
     this.crosshair = this.svg.querySelector(".bands-crosshair")

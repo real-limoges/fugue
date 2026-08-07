@@ -1,5 +1,5 @@
 /** A slowly drawn Thomas strange attractor, tinted by the user's cluster palette.
- *  Generative filler — no data, just a living scribble that rhymes with the trajectory hero. */
+ *  Generative filler; no data, just a living scribble that rhymes with the trajectory hero. */
 
 const B = 0.208186
 const STEP = 0.02

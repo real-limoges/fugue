@@ -27,9 +27,11 @@ defmodule FugueWeb.MoodLive.DateRangeTest do
       assert DateRange.format(nil) == ""
     end
 
-    test "tuple renders with en-dash separator" do
+    # ASCII "to" rather than an en-dash: the dates already contain hyphens,
+    # so a dash separator reads ambiguously, and the site is ASCII-only.
+    test "tuple renders with an ASCII separator" do
       assert DateRange.format({"2022-04-01", "2026-03-30"}) ==
-               "2022-04-01 – 2026-03-30"
+               "2022-04-01 to 2026-03-30"
     end
   end
 end

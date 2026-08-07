@@ -191,6 +191,8 @@ defmodule FugueWeb.MoodLive do
           <Sections.afterword />
         </div>
       <% end %>
+
+      <.source_link repos={[{"fugue", "lib/fugue/mood"}]} />
     </div>
     """
   end

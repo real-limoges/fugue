@@ -193,7 +193,13 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
           Memberships are normalized so every column fills the full height;
           hover for the exact breakdown.
         </p>
+        <.figure_source
+          note="Triangular membership functions evaluated per day over four years of GHCN-D Melbourne maxima, rendered as server-side SVG. Dragging a slider recomputes every column in Elixir and diffs the result over the wire."
+          repo={{"fugue", "lib/fugue/fuzzy/membership.ex"}}
+        />
       </div>
+
+      <.source_link repos={[{"fugue", "lib/fugue/fuzzy"}]} />
     </div>
     """
   end

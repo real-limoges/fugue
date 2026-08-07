@@ -22,7 +22,7 @@ defmodule FugueWeb.LabLive.Index do
         </h1>
         <p class="text-sm text-base-content/50 leading-relaxed max-w-2xl">
           Small pieces, each one going after a single thing about a model.
-          Rougher than a topic page; rougher on purpose. Two so far.
+          Rougher than a topic page, deliberately. Two so far.
         </p>
       </header>
 
@@ -33,10 +33,10 @@ defmodule FugueWeb.LabLive.Index do
           title="Same scatter, three fits"
           accent="primary"
         >
-          Four datasets, one habit: stack a line, a GAM, and a GAMLSS over the
-          same points and watch what each layer can and can't say. The line is
-          the floor; the GAM bends to the mean; the GAMLSS lets the spread bend
-          with it.
+          Four datasets, same move on each: stack a line, a GAM, and a GAMLSS
+          over the same points and see where each one runs out. A line only has
+          a slope to work with. A GAM can bend toward the mean. A GAMLSS can
+          also let the spread change as you move along.
         </.card>
 
         <.card
@@ -45,11 +45,13 @@ defmodule FugueWeb.LabLive.Index do
           title="Three problems, three posteriors"
           accent="accent"
         >
-          A search, a rate, a decision. Each one ends with a distribution over
-          the thing you didn't know, and any question you had about it becomes
-          an integral over that distribution. That's the whole framework.
+          A search, a rate, a decision. Each one ends up with a distribution
+          over the thing you didn't know, and once you have that, the questions
+          you actually care about are just integrals over it.
         </.card>
       </div>
+
+      <.source_link repos={[{"fugue", "lib/fugue_web/live/lab"}]} />
     </div>
     """
   end
