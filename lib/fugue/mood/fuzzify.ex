@@ -6,6 +6,7 @@ defmodule Fugue.Mood.Fuzzify do
   """
 
   alias Fugue.Fuzzy.Membership
+  alias Fugue.Mood.Entry
 
   @doc """
   Canonical default `MembershipFuncDefs`-equivalent config: 5 input vars
@@ -91,7 +92,16 @@ defmodule Fugue.Mood.Fuzzify do
     }
   end
 
-  defp dimension_key(name), do: String.to_existing_atom(name)
+  # Resolved against the fixed dimension list rather than
+  # String.to_existing_atom/1. That call succeeds only if some already-loaded
+  # module happened to have created the atom, so whether "anxiety" resolved
+  # depended on test order and module-load timing rather than on anything
+  # about the input. Matching the canonical list keeps the same guarantee
+  # (no atoms created from caller-supplied strings) and makes it deterministic.
+  defp dimension_key(name) do
+    Enum.find(Entry.dimension_order(), &(Atom.to_string(&1) == name)) ||
+      raise ArgumentError, "unknown mood dimension: #{inspect(name)}"
+  end
 
   defp suggest_terms({lo, hi}, []) do
     mid = (lo + hi) / 2
