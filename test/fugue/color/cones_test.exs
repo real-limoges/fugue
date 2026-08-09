@@ -51,7 +51,11 @@ defmodule Fugue.Color.ConesTest do
   end
 
   test "raises for unknown cone atoms" do
-    assert_raise FunctionClauseError, fn -> Cones.response(:x, 500) end
+    # Called through apply/3 on purpose. A literal `Cones.response(:x, 500)`
+    # lets the compiler see the guard can never match and warn about it, which
+    # is exactly the case under test; apply/3 keeps the assertion honest and
+    # the build quiet.
+    assert_raise FunctionClauseError, fn -> apply(Cones, :response, [:x, 500]) end
   end
 
   defp peak_for(cone) do

@@ -104,11 +104,14 @@ defmodule Fugue.MixProject do
         "phx.digest"
       ],
       precommit: [
+        # compile covers lib/; the test step is what gates warnings in test/,
+        # which `mix compile` never touches. Scoped to this project, so the
+        # ~50 dependency warnings on a cold build do not trip it.
         "compile --warnings-as-errors",
         "deps.unlock --unused",
         "format",
         "assets.format.check",
-        "test"
+        "test --warnings-as-errors"
       ]
     ]
   end
