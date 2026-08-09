@@ -66,3 +66,6 @@ menagerie-*.png
 
 # the annoying MacOS thing
 .DS_Store
+
+# working notes and drafts; see docs/private-notes/README.md
+docs/private-notes/

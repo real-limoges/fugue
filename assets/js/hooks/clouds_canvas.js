@@ -429,17 +429,14 @@ export const CloudsCanvas = {
           paintGaussian(qc, NX, NZ, DX, DZ, c.cx + lobe.dx, c.cz + lobe.dz, lobe.sigma, lobe.peak)
         }
       }
-      let simFrame = 0
       // Skip post-paint sim steps for now -- saturation adjustment will
       // evaporate freshly painted qc if qv isn't also raised.
-
-      const onClick = (e) => {
-        const rect = canvas.getBoundingClientRect()
-        const fx = (e.clientX - rect.left) / rect.width
-        const x_m = VIEW_X0 + fx * (VIEW_X1 - VIEW_X0)
-        clouds.applyBubble(x_m, 150, 4.0, 320)
-      }
-      canvas.addEventListener("click", onClick)
+      //
+      // There used to be a click handler here firing applyBubble into the
+      // qc field. Nothing steps the solver and nothing re-renders, so the
+      // bubble was never integrated and the click did nothing visible.
+      // Removed along with the canvas cursor:pointer that advertised it.
+      // Restoring interaction means restoring the render loop first.
 
       // Render the painted state once. The WASM saturation step would
       // evaporate freshly painted qc (subsaturated qv), so we don't step
@@ -448,12 +445,7 @@ export const CloudsCanvas = {
       renderFrame(rgba, qc)
       ctx.putImageData(new ImageData(rgba, CANVAS_W, CANVAS_H), 0, 0)
 
-      let rafId = null
-
-      this._stopLoop = () => {
-        if (rafId !== null) cancelAnimationFrame(rafId)
-        canvas.removeEventListener("click", onClick)
-      }
+      this._stopLoop = () => {}
     } catch (err) {
       console.error("[CloudsCanvas] mount failed:", err)
     }
