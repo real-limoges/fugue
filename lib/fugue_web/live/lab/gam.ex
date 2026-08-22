@@ -79,15 +79,15 @@ defmodule FugueWeb.LabLive.Gam do
           class={[
             "btn btn-xs btn-ghost border font-mono text-xs",
             (ds.id == @dataset_id && "border-primary/70 text-primary bg-primary/10") ||
-              "border-white/25 text-gray-300 hover:text-white hover:border-white/40"
+              "border-base-content/25 text-base-content/75 hover:text-base-content hover:border-base-content/40"
           ]}
         >
           {ds.label}
         </button>
       </div>
 
-      <h1 class="text-2xl font-semibold text-white mb-1">{@current.title}</h1>
-      <p class="text-gray-400 text-sm mb-6">
+      <h1 class="text-2xl font-semibold text-base-content mb-1">{@current.title}</h1>
+      <p class="text-base-content/60 text-sm mb-6">
         {@current.blurb}
       </p>
 
@@ -119,7 +119,7 @@ defmodule FugueWeb.LabLive.Gam do
         </button>
       </div>
 
-      <div class="mt-5 space-y-1 text-xs text-gray-500 font-mono">
+      <div class="mt-5 space-y-1 text-xs text-base-content/45 font-mono">
         <p :for={cap <- @current.captions}>
           <span class={caption_glyph_class(cap.accent)}>{cap.glyph}</span>
           {cap.text}
@@ -131,12 +131,12 @@ defmodule FugueWeb.LabLive.Gam do
     """
   end
 
-  defp layer_button_classes(:white_dash, true), do: "border-white/40 text-white"
-  defp layer_button_classes(:gray, true), do: "border-gray-400 text-gray-400"
+  defp layer_button_classes(:white_dash, true), do: "border-base-content/40 text-base-content"
+  defp layer_button_classes(:gray, true), do: "border-base-content/60 text-base-content/60"
   defp layer_button_classes(:primary, true), do: "border-primary/60 text-primary"
-  defp layer_button_classes(_, false), do: "border-white/10 text-gray-600"
+  defp layer_button_classes(_, false), do: "border-base-content/10 text-base-content/35"
 
-  defp caption_glyph_class(:white_dim), do: "text-white/40"
-  defp caption_glyph_class(:gray), do: "text-gray-400"
+  defp caption_glyph_class(:white_dim), do: "text-base-content/40"
+  defp caption_glyph_class(:gray), do: "text-base-content/60"
   defp caption_glyph_class(:primary), do: "text-primary/70"
 end

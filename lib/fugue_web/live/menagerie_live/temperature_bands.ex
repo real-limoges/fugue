@@ -204,7 +204,7 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
     <div id="temperature-bands" phx-hook="BandsHover" style="position: relative;">
       <div style="display: flex; flex-direction: column; gap: 14px;">
         <div>
-          <div class="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-1">
+          <div class="text-[10px] uppercase tracking-[0.2em] text-base-content/50 mb-1">
             membership functions · drag sliders to reshape
           </div>
           <svg
@@ -213,7 +213,13 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
             style="width: 100%;"
           >
             <g transform={@g_transform}>
-              <line x1="0" x2={@inner_w} y1={@shapes_inner_h} y2={@shapes_inner_h} stroke="#374151" />
+              <line
+                x1="0"
+                x2={@inner_w}
+                y1={@shapes_inner_h}
+                y2={@shapes_inner_h}
+                style="stroke: var(--color-base-content); opacity: 0.4"
+              />
 
               <%= for shape <- @shapes_rendered do %>
                 <path d={shape.area_d} fill={shape.color} fill-opacity="0.18" />
@@ -231,10 +237,28 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
               <% end %>
 
               <g transform={@shapes_axis_transform}>
-                <line x1="0" x2={@inner_w} y1="0" y2="0" stroke="#374151" />
+                <line
+                  x1="0"
+                  x2={@inner_w}
+                  y1="0"
+                  y2="0"
+                  style="stroke: var(--color-base-content); opacity: 0.4"
+                />
                 <%= for t <- @x_temp_ticks do %>
-                  <line x1={SvgMath.fmt(t.x)} x2={SvgMath.fmt(t.x)} y1="0" y2="3" stroke="#374151" />
-                  <text x={SvgMath.fmt(t.x)} y="14" text-anchor="middle" fill="#9ca3af" font-size="10">
+                  <line
+                    x1={SvgMath.fmt(t.x)}
+                    x2={SvgMath.fmt(t.x)}
+                    y1="0"
+                    y2="3"
+                    style="stroke: var(--color-base-content); opacity: 0.4"
+                  />
+                  <text
+                    x={SvgMath.fmt(t.x)}
+                    y="14"
+                    text-anchor="middle"
+                    style="fill: color-mix(in oklch, var(--color-base-content) 60%, transparent)"
+                    font-size="10"
+                  >
                     {t.label}
                   </text>
                 <% end %>
@@ -244,7 +268,7 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
         </div>
 
         <div style="position: relative;">
-          <div class="text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-1">
+          <div class="text-[10px] uppercase tracking-[0.2em] text-base-content/50 mb-1">
             fuzzy memberships over time · hover for breakdown
           </div>
           <svg
@@ -271,7 +295,7 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
                     x2={SvgMath.fmt(y.x)}
                     y1="0"
                     y2={@bands_inner_h}
-                    stroke="#ffffff"
+                    style="stroke: var(--color-base-content)"
                     stroke-opacity="0.14"
                     stroke-dasharray="2,3"
                   />
@@ -279,24 +303,54 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
               </g>
 
               <g transform={@bands_axis_transform}>
-                <line x1="0" x2={@inner_w} y1="0" y2="0" stroke="#374151" />
+                <line
+                  x1="0"
+                  x2={@inner_w}
+                  y1="0"
+                  y2="0"
+                  style="stroke: var(--color-base-content); opacity: 0.4"
+                />
                 <%= for t <- @date_ticks do %>
-                  <line x1={SvgMath.fmt(t.x)} x2={SvgMath.fmt(t.x)} y1="0" y2="3" stroke="#374151" />
-                  <text x={SvgMath.fmt(t.x)} y="16" text-anchor="middle" fill="#9ca3af" font-size="10">
+                  <line
+                    x1={SvgMath.fmt(t.x)}
+                    x2={SvgMath.fmt(t.x)}
+                    y1="0"
+                    y2="3"
+                    style="stroke: var(--color-base-content); opacity: 0.4"
+                  />
+                  <text
+                    x={SvgMath.fmt(t.x)}
+                    y="16"
+                    text-anchor="middle"
+                    style="fill: color-mix(in oklch, var(--color-base-content) 60%, transparent)"
+                    font-size="10"
+                  >
                     {t.label}
                   </text>
                 <% end %>
               </g>
 
               <g>
-                <line x1="0" x2="0" y1="0" y2={@bands_inner_h} stroke="#374151" />
+                <line
+                  x1="0"
+                  x2="0"
+                  y1="0"
+                  y2={@bands_inner_h}
+                  style="stroke: var(--color-base-content); opacity: 0.4"
+                />
                 <%= for t <- @y_ticks do %>
-                  <line x1="-3" x2="0" y1={SvgMath.fmt(t.y)} y2={SvgMath.fmt(t.y)} stroke="#374151" />
+                  <line
+                    x1="-3"
+                    x2="0"
+                    y1={SvgMath.fmt(t.y)}
+                    y2={SvgMath.fmt(t.y)}
+                    style="stroke: var(--color-base-content); opacity: 0.4"
+                  />
                   <text
                     x="-6"
                     y={SvgMath.fmt(t.y + 3)}
                     text-anchor="end"
-                    fill="#9ca3af"
+                    style="fill: color-mix(in oklch, var(--color-base-content) 60%, transparent)"
                     font-size="10"
                   >
                     {t.label}
@@ -312,7 +366,7 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
                   font-weight="700"
                   text-anchor="end"
                   paint-order="stroke"
-                  stroke="#0f172a"
+                  style="stroke: var(--color-base-100)"
                   stroke-width="3"
                   stroke-linejoin="round"
                   fill={label.color}
@@ -325,7 +379,7 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
                 class="bands-crosshair"
                 y1="0"
                 y2={@bands_inner_h}
-                stroke="#f8fafc"
+                style="stroke: var(--color-base-content)"
                 stroke-width="1"
                 opacity="0"
               />

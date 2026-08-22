@@ -118,7 +118,7 @@ defmodule FugueWeb.MoodLive do
 
       <%= if @loading do %>
         <div class="flex items-center justify-center h-64">
-          <p class="text-gray-400 text-lg">Loading mood data...</p>
+          <p class="text-base-content/60 text-lg">Loading mood data...</p>
         </div>
       <% end %>
 

@@ -28,3 +28,12 @@ export function attachResizeRedraw(el, render) {
     stop: () => observer.disconnect(),
   }
 }
+
+// Re-run `render` whenever the site theme is toggled (see
+// hooks/theme_toggle.js). Returns `{ stop }` for the hook's destroyed().
+export function attachThemeRedraw(render) {
+  window.addEventListener("fugue:theme-changed", render)
+  return {
+    stop: () => window.removeEventListener("fugue:theme-changed", render),
+  }
+}

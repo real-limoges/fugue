@@ -27,13 +27,13 @@ defmodule FugueWeb.MoodLive.MoodTransitions do
       <button
         phx-click="toggle_list"
         phx-target={@myself}
-        class="flex items-center gap-1.5 text-lg font-semibold text-gray-300 hover:text-gray-100 w-full"
+        class="flex items-center gap-1.5 text-lg font-semibold text-base-content/75 hover:text-base-content w-full"
       >
         <span class={"inline-block transition-transform text-sm #{if @expanded, do: "rotate-90", else: ""}"}>
           &rsaquo;
         </span>
         Mood Transitions
-        <span class="text-xs font-normal text-gray-500 ml-1">({length(@filtered)})</span>
+        <span class="text-xs font-normal text-base-content/45 ml-1">({length(@filtered)})</span>
       </button>
 
       <%= if @expanded do %>
@@ -48,7 +48,7 @@ defmodule FugueWeb.MoodLive.MoodTransitions do
               data-date={t.date}
               class={"flex items-center gap-2 px-2 py-1 rounded cursor-pointer text-sm transition-colors #{if t.date in (@highlighted_dates || []), do: "bg-amber-300/15 ring-1 ring-amber-300/60", else: "hover:bg-base-300"}"}
             >
-              <span class="text-gray-400 w-24 shrink-0">{t.date}</span>
+              <span class="text-base-content/60 w-24 shrink-0">{t.date}</span>
               <div class="flex items-center gap-1 flex-1 min-w-0">
                 <span
                   class="px-1.5 py-0.5 rounded text-xs"
@@ -56,7 +56,7 @@ defmodule FugueWeb.MoodLive.MoodTransitions do
                 >
                   {Map.get(@cluster_names, t.from, t.from)}
                 </span>
-                <span class="text-gray-500">&rarr;</span>
+                <span class="text-base-content/45">&rarr;</span>
                 <span
                   class="px-1.5 py-0.5 rounded text-xs"
                   style={"background: #{Map.get(@cluster_colors, t.to, "#666")}33; color: #{Map.get(@cluster_colors, t.to, "#aaa")}"}

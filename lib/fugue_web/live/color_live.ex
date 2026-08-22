@@ -68,7 +68,7 @@ defmodule FugueWeb.ColorLive do
         <h1 class="text-3xl font-bold tracking-tight text-base-content">
           Color.
         </h1>
-        <p class="text-gray-500 mt-2 mb-10">
+        <p class="text-base-content/45 mt-2 mb-10">
           Three cones, give or take.
         </p>
       </header>

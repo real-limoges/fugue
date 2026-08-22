@@ -49,14 +49,14 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
     ~H"""
     <div class="sandpile-menagerie p-4 max-w-6xl mx-auto">
       <nav class="mb-6 text-xs">
-        <.link navigate={~p"/menagerie"} class="text-gray-500 hover:text-gray-300">
+        <.link navigate={~p"/menagerie"} class="text-base-content/45 hover:text-base-content/75">
           ← Menagerie
         </.link>
       </nav>
 
       <div class="mb-4">
-        <h1 class="text-2xl font-bold text-gray-100">Abelian sandpile</h1>
-        <p class="text-sm text-gray-400 mt-1 max-w-3xl leading-relaxed">
+        <h1 class="text-2xl font-bold text-base-content">Abelian sandpile</h1>
+        <p class="text-sm text-base-content/60 mt-1 max-w-3xl leading-relaxed">
           Drop grains one at a time. When a cell reaches four it topples,
           sending one grain to each neighbor. The cascade can be tiny or
           enormous, and over time the system tunes itself to a critical state
@@ -84,8 +84,8 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
         <div class="space-y-4">
           <div class="bg-base-200 rounded-lg p-4">
             <div class="flex items-center justify-between mb-3">
-              <span class="text-xs font-semibold text-gray-300">Drop mode</span>
-              <span class="text-xs font-mono text-gray-400">{@params["mode"]}</span>
+              <span class="text-xs font-semibold text-base-content/75">Drop mode</span>
+              <span class="text-xs font-mono text-base-content/60">{@params["mode"]}</span>
             </div>
             <div class="flex gap-2">
               <button
@@ -111,15 +111,15 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
 
           <div class="bg-base-200 rounded-lg p-4">
             <div class="flex items-center justify-between mb-1">
-              <span class="text-xs font-semibold text-gray-300">Total grains</span>
-              <span id="sandpile-grain-count" class="text-xs font-mono text-gray-400">0</span>
+              <span class="text-xs font-semibold text-base-content/75">Total grains</span>
+              <span id="sandpile-grain-count" class="text-xs font-mono text-base-content/60">0</span>
             </div>
           </div>
 
           <div class="bg-base-200 rounded-lg p-4">
             <div class="mb-2">
-              <span class="text-xs font-semibold text-gray-300">Avalanche sizes</span>
-              <span class="text-[10px] text-gray-500 ml-1">(log-log)</span>
+              <span class="text-xs font-semibold text-base-content/75">Avalanche sizes</span>
+              <span class="text-[10px] text-base-content/45 ml-1">(log-log)</span>
             </div>
             <div id="sandpile-histogram" phx-update="ignore"></div>
           </div>

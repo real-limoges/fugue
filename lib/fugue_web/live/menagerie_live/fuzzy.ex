@@ -99,20 +99,20 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
     ~H"""
     <div class="fuzzy-menagerie p-4 max-w-6xl mx-auto">
       <nav class="mb-6 text-xs">
-        <.link navigate={~p"/menagerie"} class="text-gray-500 hover:text-gray-300">
+        <.link navigate={~p"/menagerie"} class="text-base-content/45 hover:text-base-content/75">
           ← Menagerie
         </.link>
       </nav>
 
       <div class="mb-4">
-        <h1 class="text-2xl font-bold text-gray-100">Fuzzy temperature bands</h1>
-        <p class="text-sm text-gray-400 mt-1 max-w-3xl leading-relaxed">
+        <h1 class="text-2xl font-bold text-base-content">Fuzzy temperature bands</h1>
+        <p class="text-sm text-base-content/60 mt-1 max-w-3xl leading-relaxed">
           Hard categories lose the gradient. A 22°C day isn't exactly <em>mild</em>
           and exactly nothing else. It leans mild, a little cool, a little warm.
           Five overlapping triangular membership functions let every day hold partial
           membership in every fuzzy set at once.
         </p>
-        <p class="text-xs text-gray-500 mt-3 max-w-3xl">
+        <p class="text-xs text-base-content/45 mt-3 max-w-3xl">
           Data: {@row_count} days of daily max temperatures from Melbourne Airport
           (GHCN-D {@first_date} → {@last_date}).
         </p>
@@ -122,8 +122,8 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <label class="block bg-base-200 rounded-lg p-3">
             <div class="flex items-center justify-between mb-1">
-              <span class="text-xs font-semibold text-gray-300">Center offset</span>
-              <span class="text-xs font-mono text-gray-400">
+              <span class="text-xs font-semibold text-base-content/75">Center offset</span>
+              <span class="text-xs font-mono text-base-content/60">
                 {format_number(@center_offset, 1)} °C
               </span>
             </div>
@@ -137,15 +137,15 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
               phx-throttle="80"
               class="range range-xs range-primary"
             />
-            <p class="text-[11px] text-gray-500 mt-1">
+            <p class="text-[11px] text-base-content/45 mt-1">
               Shift all five peaks left or right along the temperature axis.
             </p>
           </label>
 
           <label class="block bg-base-200 rounded-lg p-3">
             <div class="flex items-center justify-between mb-1">
-              <span class="text-xs font-semibold text-gray-300">Spread</span>
-              <span class="text-xs font-mono text-gray-400">
+              <span class="text-xs font-semibold text-base-content/75">Spread</span>
+              <span class="text-xs font-mono text-base-content/60">
                 {format_number(@spread, 2)}×
               </span>
             </div>
@@ -159,7 +159,7 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
               phx-throttle="80"
               class="range range-xs range-primary"
             />
-            <p class="text-[11px] text-gray-500 mt-1">
+            <p class="text-[11px] text-base-content/45 mt-1">
               Widen the triangles for more blending between adjacent sets.
             </p>
           </label>
@@ -186,7 +186,7 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
           shapes={@bands_shapes}
           bounds={@bands_bounds}
         />
-        <p class="mt-3 max-w-3xl text-xs leading-snug text-gray-500">
+        <p class="mt-3 max-w-3xl text-xs leading-snug text-base-content/45">
           Top strip: the five triangular membership functions on the temperature
           axis. Drag the sliders to reshape them. Bottom: for every day in the
           dataset, the bands show how much that day belongs to each set.

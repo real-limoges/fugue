@@ -53,14 +53,14 @@ defmodule FugueWeb.MenagerieLive.QuantumStats do
     ~H"""
     <div class="quantum-stats-menagerie p-4 max-w-6xl mx-auto">
       <nav class="mb-6 text-xs">
-        <.link navigate={~p"/menagerie"} class="text-gray-500 hover:text-gray-300">
+        <.link navigate={~p"/menagerie"} class="text-base-content/45 hover:text-base-content/75">
           ← Menagerie
         </.link>
       </nav>
 
       <div class="mb-4">
-        <h1 class="text-2xl font-bold text-gray-100">Three ways to count</h1>
-        <p class="text-sm text-gray-400 mt-1 max-w-3xl leading-relaxed">
+        <h1 class="text-2xl font-bold text-base-content">Three ways to count</h1>
+        <p class="text-sm text-base-content/60 mt-1 max-w-3xl leading-relaxed">
           Drag the temperature slider. On the hot end, the three curves lie right
           on top of each other. You'd think there was only one. Drag to the cold
           end and they peel apart into three completely different shapes. One is
@@ -68,7 +68,7 @@ defmodule FugueWeb.MenagerieLive.QuantumStats do
           flat across many levels and then falls off a cliff. The third is a
           smooth decay from the left edge downward.
         </p>
-        <p class="text-sm text-gray-400 mt-3 max-w-3xl leading-relaxed">
+        <p class="text-sm text-base-content/60 mt-3 max-w-3xl leading-relaxed">
           These are three different rules about whether two particles can share a
           state: Bose-Einstein (the pile), Fermi-Dirac (the cliff), and
           Maxwell-Boltzmann (the smooth decay). Bosons can pile onto the same

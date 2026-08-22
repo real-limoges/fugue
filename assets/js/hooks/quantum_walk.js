@@ -1,4 +1,4 @@
-import { setupDprCanvas, attachResizeRedraw } from "../lib/canvas_figure.js"
+import { setupDprCanvas, attachResizeRedraw, attachThemeRedraw } from "../lib/canvas_figure.js"
 
 // Classical vs quantum random walk overlay with a decoherence slider.
 //
@@ -10,11 +10,27 @@ import { setupDprCanvas, attachResizeRedraw } from "../lib/canvas_figure.js"
 // is the dial that turns one into the other.
 
 const TRAJECTORIES = 240
-const QUANTUM_COLOR = "#22d3ee"
-const CLASSICAL_FILL = "rgba(203, 213, 225, 0.18)"
-const CLASSICAL_STROKE = "rgba(203, 213, 225, 0.55)"
-const AXIS_COLOR = "rgba(148, 163, 184, 0.35)"
-const LABEL_COLOR = "rgba(148, 163, 184, 0.75)"
+
+// getComputedStyle resolves var() to a literal oklch() string, and canvas
+// 2D accepts that string directly as fillStyle/strokeStyle -- no var()
+// needed since it's already resolved. Alpha is bolted on by inserting a
+// "/ N" before the closing paren, same trick CSS's own oklch() syntax uses.
+function withAlpha(oklch, alpha) {
+  return oklch.replace(/\)\s*$/, ` / ${alpha})`)
+}
+
+function resolveColors() {
+  const style = getComputedStyle(document.documentElement)
+  const secondary = style.getPropertyValue("--color-secondary").trim()
+  const baseContent = style.getPropertyValue("--color-base-content").trim()
+  return {
+    quantum: secondary,
+    classicalFill: withAlpha(baseContent, 0.15),
+    classicalStroke: withAlpha(baseContent, 0.5),
+    axis: withAlpha(baseContent, 0.3),
+    label: withAlpha(baseContent, 0.7),
+  }
+}
 
 function classicalDistribution(steps) {
   const W = 2 * steps + 1
@@ -108,6 +124,7 @@ function draw(canvas, steps, classical, quantum) {
   const ctx = canvas.getContext("2d")
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, cssWidth, cssHeight)
+  const colors = resolveColors()
 
   const padL = 36
   const padR = 16
@@ -132,7 +149,7 @@ function draw(canvas, steps, classical, quantum) {
   const yToPx = (p) => padT + plotH - (p / yMax) * plotH
 
   // Axes
-  ctx.strokeStyle = AXIS_COLOR
+  ctx.strokeStyle = colors.axis
   ctx.lineWidth = 1
   ctx.beginPath()
   ctx.moveTo(padL, padT + plotH)
@@ -146,7 +163,7 @@ function draw(canvas, steps, classical, quantum) {
   ctx.lineTo(centerX, padT + plotH + 4)
   ctx.stroke()
 
-  ctx.fillStyle = LABEL_COLOR
+  ctx.fillStyle = colors.label
   ctx.font = "10px ui-monospace, SFMono-Regular, Menlo, monospace"
   ctx.textAlign = "center"
   ctx.fillText("0", centerX, padT + plotH + 16)
@@ -168,7 +185,7 @@ function draw(canvas, steps, classical, quantum) {
   // Classical: filled area
   const cPts = points(classical)
   if (cPts.length > 0) {
-    ctx.fillStyle = CLASSICAL_FILL
+    ctx.fillStyle = colors.classicalFill
     ctx.beginPath()
     ctx.moveTo(cPts[0][0], padT + plotH)
     for (const [x, y] of cPts) ctx.lineTo(x, y)
@@ -176,7 +193,7 @@ function draw(canvas, steps, classical, quantum) {
     ctx.closePath()
     ctx.fill()
 
-    ctx.strokeStyle = CLASSICAL_STROKE
+    ctx.strokeStyle = colors.classicalStroke
     ctx.lineWidth = 1.25
     ctx.beginPath()
     cPts.forEach(([x, y], idx) => (idx === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)))
@@ -186,7 +203,7 @@ function draw(canvas, steps, classical, quantum) {
   // Quantum: solid line
   const qPts = points(quantum)
   if (qPts.length > 0) {
-    ctx.strokeStyle = QUANTUM_COLOR
+    ctx.strokeStyle = colors.quantum
     ctx.lineWidth = 2
     ctx.lineJoin = "round"
     ctx.beginPath()
@@ -200,19 +217,19 @@ function draw(canvas, steps, classical, quantum) {
   const legendY = padT + 4
   let legendX = padL + 8
 
-  ctx.fillStyle = CLASSICAL_STROKE
+  ctx.fillStyle = colors.classicalStroke
   ctx.fillRect(legendX, legendY + 4, 14, 8)
-  ctx.fillStyle = LABEL_COLOR
+  ctx.fillStyle = colors.label
   ctx.fillText("classical", legendX + 20, legendY + 12)
 
   legendX += 90
-  ctx.strokeStyle = QUANTUM_COLOR
+  ctx.strokeStyle = colors.quantum
   ctx.lineWidth = 2
   ctx.beginPath()
   ctx.moveTo(legendX, legendY + 8)
   ctx.lineTo(legendX + 14, legendY + 8)
   ctx.stroke()
-  ctx.fillStyle = LABEL_COLOR
+  ctx.fillStyle = colors.label
   ctx.fillText("quantum", legendX + 20, legendY + 12)
 }
 
@@ -229,10 +246,12 @@ export const QuantumWalk = {
     })
 
     this._resize = attachResizeRedraw(this.el, () => this.render())
+    this._theme = attachThemeRedraw(() => this.render())
   },
 
   destroyed() {
     if (this._resize) this._resize.stop()
+    if (this._theme) this._theme.stop()
   },
 
   recompute() {

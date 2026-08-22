@@ -137,7 +137,14 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
             patternUnits="userSpaceOnUse"
             patternTransform="rotate(45)"
           >
-            <line x1="0" y1="0" x2="0" y2="4" stroke="#555" stroke-width="1" />
+            <line
+              x1="0"
+              y1="0"
+              x2="0"
+              y2="4"
+              style="stroke: color-mix(in oklch, var(--color-base-content) 45%, transparent);"
+              stroke-width="1"
+            />
           </pattern>
         </defs>
 
@@ -146,7 +153,7 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
             x="0"
             y={group.label_y}
             text-anchor="start"
-            fill="#888"
+            style="fill: color-mix(in oklch, var(--color-base-content) 65%, transparent);"
             font-size="11px"
             font-weight="bold"
           >
@@ -158,7 +165,7 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
               x={@weekday_label_x}
               y={wl.y}
               text-anchor="end"
-              fill="#666"
+              style="fill: color-mix(in oklch, var(--color-base-content) 55%, transparent);"
               font-size="9px"
             >
               {wl.label}
@@ -177,10 +184,9 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
                 x={cell.x}
                 y={cell.y}
                 fill={cell.fill}
-                stroke={cell.stroke}
                 stroke-width={cell.stroke_width}
                 stroke-dasharray={cell.stroke_dasharray}
-                style={"cursor: #{if cell.is_gap, do: "default", else: "pointer"};"}
+                style={"cursor: #{if cell.is_gap, do: "default", else: "pointer"}; stroke: #{cell.stroke};"}
                 phx-click={!cell.is_gap && "day_selected"}
                 phx-value-date={!cell.is_gap && cell.date}
               />
@@ -195,7 +201,7 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
         .calendar-svg.has-gap-highlight .day-cell { opacity: 0.15; }
         .calendar-svg.has-gap-highlight .day-cell.gap-highlighted {
           opacity: 1;
-          stroke: #f39c12;
+          stroke: var(--color-warning) !important;
           stroke-width: 2;
         }
         .calendar-svg.has-cluster-isolate .day-cell { opacity: 0.08; }
@@ -284,8 +290,8 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
 
   defp cell_stroke(day, top_cluster, top_weight, colors, transition_set) do
     cond do
-      MapSet.member?(transition_set, day.date) -> "#fff"
-      day.is_gap -> "#555"
+      MapSet.member?(transition_set, day.date) -> "var(--color-base-content)"
+      day.is_gap -> "color-mix(in oklch, var(--color-base-content) 45%, transparent)"
       is_nil(top_cluster) or top_weight < 0.5 -> "none"
       true -> Map.get(colors, top_cluster, "none")
     end
@@ -351,7 +357,8 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
   end
 
   defp gap_tag(true),
-    do: "<br><span style=\"color: #666; font-style: italic\">gap day</span>"
+    do:
+      "<br><span style=\"color: color-mix(in oklch, var(--color-neutral-content) 55%, transparent); font-style: italic\">gap day</span>"
 
   defp gap_tag(_), do: ""
 
@@ -361,7 +368,7 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
   defp dimensions_block(dims) do
     rows =
       Enum.map_join(dims, "", fn {k, v} ->
-        "<span style=\"color: #888\">" <>
+        "<span style=\"color: color-mix(in oklch, var(--color-neutral-content) 65%, transparent)\">" <>
           html_escape(to_string(k)) <>
           "</span><strong>" <>
           html_escape(to_string(v)) <>
@@ -387,7 +394,7 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
         )
       end)
 
-    "<div style=\"margin-top: 6px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 5px\">" <>
+    "<div style=\"margin-top: 6px; border-top: 1px solid color-mix(in oklch, var(--color-neutral-content) 12%, transparent); padding-top: 5px\">" <>
       rows <> "</div>"
   end
 
@@ -399,10 +406,10 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
 
     "<div style=\"display: flex; align-items: center; gap: 5px; margin: 2px 0\">" <>
       "<span style=\"color: #{safe_color}; font-size: 11px; white-space: nowrap\">#{safe_name}</span>" <>
-      "<div style=\"flex: 0 0 50px; height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px\">" <>
+      "<div style=\"flex: 0 0 50px; height: 3px; background: color-mix(in oklch, var(--color-neutral-content) 10%, transparent); border-radius: 2px\">" <>
       "<div style=\"width: #{bar_w}px; height: 3px; background: #{safe_color}; border-radius: 2px\"></div>" <>
       "</div>" <>
-      "<span style=\"color: #888; font-size: 10px; white-space: nowrap\">#{pct}%</span>" <>
+      "<span style=\"color: color-mix(in oklch, var(--color-neutral-content) 65%, transparent); font-size: 10px; white-space: nowrap\">#{pct}%</span>" <>
       "</div>"
   end
 
