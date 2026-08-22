@@ -121,8 +121,8 @@ defmodule FugueWeb.MenagerieLive.AnimatedCard do
     <form phx-change="update_params" class={@class}>
       <label :for={slider <- @sliders} class="block bg-base-200 rounded-lg p-3">
         <div class="flex items-center justify-between mb-1">
-          <span class="text-xs font-semibold text-gray-300">{slider.label}</span>
-          <span class="text-xs font-mono text-gray-400">
+          <span class="text-xs font-semibold text-base-content/75">{slider.label}</span>
+          <span class="text-xs font-mono text-base-content/60">
             {slider.format.(@params[slider.key])}
           </span>
         </div>

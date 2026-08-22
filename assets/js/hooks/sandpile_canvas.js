@@ -3,6 +3,13 @@ import * as d3 from "d3"
 import { resolveThemeColors, buildColorTable } from "../lib/theme_colors.js"
 import { startRafLoop, createThemePoll, mapPixels } from "../lib/canvas_loop.js"
 
+function axisColor() {
+  return (
+    getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim() ||
+    "#666"
+  )
+}
+
 function setupHistogram(container) {
   const margin = { top: 8, right: 12, bottom: 28, left: 36 }
   const width = container.clientWidth || 320
@@ -22,22 +29,22 @@ function setupHistogram(container) {
     .attr("transform", `translate(0,${innerH})`)
     .call(d3.axisBottom(x).ticks(4, "~s"))
     .selectAll("text, line, path")
-    .attr("stroke", "#666")
-    .attr("fill", "#666")
+    .attr("stroke", axisColor())
+    .attr("fill", axisColor())
 
   g.append("g")
     .attr("class", "y-axis")
     .call(d3.axisLeft(y).ticks(4, "~s"))
     .selectAll("text, line, path")
-    .attr("stroke", "#666")
-    .attr("fill", "#666")
+    .attr("stroke", axisColor())
+    .attr("fill", axisColor())
 
   svg
     .append("text")
     .attr("x", margin.left + innerW / 2)
     .attr("y", height - 2)
     .attr("text-anchor", "middle")
-    .attr("fill", "#666")
+    .attr("fill", axisColor())
     .attr("font-size", "10px")
     .text("avalanche size")
 
@@ -45,7 +52,7 @@ function setupHistogram(container) {
     .append("text")
     .attr("transform", `translate(10,${margin.top + innerH / 2}) rotate(-90)`)
     .attr("text-anchor", "middle")
-    .attr("fill", "#666")
+    .attr("fill", axisColor())
     .attr("font-size", "10px")
     .text("count")
 
@@ -71,21 +78,21 @@ function updateHistogram(chart, bins) {
     .select(".x-axis")
     .call(d3.axisBottom(chart.x).ticks(4, "~s"))
     .selectAll("text, line, path")
-    .attr("stroke", "#666")
-    .attr("fill", "#666")
+    .attr("stroke", axisColor())
+    .attr("fill", axisColor())
   chart.g
     .select(".y-axis")
     .call(d3.axisLeft(chart.y).ticks(4, "~s"))
     .selectAll("text, line, path")
-    .attr("stroke", "#666")
-    .attr("fill", "#666")
+    .attr("stroke", axisColor())
+    .attr("fill", axisColor())
 
   const dots = chart.dotsGroup.selectAll("circle").data(data, (d) => d.size)
   dots
     .enter()
     .append("circle")
     .attr("r", 2)
-    .attr("fill", "#888")
+    .attr("fill", axisColor())
     .attr("opacity", 0.7)
     .merge(dots)
     .attr("cx", (d) => chart.x(d.size))
@@ -125,13 +132,26 @@ export const SandpileCanvas = {
 
       const grainCounter = document.getElementById("sandpile-grain-count")
 
-      const repollTheme = createThemePoll({
-        frames: 120,
-        onChange: () => {
-          const fresh = resolveThemeColors()
-          colorTable = buildColorTable(fresh.base, fresh.primary)
-        },
-      })
+      const repollThemeColors = () => {
+        const fresh = resolveThemeColors()
+        colorTable = buildColorTable(fresh.base, fresh.primary)
+        if (histChart) {
+          histChart.g
+            .select(".x-axis")
+            .selectAll("text, line, path")
+            .attr("stroke", axisColor())
+            .attr("fill", axisColor())
+          histChart.g
+            .select(".y-axis")
+            .selectAll("text, line, path")
+            .attr("stroke", axisColor())
+            .attr("fill", axisColor())
+          histChart.dotsGroup.selectAll("circle").attr("fill", axisColor())
+        }
+      }
+      const repollTheme = createThemePoll({ frames: 120, onChange: repollThemeColors })
+      this._onThemeChanged = repollThemeColors
+      window.addEventListener("fugue:theme-changed", this._onThemeChanged)
 
       this._loop = startRafLoop(() => {
         sandpile.step(dropsPerFrame)
@@ -191,5 +211,7 @@ export const SandpileCanvas = {
 
   destroyed() {
     if (this._loop) this._loop.stop()
+    if (this._onThemeChanged)
+      window.removeEventListener("fugue:theme-changed", this._onThemeChanged)
   },
 }

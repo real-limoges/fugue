@@ -140,9 +140,19 @@ function compileShader(gl, type, src) {
 }
 
 function applyFallback(canvas) {
-  // Spectrum-strip CSS gradient so non-WebGL2 clients still see color
-  canvas.style.background =
-    "linear-gradient(90deg,#5a4cff 0%,#22d3ee 25%,#84cc16 50%,#facc15 70%,#f97316 85%,#ef4444 100%)"
+  // Spectrum-strip CSS gradient so non-WebGL2 clients still see color.
+  // This is chrome, not the flamboyant-cuttlefish content above -- it
+  // reads the live theme accents rather than carrying its own palette.
+  const style = getComputedStyle(document.documentElement)
+  const stops = [
+    style.getPropertyValue("--color-secondary").trim(),
+    style.getPropertyValue("--color-info").trim(),
+    style.getPropertyValue("--color-accent").trim(),
+    style.getPropertyValue("--color-warning").trim(),
+    style.getPropertyValue("--color-primary").trim(),
+    style.getPropertyValue("--color-error").trim(),
+  ]
+  canvas.style.background = `linear-gradient(90deg,${stops[0]} 0%,${stops[1]} 25%,${stops[2]} 50%,${stops[3]} 70%,${stops[4]} 85%,${stops[5]} 100%)`
 }
 
 export const IridescenceCanvas = {

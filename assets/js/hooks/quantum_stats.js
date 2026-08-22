@@ -1,4 +1,4 @@
-import { setupDprCanvas, attachResizeRedraw } from "../lib/canvas_figure.js"
+import { setupDprCanvas, attachResizeRedraw, attachThemeRedraw } from "../lib/canvas_figure.js"
 
 // Three occupation histograms overlaid: Maxwell-Boltzmann, Bose-Einstein,
 // Fermi-Dirac. Given N particles and L = 30 energy levels at ε_i = i, solve
@@ -12,12 +12,28 @@ import { setupDprCanvas, attachResizeRedraw } from "../lib/canvas_figure.js"
 // its tail extending below n=1 into the sub-unity region.
 
 const LEVELS = 30
-const MB_COLOR = "rgba(203, 213, 225, 0.75)"
-const QUANTUM_COLOR = "#22d3ee"
-const AXIS_COLOR = "rgba(148, 163, 184, 0.35)"
-const GRID_COLOR = "rgba(148, 163, 184, 0.12)"
-const LABEL_COLOR = "rgba(148, 163, 184, 0.75)"
 const Y_MIN = 0.01
+
+// getComputedStyle resolves var() to a literal oklch() string, and canvas
+// 2D accepts that string directly as fillStyle/strokeStyle -- no var()
+// needed since it's already resolved. Alpha is bolted on by inserting a
+// "/ N" before the closing paren, same trick CSS's own oklch() syntax uses.
+function withAlpha(oklch, alpha) {
+  return oklch.replace(/\)\s*$/, ` / ${alpha})`)
+}
+
+function resolveColors() {
+  const style = getComputedStyle(document.documentElement)
+  const secondary = style.getPropertyValue("--color-secondary").trim()
+  const baseContent = style.getPropertyValue("--color-base-content").trim()
+  return {
+    quantum: secondary,
+    mb: withAlpha(baseContent, 0.65),
+    axis: withAlpha(baseContent, 0.3),
+    grid: withAlpha(baseContent, 0.1),
+    label: withAlpha(baseContent, 0.7),
+  }
+}
 
 function energyLevels() {
   const e = new Float64Array(LEVELS)
@@ -103,6 +119,7 @@ function draw(canvas, T, N) {
   const ctx = canvas.getContext("2d")
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, cssW, cssH)
+  const colors = resolveColors()
 
   const padL = 52
   const padR = 20
@@ -139,7 +156,7 @@ function draw(canvas, T, N) {
   }
 
   // Horizontal gridlines at each power of 10.
-  ctx.strokeStyle = GRID_COLOR
+  ctx.strokeStyle = colors.grid
   ctx.lineWidth = 1
   const firstPow = Math.ceil(logYMin)
   const lastPow = Math.floor(logYMax)
@@ -152,7 +169,7 @@ function draw(canvas, T, N) {
   }
 
   // Axes
-  ctx.strokeStyle = AXIS_COLOR
+  ctx.strokeStyle = colors.axis
   ctx.lineWidth = 1
   ctx.beginPath()
   ctx.moveTo(padL, padT)
@@ -161,7 +178,7 @@ function draw(canvas, T, N) {
   ctx.stroke()
 
   // Y-axis tick labels at each decade.
-  ctx.fillStyle = LABEL_COLOR
+  ctx.fillStyle = colors.label
   ctx.font = "10px ui-monospace, SFMono-Regular, Menlo, monospace"
   ctx.textAlign = "right"
   for (let p = firstPow; p <= lastPow; p++) {
@@ -191,17 +208,17 @@ function draw(canvas, T, N) {
   const fdPts = toPts(nFD)
 
   // MB, classical baseline: gray dashed
-  ctx.strokeStyle = MB_COLOR
+  ctx.strokeStyle = colors.mb
   ctx.lineWidth = 1.25
   ctx.setLineDash([4, 4])
   drawCurve(ctx, mbPts)
   ctx.setLineDash([])
 
   // FD, thin cyan solid with dot markers at each level
-  ctx.strokeStyle = QUANTUM_COLOR
+  ctx.strokeStyle = colors.quantum
   ctx.lineWidth = 1.25
   drawCurve(ctx, fdPts)
-  ctx.fillStyle = QUANTUM_COLOR
+  ctx.fillStyle = colors.quantum
   for (let i = 0; i < LEVELS; i++) {
     const [x, y] = fdPts[i]
     ctx.beginPath()
@@ -210,7 +227,7 @@ function draw(canvas, T, N) {
   }
 
   // BE, thick cyan solid
-  ctx.strokeStyle = QUANTUM_COLOR
+  ctx.strokeStyle = colors.quantum
   ctx.lineWidth = 2.5
   ctx.lineJoin = "round"
   drawCurve(ctx, bePts)
@@ -224,34 +241,34 @@ function draw(canvas, T, N) {
   const rowH = 16
 
   // Bose-Einstein: thick cyan solid
-  ctx.strokeStyle = QUANTUM_COLOR
+  ctx.strokeStyle = colors.quantum
   ctx.lineWidth = 2.5
   ctx.beginPath()
   ctx.moveTo(lx, ly + 6)
   ctx.lineTo(lx + lineLen, ly + 6)
   ctx.stroke()
-  ctx.fillStyle = LABEL_COLOR
+  ctx.fillStyle = colors.label
   ctx.fillText("Bose-Einstein", lx + lineLen + 8, ly + 10)
 
   // Fermi-Dirac: thin cyan with dots
-  ctx.strokeStyle = QUANTUM_COLOR
+  ctx.strokeStyle = colors.quantum
   ctx.lineWidth = 1.25
   ctx.beginPath()
   ctx.moveTo(lx, ly + rowH + 6)
   ctx.lineTo(lx + lineLen, ly + rowH + 6)
   ctx.stroke()
-  ctx.fillStyle = QUANTUM_COLOR
+  ctx.fillStyle = colors.quantum
   for (let k = 0; k < 3; k++) {
     const dx = lx + 4 + k * ((lineLen - 8) / 2)
     ctx.beginPath()
     ctx.arc(dx, ly + rowH + 6, 1.75, 0, 2 * Math.PI)
     ctx.fill()
   }
-  ctx.fillStyle = LABEL_COLOR
+  ctx.fillStyle = colors.label
   ctx.fillText("Fermi-Dirac", lx + lineLen + 8, ly + rowH + 10)
 
   // Maxwell-Boltzmann: gray dashed
-  ctx.strokeStyle = MB_COLOR
+  ctx.strokeStyle = colors.mb
   ctx.lineWidth = 1.25
   ctx.setLineDash([4, 4])
   ctx.beginPath()
@@ -259,7 +276,7 @@ function draw(canvas, T, N) {
   ctx.lineTo(lx + lineLen, ly + rowH * 2 + 6)
   ctx.stroke()
   ctx.setLineDash([])
-  ctx.fillStyle = LABEL_COLOR
+  ctx.fillStyle = colors.label
   ctx.fillText("Maxwell-Boltzmann", lx + lineLen + 8, ly + rowH * 2 + 10)
 }
 
@@ -276,10 +293,12 @@ export const QuantumStats = {
     })
 
     this._resize = attachResizeRedraw(this.el, () => this.render())
+    this._theme = attachThemeRedraw(() => this.render())
   },
 
   destroyed() {
     if (this._resize) this._resize.stop()
+    if (this._theme) this._theme.stop()
   },
 
   render() {

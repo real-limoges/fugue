@@ -50,14 +50,14 @@ defmodule FugueWeb.MenagerieLive.QuantumWalk do
     ~H"""
     <div class="quantum-walk-menagerie p-4 max-w-6xl mx-auto">
       <nav class="mb-6 text-xs">
-        <.link navigate={~p"/menagerie"} class="text-gray-500 hover:text-gray-300">
+        <.link navigate={~p"/menagerie"} class="text-base-content/45 hover:text-base-content/75">
           ← Menagerie
         </.link>
       </nav>
 
       <div class="mb-4">
-        <h1 class="text-2xl font-bold text-gray-100">Classical vs quantum walk</h1>
-        <p class="text-sm text-gray-400 mt-1 max-w-3xl leading-relaxed">
+        <h1 class="text-2xl font-bold text-base-content">Classical vs quantum walk</h1>
+        <p class="text-sm text-base-content/60 mt-1 max-w-3xl leading-relaxed">
           Both walkers start at the center and take {@params["steps"]} steps. The gray
           one takes a classical random walk (coin flip, step, coin flip, step)
           and settles into the familiar bell curve. The cyan one takes a quantum
@@ -65,7 +65,7 @@ defmodule FugueWeb.MenagerieLive.QuantumWalk do
           spreads to the edges instead, piling up in two sharp horns at the outer
           limits of where it could possibly be.
         </p>
-        <p class="text-sm text-gray-400 mt-3 max-w-3xl leading-relaxed">
+        <p class="text-sm text-base-content/60 mt-3 max-w-3xl leading-relaxed">
           Drag decoherence. At zero, the quantum walker stays weird. Turn it up
           and the weirdness drains out step by step until you're back to the
           bell curve the classical walker was in the whole time. The slider is

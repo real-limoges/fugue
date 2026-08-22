@@ -238,8 +238,8 @@ defmodule FugueWeb.LabLive.Bayes do
 
     ~H"""
     <section class="mb-14">
-      <h2 class="text-lg font-semibold text-white mb-1">Where are the keys?</h2>
-      <p class="text-gray-400 text-sm mb-4 max-w-2xl">
+      <h2 class="text-lg font-semibold text-base-content mb-1">Where are the keys?</h2>
+      <p class="text-base-content/60 text-sm mb-4 max-w-2xl">
         Twenty-five rooms. The shading is where you think you left them --
         your prior. Click a room to look. If they're not in there, the
         room's mass collapses to zero and the rest of the grid soaks it up.
@@ -284,9 +284,9 @@ defmodule FugueWeb.LabLive.Bayes do
           </g>
         </svg>
 
-        <div class="flex-1 space-y-3 text-xs text-gray-500 font-mono">
+        <div class="flex-1 space-y-3 text-xs text-base-content/45 font-mono">
           <p>
-            <span class="text-gray-300">Searches: {MapSet.size(@searched)}</span>
+            <span class="text-base-content/75">Searches: {MapSet.size(@searched)}</span>
             <%= if @found != nil do %>
               ·
               <span class="text-primary">
@@ -298,7 +298,7 @@ defmodule FugueWeb.LabLive.Bayes do
           </p>
           <button
             phx-click="reset_search"
-            class="btn btn-xs btn-ghost border border-white/25 text-gray-300 hover:text-white hover:border-white/40 font-mono"
+            class="btn btn-xs btn-ghost border border-base-content/25 text-base-content/75 hover:text-base-content hover:border-base-content/40 font-mono"
           >
             Reset (new hidden cell)
           </button>
@@ -328,8 +328,8 @@ defmodule FugueWeb.LabLive.Bayes do
 
     ~H"""
     <section class="mb-14">
-      <h2 class="text-lg font-semibold text-white mb-1">A rate, learned from years</h2>
-      <p class="text-gray-400 text-sm mb-4 max-w-2xl">
+      <h2 class="text-lg font-semibold text-base-content mb-1">A rate, learned from years</h2>
+      <p class="text-base-content/60 text-sm mb-4 max-w-2xl">
         Earthquakes per year in the Bay Area, where I live; not a textbook
         example for me. Each year is a draw from <code class="text-primary/70">Poisson(rate)</code>; the rate itself
         is the thing you want, and you don't know it. The dim curve is
@@ -349,19 +349,19 @@ defmodule FugueWeb.LabLive.Bayes do
         </button>
         <button
           phx-click="reset_rate"
-          class="btn btn-xs btn-ghost border border-white/25 text-gray-300 hover:text-white hover:border-white/40 font-mono"
+          class="btn btn-xs btn-ghost border border-base-content/25 text-base-content/75 hover:text-base-content hover:border-base-content/40 font-mono"
         >
           Reset
         </button>
-        <p class="text-xs text-gray-500 font-mono ml-2">
+        <p class="text-xs text-base-content/45 font-mono ml-2">
           {@observed_years} {if @observed_years == 1, do: "year", else: "years"} · {@observed_count} total events ·
           posterior mean <span class="text-primary/80">{Float.round(@post_mean, 2)}</span>
         </p>
       </div>
 
-      <p class="mt-5 text-xs text-gray-500 font-mono leading-relaxed max-w-2xl">
+      <p class="mt-5 text-xs text-base-content/45 font-mono leading-relaxed max-w-2xl">
         Closed-form here: a
-        <code class="text-gray-400">
+        <code class="text-base-content/60">
           Gamma({Float.round(@prior_alpha, 1)}, {Float.round(@prior_beta, 1)})
         </code>
         prior times a Poisson likelihood is another Gamma, <code class="text-primary/70">Gamma({Float.round(@post_alpha, 1)}, {Float.round(@post_beta, 1)})</code>.
@@ -386,8 +386,8 @@ defmodule FugueWeb.LabLive.Bayes do
 
     ~H"""
     <section class="mb-6">
-      <h2 class="text-lg font-semibold text-white mb-1">Asking the posterior a question</h2>
-      <p class="text-gray-400 text-sm mb-4 max-w-2xl">
+      <h2 class="text-lg font-semibold text-base-content mb-1">Asking the posterior a question</h2>
+      <p class="text-base-content/60 text-sm mb-4 max-w-2xl">
         You have a posterior; the section above made one. Reducing it to a
         single number ("the rate is 3.5") throws away most of what's there.
         Usually what you want to know is more like <em>is it above some threshold I care about?</em>
@@ -397,7 +397,7 @@ defmodule FugueWeb.LabLive.Bayes do
       <.density_chart chart={@chart} />
 
       <form phx-change="set_threshold" class="mt-4 flex items-center gap-4">
-        <label class="text-xs font-mono text-gray-400">Threshold</label>
+        <label class="text-xs font-mono text-base-content/60">Threshold</label>
         <input
           type="range"
           name="value"
@@ -412,7 +412,7 @@ defmodule FugueWeb.LabLive.Bayes do
         </span>
       </form>
 
-      <p class="mt-5 text-xs text-gray-500 font-mono leading-relaxed max-w-2xl">
+      <p class="mt-5 text-xs text-base-content/45 font-mono leading-relaxed max-w-2xl">
         The shaded area is <code class="text-primary/70">P(rate &gt; threshold | data)</code>.
         Same posterior as the section above; observe more years there and
         watch the answer here move. Every other question you'd ask about the
@@ -442,7 +442,7 @@ defmodule FugueWeb.LabLive.Bayes do
           y1={@chart.frame.margin.top}
           x2={t.x}
           y2={@chart.frame.margin.top + @chart.frame.inner_h}
-          stroke="#fff"
+          style="stroke: var(--color-base-content)"
           stroke-width="1"
         />
       </g>
@@ -452,7 +452,7 @@ defmodule FugueWeb.LabLive.Bayes do
         y1={@chart.frame.margin.top + @chart.frame.inner_h}
         x2={@chart.frame.margin.left + @chart.frame.inner_w}
         y2={@chart.frame.margin.top + @chart.frame.inner_h}
-        stroke="#555"
+        style="stroke: var(--color-base-content); opacity: 0.4"
         stroke-width="1"
       />
       <line
@@ -460,7 +460,7 @@ defmodule FugueWeb.LabLive.Bayes do
         y1={@chart.frame.margin.top}
         x2={@chart.frame.margin.left}
         y2={@chart.frame.margin.top + @chart.frame.inner_h}
-        stroke="#555"
+        style="stroke: var(--color-base-content); opacity: 0.4"
         stroke-width="1"
       />
 
@@ -469,7 +469,7 @@ defmodule FugueWeb.LabLive.Bayes do
         x={t.x}
         y={@chart.frame.margin.top + @chart.frame.inner_h + 18}
         text-anchor="middle"
-        fill="#888"
+        style="fill: color-mix(in oklch, var(--color-base-content) 60%, transparent)"
         font-size="11"
         font-family="monospace"
       >
@@ -480,7 +480,7 @@ defmodule FugueWeb.LabLive.Bayes do
         x={@chart.frame.margin.left + @chart.frame.inner_w / 2}
         y={@chart.frame.height - 4}
         text-anchor="middle"
-        fill="#666"
+        style="fill: color-mix(in oklch, var(--color-base-content) 50%, transparent)"
         font-size="12"
         font-family="monospace"
       >
@@ -490,7 +490,7 @@ defmodule FugueWeb.LabLive.Bayes do
         x="12"
         y={@chart.frame.margin.top + @chart.frame.inner_h / 2}
         text-anchor="middle"
-        fill="#666"
+        style="fill: color-mix(in oklch, var(--color-base-content) 50%, transparent)"
         font-size="12"
         font-family="monospace"
         transform={"rotate(-90, 12, #{@chart.frame.margin.top + @chart.frame.inner_h / 2})"}
@@ -521,7 +521,7 @@ defmodule FugueWeb.LabLive.Bayes do
           y1={@chart.threshold_line.y1}
           x2={@chart.threshold_line.x}
           y2={@chart.threshold_line.y2}
-          stroke="#fff"
+          style="stroke: var(--color-base-content)"
           stroke-width="1.5"
           opacity="0.6"
           stroke-dasharray="5,3"

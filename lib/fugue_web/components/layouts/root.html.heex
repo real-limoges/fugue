@@ -1,6 +1,14 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
   <head>
+    <script>
+      (() => {
+        const stored = localStorage.getItem("fugue-theme");
+        const theme =
+          stored ?? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+        document.documentElement.setAttribute("data-theme", theme);
+      })();
+    </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content={get_csrf_token()} />
@@ -60,6 +68,20 @@
               >
                 Menagerie
               </a>
+            </li>
+            <li>
+              <button
+                id="theme-toggle"
+                type="button"
+                phx-hook="ThemeToggle"
+                phx-update="ignore"
+                class="btn btn-ghost btn-sm btn-square"
+                aria-label="Toggle light and dark theme"
+                title="Toggle light and dark theme"
+              >
+                <span class="hero-sun-solid size-4 dark:hidden"></span>
+                <span class="hero-moon-solid size-4 hidden dark:inline-block"></span>
+              </button>
             </li>
           </ul>
         </div>

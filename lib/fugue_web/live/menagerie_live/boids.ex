@@ -108,14 +108,14 @@ defmodule FugueWeb.MenagerieLive.Boids do
     ~H"""
     <div class="boids-menagerie p-4 max-w-6xl mx-auto">
       <nav class="mb-6 text-xs">
-        <.link navigate={~p"/menagerie"} class="text-gray-500 hover:text-gray-300">
+        <.link navigate={~p"/menagerie"} class="text-base-content/45 hover:text-base-content/75">
           ← Menagerie
         </.link>
       </nav>
 
       <div class="mb-4">
-        <h1 class="text-2xl font-bold text-gray-100">Boids playground</h1>
-        <p class="text-sm text-gray-400 mt-1 max-w-3xl leading-relaxed">
+        <h1 class="text-2xl font-bold text-base-content">Boids playground</h1>
+        <p class="text-sm text-base-content/60 mt-1 max-w-3xl leading-relaxed">
           Each bird follows three simple rules: steer away from crowded neighbors,
           turn toward the average heading of the flock, and drift toward the local
           center of mass. Small changes to any of the three produce wildly

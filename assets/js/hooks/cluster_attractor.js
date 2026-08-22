@@ -1,15 +1,23 @@
 /** A slowly drawn Thomas strange attractor, tinted by the user's cluster palette.
  *  Generative filler; no data, just a living scribble that rhymes with the trajectory hero. */
 
+import { resolveThemeColors } from "../lib/theme_colors.js"
+import { createThemePoll } from "../lib/canvas_loop.js"
+
 const B = 0.208186
 const STEP = 0.02
 const SEGS_PER_FRAME = 6
 const WARMUP_STEPS = 6000
-const FADE = "rgba(10,10,26,0.035)"
+const FADE_ALPHA = 0.035
 const LINE_WIDTH = 1.1
 const LINE_ALPHA = 0.78
 const FALLBACK_ASPECT = 0.62
-const BG = "rgb(10,10,26)"
+
+// Used only when the server sends no cluster-color data (data-colors empty
+// or unparseable) -- the real page always supplies cluster_colors from
+// @analysis, so this is a last-resort palette, not the common path.
+const DARK_FALLBACK_PALETTE = ["#b266ff", "#22d3ee", "#f472b6", "#facc15", "#4ade80"]
+const LIGHT_FALLBACK_PALETTE = ["#b45309", "#0e7490", "#7c3aed", "#be185d", "#15803d"]
 
 function thomasStep(p) {
   const [x, y, z] = p
@@ -24,13 +32,15 @@ export const ClusterAttractor = {
   mounted() {
     const raw = this.el.dataset.colors || "[]"
     try {
-      this.palette = JSON.parse(raw).filter((c) => typeof c === "string" && c.length > 0)
+      this.customPalette = JSON.parse(raw).filter((c) => typeof c === "string" && c.length > 0)
     } catch {
-      this.palette = []
+      this.customPalette = []
     }
-    if (this.palette.length === 0) {
-      this.palette = ["#b266ff", "#22d3ee", "#f472b6", "#facc15", "#4ade80"]
-    }
+
+    this.applyThemeColors()
+    this._onThemeChanged = () => this.applyThemeColors()
+    window.addEventListener("fugue:theme-changed", this._onThemeChanged)
+    this._repollTheme = createThemePoll({ frames: 120, onChange: this._onThemeChanged })
 
     this.warmup()
     this.setupCanvas()
@@ -50,6 +60,21 @@ export const ClusterAttractor = {
     if (this._raf) cancelAnimationFrame(this._raf)
     window.removeEventListener("resize", this._onResize)
     if (this._ro) this._ro.disconnect()
+    if (this._onThemeChanged)
+      window.removeEventListener("fugue:theme-changed", this._onThemeChanged)
+  },
+
+  applyThemeColors() {
+    const isLight = document.documentElement.getAttribute("data-theme") === "light"
+    const base = resolveThemeColors().base
+    this.bg = `rgb(${base[0]}, ${base[1]}, ${base[2]})`
+    this.fade = `rgba(${base[0]}, ${base[1]}, ${base[2]}, ${FADE_ALPHA})`
+    this.palette =
+      this.customPalette.length > 0
+        ? this.customPalette
+        : isLight
+          ? LIGHT_FALLBACK_PALETTE
+          : DARK_FALLBACK_PALETTE
   },
 
   warmup() {
@@ -75,9 +100,9 @@ export const ClusterAttractor = {
     this.p = p
 
     const stride = Math.floor(samples.length / this.palette.length)
-    this.basins = this.palette.map((color, i) => {
+    this.basins = this.palette.map((_, i) => {
       const s = samples[((i + 0.5) * stride) | 0] || samples[0]
-      return { x: s[0], y: s[1], z: s[2], color }
+      return { x: s[0], y: s[1], z: s[2], i }
     })
   },
 
@@ -102,7 +127,7 @@ export const ClusterAttractor = {
 
     const ctx = canvas.getContext("2d")
     ctx.scale(dpr, dpr)
-    ctx.fillStyle = BG
+    ctx.fillStyle = this.bg
     ctx.fillRect(0, 0, w, h)
 
     this.canvas = canvas
@@ -147,12 +172,13 @@ export const ClusterAttractor = {
         best = b
       }
     }
-    return best.color
+    return this.palette[best.i]
   },
 
   loop() {
+    this._repollTheme()
     const ctx = this.ctx
-    ctx.fillStyle = FADE
+    ctx.fillStyle = this.fade
     ctx.fillRect(0, 0, this.w, this.h)
 
     ctx.globalAlpha = LINE_ALPHA

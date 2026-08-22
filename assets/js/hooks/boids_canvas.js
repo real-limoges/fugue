@@ -38,13 +38,13 @@ export const BoidsCanvas = {
       let colorTable = buildColorTable(initialColors.base, initialColors.primary)
       const rgba = new Uint8ClampedArray(width * height * 4)
 
-      const repollTheme = createThemePoll({
-        frames: 120,
-        onChange: () => {
-          const fresh = resolveThemeColors()
-          colorTable = buildColorTable(fresh.base, fresh.primary)
-        },
-      })
+      const repollThemeColors = () => {
+        const fresh = resolveThemeColors()
+        colorTable = buildColorTable(fresh.base, fresh.primary)
+      }
+      const repollTheme = createThemePoll({ frames: 120, onChange: repollThemeColors })
+      this._onThemeChanged = repollThemeColors
+      window.addEventListener("fugue:theme-changed", this._onThemeChanged)
 
       this._loop = startRafLoop(() => {
         boids.step(1)
@@ -72,5 +72,7 @@ export const BoidsCanvas = {
 
   destroyed() {
     if (this._loop) this._loop.stop()
+    if (this._onThemeChanged)
+      window.removeEventListener("fugue:theme-changed", this._onThemeChanged)
   },
 }

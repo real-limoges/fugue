@@ -43,18 +43,18 @@ defmodule FugueWeb.MoodLive.ExperiencePanel do
     ~H"""
     <div
       class="mood-day-panel"
-      style={"position: fixed; right: #{if @selected_day, do: "0px", else: "-380px"}; top: 0; bottom: 0; width: 360px; background: rgba(10, 10, 26, 0.95); border-left: 1px solid rgba(255,255,255,0.06); z-index: 50; padding: 20px; overflow-y: auto; transition: right 0.3s ease; backdrop-filter: blur(12px);"}
+      style={"position: fixed; right: #{if @selected_day, do: "0px", else: "-380px"}; top: 0; bottom: 0; width: 360px; background: color-mix(in oklch, var(--color-base-100) 95%, transparent); border-left: 1px solid color-mix(in oklch, var(--color-base-content) 8%, transparent); z-index: 50; padding: 20px; overflow-y: auto; transition: right 0.3s ease; backdrop-filter: blur(12px);"}
     >
       <%= if @selected_day do %>
         <button
           type="button"
           phx-click="clear_highlights"
-          style="position: absolute; top: 12px; right: 16px; background: none; border: none; color: #666; font-size: 22px; cursor: pointer; line-height: 1;"
+          style="position: absolute; top: 12px; right: 16px; background: none; border: none; color: color-mix(in oklch, var(--color-base-content) 55%, transparent); font-size: 22px; cursor: pointer; line-height: 1;"
         >
           ×
         </button>
 
-        <h3 style="color: #ccc; font-size: 18px; font-weight: 700; margin-bottom: 4px;">
+        <h3 style="color: var(--color-base-content); font-size: 18px; font-weight: 700; margin-bottom: 4px;">
           {@selected_day.date}
         </h3>
 
@@ -64,7 +64,7 @@ defmodule FugueWeb.MoodLive.ExperiencePanel do
           </div>
         <% end %>
 
-        <div style="color: #666; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
+        <div style="color: color-mix(in oklch, var(--color-base-content) 55%, transparent); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">
           Dimensions
         </div>
 
@@ -73,18 +73,18 @@ defmodule FugueWeb.MoodLive.ExperiencePanel do
             <span style={"color: #{dim_color(dim)}; font-size: 11px; width: 72px; font-weight: 500;"}>
               {dim}
             </span>
-            <div style="flex: 1; height: 6px; background: rgba(255,255,255,0.04); border-radius: 3px; position: relative;">
+            <div style="flex: 1; height: 6px; background: color-mix(in oklch, var(--color-base-content) 6%, transparent); border-radius: 3px; position: relative;">
               <div style={"width: #{bar_pct(val)}%; height: 100%; background: #{dim_color(dim)}; border-radius: 3px; opacity: 0.7;"}>
               </div>
             </div>
-            <span style="color: #888; font-size: 11px; min-width: 20px; text-align: right;">
+            <span style="color: color-mix(in oklch, var(--color-base-content) 65%, transparent); font-size: 11px; min-width: 20px; text-align: right;">
               {val}
             </span>
           </div>
         <% end %>
 
         <%= if @selected_day.memberships && @selected_day.memberships != [] do %>
-          <div style="color: #666; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px;">
+          <div style="color: color-mix(in oklch, var(--color-base-content) 55%, transparent); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px;">
             Cluster membership
           </div>
 
@@ -99,7 +99,7 @@ defmodule FugueWeb.MoodLive.ExperiencePanel do
               <span style={"color: #{cluster_color(@selected_day, m.id)}; font-size: 11px; flex: 1;"}>
                 {m.name}
               </span>
-              <span style="color: #888; font-size: 11px;">
+              <span style="color: color-mix(in oklch, var(--color-base-content) 65%, transparent); font-size: 11px;">
                 {percent(m.weight)}%
               </span>
             </div>
@@ -107,7 +107,7 @@ defmodule FugueWeb.MoodLive.ExperiencePanel do
         <% end %>
 
         <%= if @selected_day.prev || @selected_day.next do %>
-          <div style="color: #666; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px;">
+          <div style="color: color-mix(in oklch, var(--color-base-content) 55%, transparent); font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin: 16px 0 8px;">
             Neighbors
           </div>
           <.neighbor label="←" neighbor={@selected_day.prev} day={@selected_day} />
@@ -131,8 +131,12 @@ defmodule FugueWeb.MoodLive.ExperiencePanel do
       phx-value-date={@neighbor.date}
       style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; cursor: pointer;"
     >
-      <span style="color: #555; font-size: 11px; width: 14px;">{@label}</span>
-      <span style="color: #999; font-size: 11px;">{@neighbor.date}</span>
+      <span style="color: color-mix(in oklch, var(--color-base-content) 45%, transparent); font-size: 11px; width: 14px;">
+        {@label}
+      </span>
+      <span style="color: color-mix(in oklch, var(--color-base-content) 70%, transparent); font-size: 11px;">
+        {@neighbor.date}
+      </span>
       <span style={"color: #{cluster_color(@day, @neighbor.dominant_id)}; font-size: 11px; margin-left: auto;"}>
         {@neighbor.dominant_name || ""}
       </span>

@@ -14,6 +14,7 @@ import { SandpileCanvas } from "./sandpile_canvas"
 import { CloudsCanvas } from "./clouds_canvas"
 import { LabGam } from "./lab_gam"
 import { IridescenceCanvas } from "./iridescence"
+import { ThemeToggle } from "./theme_toggle"
 
 export default {
   CalendarTooltip,
@@ -32,4 +33,5 @@ export default {
   CloudsCanvas,
   LabGam,
   IridescenceCanvas,
+  ThemeToggle,
 }
