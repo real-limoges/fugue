@@ -28,6 +28,12 @@
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title="realcomplex.systems updates"
+      href={~p"/feed.xml"}
+    />
     <link phx-track-static rel="stylesheet" href={~p"/assets/css/app.css"} />
     <script defer phx-track-static type="text/javascript" src={~p"/assets/js/app.js"}>
     </script>
@@ -103,6 +109,9 @@
           </a>
           <a href="/code" class="hover:text-primary transition-colors">
             code
+          </a>
+          <a href={~p"/feed.xml"} class="hover:text-primary transition-colors" title="RSS feed">
+            feed
           </a>
           <a href="https://github.com/real-limoges" class="hover:text-primary transition-colors">
             github
