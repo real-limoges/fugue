@@ -59,7 +59,6 @@ defmodule Fugue.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
-      {:earmark, "~> 1.4"},
       {:req, "~> 0.5"},
       {:stream_data, "~> 1.0", only: :test}
     ]

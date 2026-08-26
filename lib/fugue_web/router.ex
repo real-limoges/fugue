@@ -17,6 +17,7 @@ defmodule FugueWeb.Router do
     get "/", PageController, :home
     get "/about", PageController, :about
     get "/code", PageController, :code
+    get "/feed.xml", FeedController, :rss
     live "/mood", MoodLive
     live "/menagerie", MenagerieLive.Index
     live "/menagerie/fuzzy", MenagerieLive.Fuzzy

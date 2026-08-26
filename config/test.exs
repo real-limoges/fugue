@@ -20,6 +20,3 @@ config :phoenix_live_view,
 # Sort query params output of verified routes for robust url comparisons
 config :phoenix,
   sort_verified_routes_query_params: true
-
-# Skip CozoDB in test — no tests require it yet
-config :fugue, start_db: false
