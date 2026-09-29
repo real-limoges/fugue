@@ -257,7 +257,7 @@ defmodule FugueWeb.ColorLive do
           How many words does a language need for color? Up to the
           language. English commits to eleven basic ones: red,
           orange, yellow, green, blue, purple, pink, brown, black,
-          white, grey. Some languages get by with two: one warm
+          white, gray. Some languages get by with two: one warm
           word, one cool word. Both work fine for the people
           speaking them, and both sets of speakers are looking at
           the same wavelengths. Each one thinks its own partition is
@@ -359,7 +359,7 @@ defmodule FugueWeb.ColorLive do
         <p class="text-sm text-base-content/65 leading-relaxed">
           Look at those patches. Two patches, one color, to anyone
           looking at this page. (To me, this is a paragraph about
-          two grey patches.) That simulation up there is a
+          two gray patches.) That simulation up there is a
           trichromat's guess at what dichromat experience is like,
           calculated in trichromat math and rendered on a
           trichromat screen. Nobody who built it has seen the thing

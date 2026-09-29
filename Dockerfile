@@ -21,7 +21,7 @@ RUN mix compile
 RUN mix assets.deploy
 RUN mix release
 
-# Runner stage — minimal runtime image
+# Runner stage: minimal runtime image
 FROM alpine:3.23 AS runner
 
 RUN apk add --no-cache openssl ncurses-libs ca-certificates libstdc++

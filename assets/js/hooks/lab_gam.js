@@ -13,7 +13,7 @@ import {
   loadGlissando,
   buildFrame,
   buildScatter,
-} from "./lab_chart"
+} from "../lib/lab_chart"
 
 const GRID_N = 150
 const COLOR_LINE = "#ffffff"

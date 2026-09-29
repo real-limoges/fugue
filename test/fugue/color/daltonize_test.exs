@@ -9,10 +9,10 @@ defmodule Fugue.Color.DaltonizeTest do
   end
 
   test "achromatic input is approximately preserved" do
-    # Pure greys are unchanged by any LMS-cone-deficiency simulation.
-    for grey <- ~w(#000000 #404040 #808080 #c0c0c0 #ffffff) do
-      out = Daltonize.protan_hex(grey)
-      assert close?(grey, out, 4)
+    # Pure grays are unchanged by any LMS-cone-deficiency simulation.
+    for gray <- ~w(#000000 #404040 #808080 #c0c0c0 #ffffff) do
+      out = Daltonize.protan_hex(gray)
+      assert close?(gray, out, 4)
     end
   end
 

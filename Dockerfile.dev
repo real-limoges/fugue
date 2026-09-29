@@ -1,4 +1,4 @@
-# Dev image — source comes in via bind mount, deps/build/node_modules live
+# Dev image: source comes in via bind mount, deps/build/node_modules live
 # in named volumes so host artifacts (wrong arch) can't pollute them.
 FROM hexpm/elixir:1.19.5-erlang-27.3.4.9-ubuntu-noble-20260217
 

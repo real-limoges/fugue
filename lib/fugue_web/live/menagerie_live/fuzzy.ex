@@ -9,6 +9,7 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
 
   alias Fugue.Menagerie.{Fuzzy, MelbourneWeather}
   alias FugueWeb.MenagerieLive.TemperatureBands
+  import FugueWeb.MenagerieLive.Parse
 
   @default_center_offset 0.0
   @default_spread 1.0
@@ -82,17 +83,6 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
       bands_series: Fuzzy.bands(MelbourneWeather.rows(), mfs),
       bands_shapes: shapes
     )
-  end
-
-  defp parse_float(str, default) do
-    case Float.parse(str) do
-      {v, _} -> v
-      :error -> default
-    end
-  end
-
-  defp format_number(n, decimals) when is_number(n) do
-    :erlang.float_to_binary(n / 1, decimals: decimals)
   end
 
   def render(assigns) do

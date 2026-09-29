@@ -27,7 +27,7 @@ defmodule FugueWeb.ColorLive.Splashes do
     {"#da306c", "#00666d", "pink / teal"},
     {"#ca9ed6", "#00afd6", "sky"},
     {"#9073a2", "#007fa2", "steel blue"},
-    {"#896581", "#047181", "plum-grey"},
+    {"#896581", "#047181", "plum-gray"},
     {"#5e4c6c", "#0b546c", "deep slate"}
   ]
 
