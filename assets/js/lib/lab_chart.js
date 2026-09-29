@@ -2,7 +2,7 @@
 
 export const Z_95 = 1.96
 
-export const MARGIN = { top: 30, right: 45, bottom: 50, left: 60 }
+const MARGIN = { top: 30, right: 45, bottom: 50, left: 60 }
 
 export function linspace(a, b, n) {
   const step = (b - a) / (n - 1)
@@ -31,7 +31,7 @@ export function bandPath(xs, lower, upper, scaleX, scaleY) {
   return `${top} ${bottom} Z`
 }
 
-export function formatTick(v) {
+function formatTick(v) {
   if (Number.isInteger(v)) return String(v)
   return v.toFixed(2).replace(/0+$/, "").replace(/\.$/, "")
 }

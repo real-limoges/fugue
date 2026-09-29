@@ -9,6 +9,7 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
 
   alias Fugue.Fuzzy.Inference.Wire
   alias Fugue.Menagerie.Mamdani, as: MamdaniLogic
+  import FugueWeb.MenagerieLive.Parse
 
   def mount(_params, _session, socket) do
     socket =
@@ -73,17 +74,6 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
       output_curves: response["output_curves"],
       crisp: crisp
     })
-  end
-
-  defp parse_float(str, default) do
-    case Float.parse(str) do
-      {v, _} -> v
-      :error -> default
-    end
-  end
-
-  defp format_number(n, decimals) when is_number(n) do
-    :erlang.float_to_binary(n / 1, decimals: decimals)
   end
 
   def render(assigns) do

@@ -107,18 +107,6 @@
 
 /* This file is for your main application CSS */
 
-/* Glow effect for primary links on hover */
-.glow-hover:hover {
-  box-shadow: 0 0 24px color-mix(in oklch, var(--color-primary) 35%, transparent);
-}
-
-/* Accent divider */
-.divider-accent {
-  border: none;
-  height: 2px;
-  background: var(--color-primary);
-}
-
 /* Shared tooltip card. Content is server-rendered HTML; the JS hook owns
    only positioning. The `--right` modifier anchors the tooltip to the
    right edge of its container (used by the calendar grid). */

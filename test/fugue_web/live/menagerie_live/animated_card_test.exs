@@ -137,7 +137,7 @@ defmodule FugueWeb.MenagerieLive.AnimatedCardTest do
   describe "slider_grid/1" do
     import Phoenix.LiveViewTest
 
-    test "renders a labelled range input per slider with the formatted value" do
+    test "renders a labeled range input per slider with the formatted value" do
       sliders = [
         Slider.new(key: "speed", label: "Speed", min: 1, max: 200, cast: &trunc/1),
         Slider.new(

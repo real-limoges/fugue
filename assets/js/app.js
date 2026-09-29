@@ -1,5 +1,5 @@
 import "phoenix_html"
-import { initSplash, simNames } from "./petri_splash"
+import { initSplash } from "./petri_splash"
 import { initLego3D } from "./lego_3d"
 import { Socket } from "phoenix"
 import { LiveSocket } from "phoenix_live_view"
