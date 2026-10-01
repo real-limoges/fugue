@@ -10,13 +10,47 @@ permissions:
   contents: read
   id-token: write
 
+# Inlined from real-complex's deploy-service.yml: a public repo can't call a
+# reusable workflow that lives in a private one.
+env:
+  SERVICE_NAME: fugue
+  SERVICE_ACCOUNT: fugue-runner@realcomplex-prod.iam.gserviceaccount.com
+  REGION: us-central1
+  REGISTRY: us-central1-docker.pkg.dev/realcomplex-prod/realcomplex-images
+
 jobs:
   test:
     uses: ./.github/workflows/ci.yml
 
   deploy:
     needs: test
-    uses: real-limoges/real-complex/.github/workflows/deploy-service.yml@main
-    with:
-      service_name: fugue
-      service_account: fugue-runner@realcomplex-prod.iam.gserviceaccount.com
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/736771798599/locations/global/workloadIdentityPools/github-actions-pool/providers/github-actions-provider
+          service_account: deployer@realcomplex-prod.iam.gserviceaccount.com
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      - name: Build and push image
+        run: |
+          IMAGE="${REGISTRY}/${SERVICE_NAME}:${{ github.sha }}"
+          docker build -t "$IMAGE" -f ./Dockerfile .
+          docker push "$IMAGE"
+
+      - name: Deploy to Cloud Run
+        run: |
+          IMAGE="${REGISTRY}/${SERVICE_NAME}:${{ github.sha }}"
+          gcloud run deploy "$SERVICE_NAME" \
+            --image "$IMAGE" \
+            --region "$REGION" \
+            --service-account "$SERVICE_ACCOUNT" \
+            --quiet
