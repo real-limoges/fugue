@@ -6,13 +6,13 @@ import { setupDprCanvas, attachResizeRedraw, attachThemeRedraw } from "../lib/ca
 // Quantum: Hadamard walk with a coin qubit. Decoherence is implemented as
 // stochastic phase flips on the coin (the |1> branch gets multiplied by -1
 // with probability p each step), averaged over an ensemble of trajectories.
-// p=0 → clean two-horn ballistic spread. p=1 → classical bell. The slider
+// p=0 gives a clean two-horn ballistic spread; p=1 gives a classical bell. The slider
 // is the dial that turns one into the other.
 
 const TRAJECTORIES = 240
 
 // getComputedStyle resolves var() to a literal oklch() string, and canvas
-// 2D accepts that string directly as fillStyle/strokeStyle -- no var()
+// 2D accepts that string directly as fillStyle/strokeStyle, with no var()
 // needed since it's already resolved. Alpha is bolted on by inserting a
 // "/ N" before the closing paren, same trick CSS's own oklch() syntax uses.
 function withAlpha(oklch, alpha) {
@@ -89,7 +89,7 @@ function quantumDistribution(steps, decoherence) {
           a1i = -a1i
         }
 
-        // Shift: coin 0 → x-1, coin 1 → x+1
+        // Shift: coin 0 -> x-1, coin 1 -> x+1
         if (x > 0) {
           nextRe[(x - 1) * 2 + 0] += a0r
           nextIm[(x - 1) * 2 + 0] += a0i

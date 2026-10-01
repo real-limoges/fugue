@@ -6,6 +6,14 @@ defmodule FugueWeb.Updates do
 
   @entries [
     %{
+      title: "¡Amigos!",
+      description:
+        "A recap of one Arrested Development episode that keeps adding layers " <>
+          "as you scroll, until it can't be read.",
+      url: "/amigos",
+      date: ~D[2026-10-01]
+    },
+    %{
       title: "Light mode",
       description: "A light theme joins dark, toggleable from the header.",
       url: "/",

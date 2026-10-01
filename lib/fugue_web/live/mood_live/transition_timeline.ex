@@ -3,6 +3,10 @@ defmodule FugueWeb.MoodLive.TransitionTimeline do
   Horizontal timeline bar showing contiguous runs of each dominant cluster,
   with white markers at every transition. Replaces the former
   `TransitionTimeline` JS hook.
+
+  Segments arrive already smoothed (`DataTransforms.smooth_runs/2`, via
+  `Snapshot`): a new cluster only starts a run once it holds for a few days,
+  so a one-day blip does not draw as its own block or marker.
   """
 
   use Phoenix.Component

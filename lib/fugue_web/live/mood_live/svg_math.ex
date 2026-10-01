@@ -2,7 +2,7 @@ defmodule FugueWeb.MoodLive.SvgMath do
   @moduledoc """
   Shared SVG path generators used across server-rendered mood visualizations.
 
-  Currently exposes `basis_path/1`, a uniform B-spline → cubic Bezier
+  Currently exposes `basis_path/1`, a uniform B-spline to cubic Bezier
   conversion matching d3.curveBasis for open lines, and `fmt/1` for compact
   numeric output in SVG attributes.
   """

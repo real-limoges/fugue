@@ -73,8 +73,7 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
             phx-update="ignore"
             class="block w-full cursor-crosshair"
             style="height: 512px;"
-          >
-          </canvas>
+          ></canvas>
           <.figure_source
             note="Abelian sandpile: drop a grain, and any cell reaching 4 topples one grain to each neighbor, cascading until stable. The avalanche sizes go power-law without anyone tuning them there."
             repo="petri"

@@ -17,9 +17,6 @@ defmodule Fugue.Menagerie.Fuzzy do
 
   @default_half_width 7.0
 
-  @doc "Default MF set used on first mount (center_offset 0, spread 1.0)."
-  def default_mfs, do: build_mfs(0.0, 1.0)
-
   @doc """
   Build the five temperature MFs. `center_offset` shifts every peak along the
   temperature axis; `spread` multiplies the triangle half-width so adjacent
@@ -80,9 +77,10 @@ defmodule Fugue.Menagerie.Fuzzy do
     raw = Enum.map(mfs, fn mf -> {mf.name, triangular(x, mf.a, mf.b, mf.c)} end)
     total = Enum.reduce(raw, 0.0, fn {_, v}, acc -> acc + v end)
 
-    cond do
-      total > 0 -> Map.new(raw, fn {name, v} -> {name, v / total} end)
-      true -> Map.new(raw, fn {name, _} -> {name, 0.0} end)
+    if total > 0 do
+      Map.new(raw, fn {name, v} -> {name, v / total} end)
+    else
+      Map.new(raw, fn {name, _} -> {name, 0.0} end)
     end
   end
 

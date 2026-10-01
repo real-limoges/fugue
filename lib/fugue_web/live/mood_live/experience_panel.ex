@@ -94,8 +94,7 @@ defmodule FugueWeb.MoodLive.ExperiencePanel do
               phx-value-cluster={m.id}
               style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px; cursor: pointer;"
             >
-              <span style={"display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #{cluster_color(@selected_day, m.id)};"}>
-              </span>
+              <span style={"display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #{cluster_color(@selected_day, m.id)};"}></span>
               <span style={"color: #{cluster_color(@selected_day, m.id)}; font-size: 11px; flex: 1;"}>
                 {m.name}
               </span>

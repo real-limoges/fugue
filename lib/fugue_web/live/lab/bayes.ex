@@ -2,10 +2,13 @@ defmodule FugueWeb.LabLive.Bayes do
   @moduledoc """
   Three small Bayesian demos (search, rate, decision) that all end with
   a posterior. Rendering is fully server-side: no JS hooks, no push_event.
+  The math lives in `Fugue.Lab.Bayes`; this module holds the page state and
+  the charts.
   """
 
   use FugueWeb, :live_view
 
+  alias Fugue.Lab.Bayes, as: Math
   alias FugueWeb.LabLive.Charts
 
   @rows 5
@@ -73,7 +76,7 @@ defmodule FugueWeb.LabLive.Bayes do
   end
 
   def handle_event("observe_year", _, socket) do
-    count = poisson_sample(@true_rate)
+    count = Math.poisson_sample(@true_rate)
 
     {:noreply,
      socket
@@ -109,43 +112,23 @@ defmodule FugueWeb.LabLive.Bayes do
 
   defp mark_empty(socket, i) do
     socket
-    |> assign(:search_grid, zero_and_renormalize(socket.assigns.search_grid, i))
+    |> assign(:search_grid, Math.search_miss(socket.assigns.search_grid, i))
     |> assign(:search_searched, MapSet.put(socket.assigns.search_searched, i))
   end
 
   defp posterior(assigns) do
-    {@prior_alpha + assigns.observed_count, @prior_beta + assigns.observed_years}
+    Math.rate_posterior(
+      {@prior_alpha, @prior_beta},
+      assigns.observed_count,
+      assigns.observed_years
+    )
   end
 
   defp build_search_prior do
-    raw =
-      for r <- 0..(@rows - 1), c <- 0..(@cols - 1) do
-        d2 = (r - @search_peak_row) ** 2 + (c - @search_peak_col) ** 2
-        :math.exp(-d2 / (2.0 * @search_sigma * @search_sigma))
-      end
-
-    total = Enum.sum(raw)
-    Enum.map(raw, &(&1 / total))
-  end
-
-  defp zero_and_renormalize(grid, i) do
-    zeroed = List.replace_at(grid, i, 0.0)
-    total = Enum.sum(zeroed)
-    if total <= 0, do: zeroed, else: Enum.map(zeroed, &(&1 / total))
+    Math.search_prior(@rows, @cols, {@search_peak_row, @search_peak_col}, @search_sigma)
   end
 
   defp random_cell, do: :rand.uniform(@cells) - 1
-
-  # Knuth's algorithm. Adequate for our small means (≤ ~20).
-  defp poisson_sample(mean) do
-    l = :math.exp(-mean)
-    poisson_step(l, 1.0, 0)
-  end
-
-  defp poisson_step(l, p, k) do
-    p = p * :rand.uniform()
-    if p <= l, do: k, else: poisson_step(l, p, k + 1)
-  end
 
   def render(assigns) do
     {pa, pb} = posterior(assigns)

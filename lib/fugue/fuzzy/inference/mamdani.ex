@@ -5,7 +5,7 @@ defmodule Fugue.Fuzzy.Inference.Mamdani do
 
   Hazy also has a Sugeno inference path (`Hazy.Inference.Sugeno`) reached
   through a single `evaluate` dispatcher, but Ish always hardcodes the
-  Mamdani method -- Sugeno has zero real callers. It's not ported here;
+  Mamdani method, so Sugeno has no real callers. It's not ported here;
   this module is called directly wherever Hazy's `evaluate` would have
   been. Add a Sugeno port later if a real need shows up.
 

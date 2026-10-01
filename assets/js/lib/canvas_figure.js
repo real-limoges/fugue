@@ -1,5 +1,5 @@
 // Utilities for hooks that draw a static figure parameterized by named
-// values, recomputing on phx events and redrawing on resize -- today:
+// values, recomputing on phx events and redrawing on resize. Today:
 // quantum_walk, quantum_stats. No RAF loop.
 //
 // Pattern documented in CONTEXT.md as "param figure hook".

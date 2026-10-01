@@ -87,8 +87,7 @@ defmodule FugueWeb.MenagerieLive.QuantumStats do
           style="height: 420px;"
           data-log_temperature={@params["log_temperature"]}
           data-particles={@params["particles"]}
-        >
-        </canvas>
+        ></canvas>
       </div>
 
       <.figure_source

@@ -58,12 +58,6 @@ defmodule Fugue.Menagerie.FuzzyTest do
     end
   end
 
-  describe "default_mfs/0" do
-    test "matches build_mfs(0.0, 1.0)" do
-      assert Fuzzy.default_mfs() == Fuzzy.build_mfs(0.0, 1.0)
-    end
-  end
-
   describe "sample_shape/4" do
     test "returns steps + 1 points covering the bounds" do
       [mf | _] = Fuzzy.build_mfs(0.0, 1.0)

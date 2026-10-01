@@ -6,6 +6,10 @@ defmodule FugueWeb.PageControllerTest do
     assert html_response(conn, 200) =~ "Fugue"
   end
 
+  test "the footer links to /amigos", %{conn: conn} do
+    assert conn |> get(~p"/") |> html_response(200) =~ ~s(href="/amigos")
+  end
+
   describe "GET /code" do
     test "lists the repos that actually run the site", %{conn: conn} do
       html = conn |> get(~p"/code") |> html_response(200)

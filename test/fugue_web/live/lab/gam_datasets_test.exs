@@ -13,7 +13,7 @@ defmodule FugueWeb.LabLive.GamDatasetsTest do
       assert is_binary(ds.label)
       assert is_binary(ds.title)
       assert is_binary(ds.blurb)
-      assert is_list(ds.layers) and length(ds.layers) > 0
+      assert is_list(ds.layers) and ds.layers != []
       assert is_list(ds.captions) and length(ds.captions) == length(ds.layers)
     end
   end

@@ -7,7 +7,7 @@ defmodule Fugue.Mood.Data do
   local docker-compose `ish` container's data volume on 2026-08-03,
   spanning 2022-04-01..2026-03-30 (1054 rows). `@external_resource` makes
   this module recompile when the CSV changes. This dataset is a snapshot,
-  not a live-synced pipeline -- see the root `CLAUDE.md` framing for why.
+  not a live-synced pipeline.
 
   Collapses Ish's identical `/data` and `/entries` endpoints into one
   `between/2` function; there was never a behavioral difference between them.
@@ -36,9 +36,6 @@ defmodule Fugue.Mood.Data do
            end)
            |> Enum.sort_by(& &1.date, Date)
 
-  @doc "All bundled entries, date-ascending."
-  def all, do: @entries
-
   @doc """
   Entries with an inclusive date bound on either side. Pass `nil` on either
   side to leave that bound open, matching Ish's optional `from`/`to` query
@@ -50,15 +47,4 @@ defmodule Fugue.Mood.Data do
         (is_nil(to) or Date.compare(entry.date, to) != :gt)
     end)
   end
-
-  @doc "First and last dates in the bundled dataset, or nil if empty."
-  def date_range do
-    case @entries do
-      [] -> nil
-      [first | _] = entries -> {first.date, List.last(entries).date}
-    end
-  end
-
-  @doc "Row count."
-  def count, do: length(@entries)
 end

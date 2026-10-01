@@ -1,5 +1,16 @@
 import * as d3 from "d3"
 
+// The /menagerie/mamdani playground. The server runs the inference and
+// pushes "update-mamdani" with the full result; render() draws it.
+//
+// Two things keep it smooth while a slider drags. First, render() builds
+// each panel's static parts (axes, term shapes, scales stashed on the node as
+// __scales) once, and afterwards only redraws the parts that move. Second,
+// slider input recomputes the input memberships locally (triangular() below
+// mirrors the server's) so the crisp line and degree dots follow the thumb
+// without waiting on the round trip; the server's push then catches the
+// rules and output panels up.
+
 const WIDTH = 820
 
 const FAN_COLORS = {
@@ -129,6 +140,8 @@ export const MamdaniPlayground = {
       degreeData.push({ color, degree, text: d3.format(".2f")(degree), y: y(degree) + 3 })
     })
 
+    // Nudge the degree labels apart so they never overlap: a pass down
+    // pushes each below its neighbor, a pass up keeps them inside the plot.
     degreeData.sort((a, b) => a.y - b.y)
     const minGap = 13
     for (let i = 1; i < degreeData.length; i++) {

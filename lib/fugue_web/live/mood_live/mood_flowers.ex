@@ -178,7 +178,7 @@ defmodule FugueWeb.MoodLive.MoodFlowers do
     if month_key == focus_month, do: "flower-cell focused", else: "flower-cell"
   end
 
-  # Closed cardinal spline: each segment P_i → P_{i+1} uses neighbors
+  # Closed cardinal spline: each segment P_i -> P_{i+1} uses neighbors
   # P_{i-1} and P_{i+2} (wrapped) to compute tangents.
   #   c1 = P_i + (P_{i+1} - P_{i-1}) * s
   #   c2 = P_{i+1} - (P_{i+2} - P_i) * s

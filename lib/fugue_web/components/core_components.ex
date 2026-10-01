@@ -79,7 +79,7 @@ defmodule FugueWeb.CoreComponents do
   ## Examples
 
       <.figure_source
-        note="thin-film interference over a Voronoi thickness map"
+        note="thin-film interference over a swirling noise thickness map"
         repo={{"fugue", "assets/js/hooks/iridescence.js"}}
       />
   """
@@ -575,12 +575,5 @@ defmodule FugueWeb.CoreComponents do
     else
       Gettext.dgettext(FugueWeb.Gettext, "errors", msg, opts)
     end
-  end
-
-  @doc """
-  Translates the errors for a field from a keyword list of errors.
-  """
-  def translate_errors(errors, field) when is_list(errors) do
-    for {^field, {msg, opts}} <- errors, do: translate_error({msg, opts})
   end
 end

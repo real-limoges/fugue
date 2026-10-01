@@ -1,6 +1,6 @@
 defmodule FugueWeb.MoodLive.TransitionSankey do
   @moduledoc """
-  Sankey flow diagram of cluster → cluster transitions. Replaces the former
+  Sankey flow diagram of cluster-to-cluster transitions. Replaces the former
   `TransitionSankey` JS hook: node layout, link geometry, and isolate dimming
   are all computed server-side.
   """

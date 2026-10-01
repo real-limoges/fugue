@@ -15,6 +15,7 @@ import { CloudsCanvas } from "./clouds_canvas"
 import { LabGam } from "./lab_gam"
 import { IridescenceCanvas } from "./iridescence"
 import { ThemeToggle } from "./theme_toggle"
+import { AmigosScroll } from "./amigos_scroll"
 
 export default {
   CalendarTooltip,
@@ -34,4 +35,5 @@ export default {
   LabGam,
   IridescenceCanvas,
   ThemeToggle,
+  AmigosScroll,
 }

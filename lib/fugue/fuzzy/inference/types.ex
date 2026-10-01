@@ -10,7 +10,7 @@ defmodule Fugue.Fuzzy.Inference.Types do
   - `fuzzy_rule`: `%{antecedent: [{String.t(), String.t()}], consequent: [{String.t(), String.t()}]}`
     (var/term pairs; antecedents are ANDed via min t-norm)
   - `fis`: `%{inputs: %{String.t() => linguistic_var}, outputs: %{String.t() => linguistic_var}, rules: [fuzzy_rule]}`
-    (method is always Mamdani -- see the Sugeno note in `Fugue.Fuzzy.Inference.Mamdani`)
+    (method is always Mamdani; see the Sugeno note in `Fugue.Fuzzy.Inference.Mamdani`)
   - `inference_trace`: `%{input_degrees: map(), rule_strengths: [float()], output_curves: map(), crisp: map()}`
   """
 

@@ -22,7 +22,7 @@ const FALLBACKS = {
 // structure looks like it's actually being assembled. {x, y, z, wx, wz} are
 // integer stud-grid coordinates; wx is footprint along X, wz along Z.
 const SHAPES = [
-  // Stepped pyramid (4x4 base, 2x2 mid, 2x2 cap) -- 6 bricks
+  // Stepped pyramid (4x4 base, 2x2 mid, 2x2 cap), 6 bricks
   [
     { x: 0, y: 0, z: 0, wx: 4, wz: 1 },
     { x: 0, y: 0, z: 1, wx: 4, wz: 1 },
@@ -31,7 +31,7 @@ const SHAPES = [
     { x: 1, y: 1, z: 1, wx: 2, wz: 2 },
     { x: 1, y: 2, z: 1, wx: 2, wz: 2 },
   ],
-  // Tower (2x2 cross-section, 5 levels, alternating brick orientation) -- 10 bricks
+  // Tower (2x2 cross-section, 5 levels, alternating brick orientation), 10 bricks
   [
     { x: 1, y: 0, z: 1, wx: 2, wz: 1 },
     { x: 1, y: 0, z: 2, wx: 2, wz: 1 },
@@ -44,7 +44,7 @@ const SHAPES = [
     { x: 1, y: 4, z: 1, wx: 2, wz: 1 },
     { x: 1, y: 4, z: 2, wx: 2, wz: 1 },
   ],
-  // Plus sign / cross (3 levels) -- 9 bricks
+  // Plus sign / cross (3 levels), 9 bricks
   [
     { x: 0, y: 0, z: 1, wx: 4, wz: 1 },
     { x: 0, y: 0, z: 2, wx: 4, wz: 1 },
@@ -56,7 +56,7 @@ const SHAPES = [
     { x: 1, y: 3, z: 1, wx: 2, wz: 1 },
     { x: 1, y: 3, z: 2, wx: 2, wz: 1 },
   ],
-  // Arch / gate -- 8 bricks
+  // Arch / gate, 8 bricks
   [
     { x: 0, y: 0, z: 1, wx: 1, wz: 2 },
     { x: 3, y: 0, z: 1, wx: 1, wz: 2 },

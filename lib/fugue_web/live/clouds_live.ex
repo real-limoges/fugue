@@ -43,8 +43,7 @@ defmodule FugueWeb.CloudsLive do
           phx-update="ignore"
           class="block w-full"
           style="aspect-ratio: 2 / 1; image-rendering: pixelated; image-rendering: crisp-edges;"
-        >
-        </canvas>
+        ></canvas>
       </div>
 
       <.figure_source

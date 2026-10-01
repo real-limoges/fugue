@@ -47,7 +47,7 @@ defmodule Fugue.Fuzzy.FCMTest do
       assert result.iterations > 0
 
       # Each point's dominant (argmax-membership) cluster should agree with
-      # its nearest center by plain distance -- i.e. the two point clouds
+      # its nearest center by plain distance, so the two point clouds
       # land in different clusters, not mixed together.
       dominant_clusters =
         Enum.map(result.membership, fn row ->

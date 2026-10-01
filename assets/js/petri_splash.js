@@ -132,5 +132,3 @@ export async function initSplash(canvasId, simName, readingId) {
   cleanup = () => cancelAnimationFrame(rafId)
   return cleanup
 }
-
-export const simNames = Object.keys(sims)

@@ -55,6 +55,7 @@ defmodule Fugue.Color.ConesTest do
     # lets the compiler see the guard can never match and warn about it, which
     # is exactly the case under test; apply/3 keeps the assertion honest and
     # the build quiet.
+    # credo:disable-for-next-line Credo.Check.Refactor.Apply
     assert_raise FunctionClauseError, fn -> apply(Cones, :response, [:x, 500]) end
   end
 

@@ -6,7 +6,7 @@ defmodule Fugue.Color.SrgbGamutTest do
   test "cells/0 returns chromaticity-keyed hex tuples" do
     cells = SrgbGamut.cells()
     assert is_list(cells)
-    assert length(cells) > 0
+    assert cells != []
 
     Enum.each(cells, fn {x, y, hex} ->
       assert is_float(x) and is_float(y)

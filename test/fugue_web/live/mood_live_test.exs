@@ -53,7 +53,7 @@ defmodule FugueWeb.MoodLiveTest do
       html = render(view)
 
       # One per ported component. Each assertion is a cheap grep on the rendered
-      # DOM -- the real guarantee is that none of them crashed during render.
+      # DOM; the real guarantee is that none of them crashed during render.
       assert html =~ ~s(id="mood-experience")
       assert html =~ ~s(id="mood-trajectory")
       assert html =~ "#traj-glow"
@@ -85,7 +85,7 @@ defmodule FugueWeb.MoodLiveTest do
 
       # Pick whichever cluster actually has a segment rendered. The real
       # (non-fixture) dataset spans ~4 years, so a dominant cluster can
-      # recur across many non-contiguous segments -- simulate the click
+      # recur across many non-contiguous segments. Simulate the click
       # event directly rather than requiring a single unique DOM match,
       # since every one of that cluster's segments fires the same event.
       cluster_id =
@@ -149,6 +149,22 @@ defmodule FugueWeb.MoodLiveTest do
       render_click(view, "clear_highlights", %{})
 
       assert :sys.get_state(view.pid).socket.assigns.focus == :none
+    end
+  end
+
+  describe "mood transitions list" do
+    test "collapses and expands from its header", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/mood")
+      rows = "[id^=mood-transitions-list-rows]"
+      header = "button[phx-click=toggle_list]"
+
+      assert has_element?(view, rows)
+
+      view |> element(header) |> render_click()
+      refute has_element?(view, rows)
+
+      view |> element(header) |> render_click()
+      assert has_element?(view, rows)
     end
   end
 end

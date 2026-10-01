@@ -82,8 +82,7 @@ defmodule FugueWeb.MenagerieLive.QuantumWalk do
           style="height: 420px;"
           data-steps={@params["steps"]}
           data-decoherence={@params["decoherence"]}
-        >
-        </canvas>
+        ></canvas>
       </div>
 
       <.figure_source
