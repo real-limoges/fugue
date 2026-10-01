@@ -43,7 +43,7 @@ defmodule FugueWeb.MoodLive.FocusTest do
       assert Focus.clear(:none) == :none
     end
 
-    test "selecting day then cluster then day yields only day -- no leak" do
+    test "selecting day then cluster then day yields only day, with no leak" do
       focus =
         :none
         |> Focus.select_cluster("calm")

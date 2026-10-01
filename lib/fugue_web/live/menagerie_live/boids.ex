@@ -142,8 +142,7 @@ defmodule FugueWeb.MenagerieLive.Boids do
           data-min_speed={@params["min_speed"]}
           data-trail_decay={@params["trail_decay"]}
           data-crowd_threshold={@params["crowd_threshold"]}
-        >
-        </canvas>
+        ></canvas>
       </div>
 
       <.figure_source

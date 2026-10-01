@@ -46,19 +46,12 @@ defmodule Fugue.Menagerie.MamdaniTest do
   end
 
   describe "rules" do
-    test "rule_descriptions/0 returns seven human-readable strings" do
-      descriptions = Mamdani.rule_descriptions()
-
-      assert length(descriptions) == 7
-      assert Enum.all?(descriptions, &is_binary/1)
-      assert Enum.all?(descriptions, &String.starts_with?(&1, "IF "))
-    end
-
     test "rule_summaries/0 pairs each rule with its fan_speed consequent" do
       summaries = Mamdani.rule_summaries()
 
       assert length(summaries) == 7
       assert Enum.all?(summaries, fn s -> is_binary(s.text) and is_binary(s.output_term) end)
+      assert Enum.all?(summaries, &String.starts_with?(&1.text, "IF "))
 
       terms = Enum.map(summaries, & &1.output_term)
       assert Enum.all?(terms, &(&1 in ~w(off low medium high)))
@@ -71,7 +64,7 @@ defmodule Fugue.Menagerie.MamdaniTest do
   end
 
   describe "request/2" do
-    test "wraps inputs in the wire shape Ish /inference/mamdani expects" do
+    test "wraps inputs in the wire shape Inference.Wire.run_request/1 takes" do
       req = Mamdani.request(22.0, 50.0)
 
       assert %{"mfs" => _, "rules" => rules, "values" => values} = req

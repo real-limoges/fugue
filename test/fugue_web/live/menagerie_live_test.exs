@@ -60,7 +60,7 @@ defmodule FugueWeb.MenagerieLiveTest do
 
       # Shapes panel (MF triangle outlines).
       assert html =~ ~s(class="stream-svg) or html =~ ~s(id="temperature-bands")
-      # Stacked band paths -- one per fuzzy set.
+      # Stacked band paths, one per fuzzy set.
       assert html =~ ~s(class="band")
       # Crosshair line carrying the bands-crosshair class.
       assert html =~ "bands-crosshair"
@@ -199,66 +199,6 @@ defmodule FugueWeb.MenagerieLiveTest do
     end
   end
 
-  describe "Fugue.Menagerie.Mamdani" do
-    alias Fugue.Menagerie.Mamdani
-
-    test "request/2 wraps crisp values into the wire format" do
-      req = Mamdani.request(25, 40)
-      assert req["values"]["temperature"] == 25.0
-      assert req["values"]["humidity"] == 40.0
-      assert is_list(req["rules"])
-      assert length(req["rules"]) == length(Mamdani.rule_descriptions())
-      assert is_list(req["mfs"]["inputs"])
-      assert is_list(req["mfs"]["outputs"])
-    end
-
-    test "mfs/0 exposes two inputs and one output" do
-      %{"inputs" => inputs, "outputs" => outputs} = Mamdani.mfs()
-      assert Enum.map(inputs, & &1["name"]) == ["temperature", "humidity"]
-      assert Enum.map(outputs, & &1["name"]) == ["fan_speed"]
-    end
-
-    test "rule_descriptions/0 matches the rule count" do
-      descs = Mamdani.rule_descriptions()
-      assert length(descs) == length(Mamdani.request(0, 0)["rules"])
-      assert Enum.all?(descs, &is_binary/1)
-    end
-  end
-
-  describe "Fugue.Menagerie.Fuzzy" do
-    alias Fugue.Menagerie.Fuzzy
-
-    test "triangular/4 peaks at 1 at the center" do
-      assert Fuzzy.triangular(10.0, 5.0, 10.0, 15.0) == 1.0
-    end
-
-    test "triangular/4 ramps linearly to 0.5 at the half-way points" do
-      assert Fuzzy.triangular(7.5, 5.0, 10.0, 15.0) == 0.5
-      assert Fuzzy.triangular(12.5, 5.0, 10.0, 15.0) == 0.5
-    end
-
-    test "triangular/4 is zero outside [a, c]" do
-      assert Fuzzy.triangular(4.0, 5.0, 10.0, 15.0) == 0.0
-      assert Fuzzy.triangular(16.0, 5.0, 10.0, 15.0) == 0.0
-    end
-
-    test "memberships/2 normalize to 1 when any set fires" do
-      mfs = Fuzzy.default_mfs()
-      sum = 20.0 |> Fuzzy.memberships(mfs) |> Map.values() |> Enum.sum()
-      assert_in_delta(sum, 1.0, 0.001)
-    end
-
-    test "memberships/2 return all zeros when x is outside every triangle" do
-      mfs = Fuzzy.default_mfs()
-      result = Fuzzy.memberships(-100.0, mfs)
-      assert Enum.all?(Map.values(result), &(&1 == 0.0))
-    end
-
-    test "build_mfs/2 with defaults matches default_mfs/0" do
-      assert Fuzzy.build_mfs(0.0, 1.0) == Fuzzy.default_mfs()
-    end
-  end
-
   describe "mount /menagerie/boids" do
     test "renders the boids page with the canvas hook anchor", %{conn: conn} do
       {:ok, _view, html} = live(conn, "/menagerie/boids")
@@ -386,27 +326,6 @@ defmodule FugueWeb.MenagerieLiveTest do
 
       assigns = :sys.get_state(view.pid).socket.assigns
       assert assigns.params == %{"log_temperature" => 0.0, "particles" => 18}
-    end
-  end
-
-  describe "Fugue.Menagerie.MelbourneWeather" do
-    alias Fugue.Menagerie.MelbourneWeather
-
-    test "count/0 matches length of rows/0" do
-      assert MelbourneWeather.count() == length(MelbourneWeather.rows())
-      assert MelbourneWeather.count() > 1500
-    end
-
-    test "every row has a date string" do
-      Enum.each(MelbourneWeather.rows(), fn row ->
-        assert is_binary(row.date)
-        assert row.date =~ ~r/^\d{4}-\d{2}-\d{2}$/
-      end)
-    end
-
-    test "date_range/0 returns first and last dates" do
-      {first, last} = MelbourneWeather.date_range()
-      assert first < last
     end
   end
 end

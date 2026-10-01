@@ -15,7 +15,7 @@ const LEVELS = 30
 const Y_MIN = 0.01
 
 // getComputedStyle resolves var() to a literal oklch() string, and canvas
-// 2D accepts that string directly as fillStyle/strokeStyle -- no var()
+// 2D accepts that string directly as fillStyle/strokeStyle, with no var()
 // needed since it's already resolved. Alpha is bolted on by inserting a
 // "/ N" before the closing paren, same trick CSS's own oklch() syntax uses.
 function withAlpha(oklch, alpha) {

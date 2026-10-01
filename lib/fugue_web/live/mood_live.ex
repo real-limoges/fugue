@@ -3,9 +3,9 @@ defmodule FugueWeb.MoodLive do
 
   use FugueWeb, :live_view
 
+  alias Fugue.Mood.Wire
   alias FugueWeb.MoodLive.{DataTransforms, ExperiencePanel, Focus, Sections, Snapshot}
   alias FugueWeb.MoodLive.Structs.{AnalysisResult, GapData}
-  alias Fugue.Mood.Wire
 
   @default_k 3
   @default_m 1.5
@@ -39,10 +39,10 @@ defmodule FugueWeb.MoodLive do
   end
 
   def handle_info(:load_data, socket) do
-    # Fugue.Mood.Wire computes from the bundled dataset in-process (no I/O,
-    # can't fail the way an Ish HTTP call could) -- still parallelized via
-    # Task since clustering + gap analysis are genuine CPU work over ~1000
-    # points, run twice independently (see Fugue.Mood.Wire's moduledoc).
+    # Fugue.Mood.Wire computes from the bundled dataset in-process, with no
+    # I/O to fail. It is still parallelized via Task, since clustering and
+    # gap analysis are genuine CPU work over ~1000 points, run twice
+    # independently (see Fugue.Mood.Wire's moduledoc).
     tasks = %{
       data: Task.async(fn -> Wire.data(@from, @to) end),
       analysis: Task.async(fn -> Wire.cluster(@default_k, @default_m, @from, @to) end),

@@ -35,7 +35,7 @@ defmodule Fugue.Mood.DataFrameTest do
     ]
 
     spine = DataFrame.fill_missing_dates(entries)
-    # Feb 3 (present), Feb 4 (absent), Feb 5 (present) -- no leading/trailing
+    # Feb 3 (present), Feb 4 (absent), Feb 5 (present). No leading/trailing
     # absent runs exist to NOT report, so this doubles as confirming a
     # genuinely interior gap is still found even at the edge of the fixture.
     assert [%{start: ~D[2026-02-04], length: 1}] = DataFrame.identify_gaps(spine)

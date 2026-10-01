@@ -14,7 +14,7 @@ const LINE_ALPHA = 0.78
 const FALLBACK_ASPECT = 0.62
 
 // Used only when the server sends no cluster-color data (data-colors empty
-// or unparseable) -- the real page always supplies cluster_colors from
+// or unparseable). The real page always supplies cluster_colors from
 // @analysis, so this is a last-resort palette, not the common path.
 const DARK_FALLBACK_PALETTE = ["#b266ff", "#22d3ee", "#f472b6", "#facc15", "#4ade80"]
 const LIGHT_FALLBACK_PALETTE = ["#b45309", "#0e7490", "#7c3aed", "#be185d", "#15803d"]

@@ -31,5 +31,6 @@ defmodule FugueWeb.Router do
     live "/lab/gam", LabLive.Gam
     live "/lab/bayes", LabLive.Bayes
     live "/color", ColorLive
+    live "/amigos", AmigosLive
   end
 end

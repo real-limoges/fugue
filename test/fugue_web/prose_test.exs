@@ -3,8 +3,9 @@ defmodule FugueWeb.ProseTest do
   Guards the site's punctuation conventions at the file level.
 
   The house style is ASCII: no em-dashes, no en-dashes, no ellipsis
-  character, no curly quotes. This is easy to reintroduce by accident, and
-  it never fails loudly on its own, so it gets a test rather than a note.
+  character, no curly quotes, no section sign. This is easy to reintroduce
+  by accident, and it never fails loudly on its own, so it gets a test
+  rather than a note.
 
   Deliberately file-level rather than route-level: a rendered-page check
   would only cover prose that happens to be on screen for the default
@@ -19,7 +20,8 @@ defmodule FugueWeb.ProseTest do
     "ellipsis (…)" => "…",
     "curly apostrophe (’)" => "’",
     "curly open quote (“)" => "“",
-    "curly close quote (”)" => "”"
+    "curly close quote (”)" => "”",
+    "section sign (§)" => "§"
   }
 
   # Vendored upstream drops are not ours to restyle; see assets/vendor/CLAUDE.md.

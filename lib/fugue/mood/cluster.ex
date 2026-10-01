@@ -4,7 +4,7 @@ defmodule Fugue.Mood.Cluster do
 
   `default_config/0` is `k=3, m=2.0`, matching Ish's internal default.
   Callers that need a different fuzziness (e.g. `FugueWeb.MoodLive` uses
-  `k=3, m=1.5`) must pass it explicitly -- don't fold a caller-supplied
+  `k=3, m=1.5`) must pass it explicitly. Don't fold a caller-supplied
   `m` into this default, since `Fugue.Mood.Wire.gaps/2` depends on this
   default staying independent of whatever `/cluster` was called with.
 
@@ -24,7 +24,7 @@ defmodule Fugue.Mood.Cluster do
   @doc """
   Run FCM clustering on the present-data rows of `spine`, labeling each
   resulting center by running it back through `fis`. Returns
-  `%{clusters:, centers:, membership:, iterations:, dates:}` -- `dates`
+  `%{clusters:, centers:, membership:, iterations:, dates:}`. `dates`
   is the point-order date list, positionally aligned with `membership`'s
   rows, for callers (gap analysis) that need to relate a membership row
   back to a calendar date.

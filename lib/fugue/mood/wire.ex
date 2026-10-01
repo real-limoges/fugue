@@ -7,7 +7,7 @@ defmodule Fugue.Mood.Wire do
 
   `gaps/2` reclusters internally with its own hardcoded `k=3, m=2.0`
   (`Fugue.Mood.Cluster.default_config/0`), independent of whatever `k`/`m`
-  a separate `cluster/4` call used -- it does NOT reuse a cluster result
+  a separate `cluster/4` call used; it does NOT reuse a cluster result
   computed with a caller-supplied `m`. Ish's own `/gaps` handler had this
   same split; a gap transition's before/after cluster membership is not
   comparable to a `/cluster` response computed with different fuzziness.
@@ -53,11 +53,6 @@ defmodule Fugue.Mood.Wire do
      }}
   end
 
-  @doc "Matches `Ish.membership_functions/0`'s response shape."
-  def membership_functions do
-    {:ok, encode_membership_func_defs(Fuzzify.default_membership_func_defs())}
-  end
-
   defp spine(from, to), do: DataFrame.fill_missing_dates(Data.between(from, to))
 
   defp encode_entry(entry) do
@@ -93,27 +88,6 @@ defmodule Fugue.Mood.Wire do
       "before" => t.before,
       "after" => t.after,
       "clusterChanged" => t.cluster_changed
-    }
-  end
-
-  defp encode_membership_func_defs(defs) do
-    %{
-      "inputs" => Enum.map(defs.inputs, &encode_var_def/1),
-      "outputs" => Enum.map(defs.outputs, &encode_var_def/1)
-    }
-  end
-
-  defp encode_var_def(v) do
-    {lo, hi} = v.bounds
-
-    %{
-      "name" => v.name,
-      "bounds" => [lo, hi],
-      "terms" =>
-        Enum.map(v.terms, fn t ->
-          {a, b, c} = t.params
-          %{"name" => t.name, "params" => [a, b, c]}
-        end)
     }
   end
 end

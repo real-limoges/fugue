@@ -92,8 +92,7 @@ defmodule FugueWeb.MoodLive.Sections do
             <span
               class="inline-block w-2.5 h-2.5 rounded-full"
               style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}"}
-            >
-            </span>
+            ></span>
             <span class={
               if @selected_cluster == cluster["id"],
                 do: "font-semibold text-base-content",
@@ -254,8 +253,7 @@ defmodule FugueWeb.MoodLive.Sections do
             <span
               class="inline-block w-2 h-2 rounded-full"
               style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}"}
-            >
-            </span>
+            ></span>
             {cluster["name"]}
           </button>
         <% end %>
@@ -634,43 +632,6 @@ defmodule FugueWeb.MoodLive.Sections do
         repo={{"fugue", "lib/fugue/mood/gaps.ex"}}
       />
     </section>
-    """
-  end
-
-  def toc(assigns) do
-    ~H"""
-    <nav class="my-16 max-w-xl mx-auto" aria-label="Chapter navigation">
-      <div class="text-[10px] uppercase tracking-widest text-base-content/45 mb-3">
-        In this chapter
-      </div>
-      <ol class="text-sm text-base-content/75 space-y-2">
-        <li>
-          <a href="#mood-chapter-1" class="hover:text-amber-300 transition-colors">
-            <span class="text-xs text-base-content/45 mr-2">01</span>My mood states
-          </a>
-        </li>
-        <li>
-          <a href="#mood-chapter-2" class="hover:text-amber-300 transition-colors">
-            <span class="text-xs text-base-content/45 mr-2">02</span>Day by day
-          </a>
-        </li>
-        <li>
-          <a href="#mood-chapter-3" class="hover:text-amber-300 transition-colors">
-            <span class="text-xs text-base-content/45 mr-2">03</span>How my moods shift
-          </a>
-        </li>
-        <li>
-          <a href="#mood-chapter-4" class="hover:text-amber-300 transition-colors">
-            <span class="text-xs text-base-content/45 mr-2">04</span>Under the hood
-          </a>
-        </li>
-        <li>
-          <a href="#mood-chapter-5" class="hover:text-amber-300 transition-colors">
-            <span class="text-xs text-base-content/45 mr-2">05</span>The gaps
-          </a>
-        </li>
-      </ol>
-    </nav>
     """
   end
 

@@ -67,7 +67,7 @@ defmodule FugueWeb.MoodLive.SvgMathPropertyTest do
 
   describe "basis_path/1 property" do
     property "empty input yields an empty string" do
-      # Degenerate sanity check -- single generated value to exercise
+      # Degenerate sanity check: a single generated value, to exercise the
       # ExUnitProperties runner even when the input is fixed.
       check all(_ <- StreamData.constant(nil)) do
         assert SvgMath.basis_path([]) == ""
@@ -97,7 +97,7 @@ defmodule FugueWeb.MoodLive.SvgMathPropertyTest do
     end
 
     property "the path contains cubic beziers (`C`) iff input has 3+ points" do
-      check all(pts <- points(0), pts != []) do
+      check all(pts <- points(1)) do
         path = SvgMath.basis_path(pts)
 
         case length(pts) do
@@ -181,7 +181,7 @@ defmodule FugueWeb.MoodLive.SvgMathPropertyTest do
 
   # Given an SVG path string like "M0,5L2.5,5C...5...L10,5", extract every
   # (x, y) pair from the M/L/C command arguments and assert their y components
-  # all equal the expected string form. Bezier control points are included --
+  # all equal the expected string form. Bezier control points are included,
   # which is the correct invariant: a curve through collinear y=y0 points
   # must have every control point on y=y0 or the curve would bulge.
   defp all_y_equal?(path, expected_y_fmt) do

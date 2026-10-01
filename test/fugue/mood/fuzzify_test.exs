@@ -45,26 +45,4 @@ defmodule Fugue.Mood.FuzzifyTest do
     # Good sleep, low anxiety, high outlook should read as high wellbeing.
     assert result["wellbeing"] > 5.0
   end
-
-  test "suggest_membership_func_defs/2 anchors terms to the data's percentiles" do
-    current = Fuzzify.default_membership_func_defs()
-    rows = for v <- [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0], do: %{sleep: v}
-
-    suggested = Fuzzify.suggest_membership_func_defs(current, rows)
-
-    assert Enum.map(suggested.outputs, & &1.name) == Enum.map(current.outputs, & &1.name)
-    sleep = Enum.find(suggested.inputs, &(&1.name == "sleep"))
-    low = Enum.find(sleep.terms, &(&1.name == "low"))
-    {a, _b, _c} = low.params
-    assert a == 0
-  end
-
-  test "suggest_membership_func_defs/2 falls back to an even split with no data" do
-    current = Fuzzify.default_membership_func_defs()
-    suggested = Fuzzify.suggest_membership_func_defs(current, [])
-
-    sleep = Enum.find(suggested.inputs, &(&1.name == "sleep"))
-    medium = Enum.find(sleep.terms, &(&1.name == "medium"))
-    assert medium.params == {0, 7.5, 15}
-  end
 end

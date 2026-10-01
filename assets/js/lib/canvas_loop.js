@@ -1,5 +1,5 @@
-// Utilities for hooks whose canvas is driven by a continuous RAF loop --
-// today: boids, sandpile. The lifecycle is RAF id management, periodic
+// Utilities for hooks whose canvas is driven by a continuous RAF loop.
+// Today: boids, sandpile. The lifecycle is RAF id management, periodic
 // theme-color repolling, and the inner pixel-mapping loop. Each hook
 // composes these in its own mount() rather than handing config to a
 // factory; they stay readable as Phoenix hooks.

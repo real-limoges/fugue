@@ -9,7 +9,7 @@ defmodule Fugue.Mood.Gaps do
   alias Fugue.Mood.DataFrame
 
   @doc """
-  `%{transitions:, length_distribution:, imputed_memberships:}` -- per-gap
+  `%{transitions:, length_distribution:, imputed_memberships:}`: per-gap
   before/after cluster-membership vectors and dominant-cluster-changed
   flags, a histogram of gap lengths, and a linear day-fraction
   interpolation of per-cluster membership for every day inside each gap.

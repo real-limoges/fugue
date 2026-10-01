@@ -5,11 +5,16 @@ defmodule Fugue.MixProject do
     [
       app: :fugue,
       version: "0.1.0",
-      elixir: "~> 1.15",
+      # Pinned to 1.20.4 in .tool-versions, the Dockerfile and CI; older
+      # versions miss type-checker warnings that CI gates on.
+      elixir: "~> 1.20",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
       deps: deps(),
+      # Coverage is reported, not gated: the default 90% threshold would fail
+      # the build on day one.
+      test_coverage: [summary: [threshold: 0]],
       listeners: [Phoenix.CodeReloader]
     ]
   end
@@ -42,7 +47,7 @@ defmodule Fugue.MixProject do
       {:phoenix, "~> 1.8.3"},
       {:phoenix_html, "~> 4.1"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
-      {:phoenix_live_view, "~> 1.1.0"},
+      {:phoenix_live_view, "~> 1.2.0"},
       {:lazy_html, ">= 0.1.0", only: :test},
       {:esbuild, "~> 0.10", runtime: Mix.env() == :dev},
       {:tailwind, "~> 0.3", runtime: Mix.env() == :dev},
@@ -59,7 +64,8 @@ defmodule Fugue.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
-      {:stream_data, "~> 1.0", only: :test}
+      {:stream_data, "~> 1.0", only: :test},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
     ]
   end
 
@@ -86,6 +92,7 @@ defmodule Fugue.MixProject do
       ],
       "assets.format": ["cmd npm --prefix assets run format"],
       "assets.format.check": ["cmd npm --prefix assets run format:check"],
+      "assets.test": ["cmd npm --prefix assets test"],
       "assets.build": [
         "compile",
         "cmd sh -c 'mkdir -p priv/static/vendor/petri/wasm && cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/'",
@@ -105,11 +112,17 @@ defmodule Fugue.MixProject do
         # compile covers lib/; the test step is what gates warnings in test/,
         # which `mix compile` never touches. Scoped to this project, so the
         # ~50 dependency warnings on a cold build do not trip it.
+        #
+        # Every step checks rather than rewrites, so CI fails on drift instead
+        # of fixing it in a throwaway checkout. Run `mix format`, `mix
+        # assets.format` and `mix deps.unlock --unused` to fix locally.
         "compile --warnings-as-errors",
-        "deps.unlock --unused",
-        "format",
+        "deps.unlock --check-unused",
+        "format --check-formatted",
+        "credo --strict",
         "assets.format.check",
-        "test --warnings-as-errors"
+        "assets.test",
+        "test --warnings-as-errors --cover"
       ]
     ]
   end

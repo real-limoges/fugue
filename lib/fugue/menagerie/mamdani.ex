@@ -2,7 +2,8 @@ defmodule Fugue.Menagerie.Mamdani do
   @moduledoc """
   Fan-controller Mamdani fixture for the /menagerie playground. Pure: given
   crisp temperature and humidity, produces the wire-format MamdaniRequest
-  that Ish's `POST /inference/mamdani` expects. Two inputs with three terms
+  that `Fugue.Fuzzy.Inference.Wire.run_request/1` takes (the shape Ish's
+  `POST /inference/mamdani` used to accept). Two inputs with three terms
   each, one four-term output, and seven rules covering the 3x3 grid.
   """
 
@@ -105,8 +106,6 @@ defmodule Fugue.Menagerie.Mamdani do
       "outputs" => [@fan_speed_var]
     }
   end
-
-  def rule_descriptions, do: Enum.map(@rules, fn {desc, _} -> desc end)
 
   @doc """
   Each rule's descriptive text paired with the name of its single fan_speed

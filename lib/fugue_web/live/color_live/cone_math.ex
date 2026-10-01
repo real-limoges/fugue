@@ -1,7 +1,7 @@
 defmodule FugueWeb.ColorLive.ConeMath do
   @moduledoc """
   Pure plot-coordinate helpers for the /color cone plot and CIE chromaticity
-  diagram. All wavelength → SVG coordinate math, gamut polygon helpers, and
+  diagram. All wavelength-to-SVG coordinate math, gamut polygon helpers, and
   cone-label nudges live here so they're testable without booting a socket.
   """
 

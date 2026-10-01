@@ -1,7 +1,7 @@
-// Iridescent thin-film surface for /color section 1. Cuttlefish-papillae
-// thickness map driven by a Voronoi field; cursor proximity maps to
-// effective viewing angle so the rainbow shifts as you hover. WebGL2
-// fragment shader; no WASM, no shader build step.
+// Iridescent thin-film surface for /color section 1. The film thickness is
+// domain-warped fbm (flowing swirls, deliberately no cells), colored through
+// a flamboyant-cuttlefish palette; moving the cursor nudges the palette's
+// phase. WebGL2 fragment shader; no WASM, no shader build step.
 
 const VERT_SRC = `#version 300 es
 in vec2 a_pos;
@@ -46,7 +46,7 @@ float fbm(vec2 p) {
 }
 
 // Domain-warped fbm. Feeds an fbm result back into its own input twice
-// to produce flowing organic swirls -- no cells, no spots, no holes.
+// to produce flowing organic swirls: no cells, no spots, no holes.
 float swirl(vec2 p, float t) {
   vec2 q = vec2(
     fbm(p + vec2(0.0, t * 0.06)),
@@ -61,7 +61,7 @@ float swirl(vec2 p, float t) {
 
 // Flamboyant-cuttlefish palette: deep crimson -> bright red -> magenta
 // -> burnt orange -> cream-yellow -> wine, then back. No greens, no
-// blues, no cyans -- just the vivid warning-coloration band these
+// blues, no cyans; just the vivid warning-coloration band these
 // animals wear when they're not bothering to hide.
 vec3 flamboyantPalette(float t) {
   t = fract(t);
@@ -76,7 +76,7 @@ void main() {
   vec2 uv = gl_FragCoord.xy / u_res;
   vec2 aspect = vec2(u_res.x / u_res.y, 1.0);
 
-  // Flowing thickness field -- domain-warped fbm, organic swirls.
+  // Flowing thickness field: domain-warped fbm, organic swirls.
   float thicknessField = swirl(uv * aspect * 2.4, u_time);
 
   // Optical path length, no cursor influence on geometry.
@@ -110,7 +110,7 @@ void main() {
   // Passing-cloud display: a traveling wave of darkness sweeps across
   // the surface periodically, modulated by fbm so the front isn't a
   // straight line. The wave momentarily intensifies the chromatophore
-  // patches as it passes -- the signature cuttlefish move.
+  // patches as it passes, the signature cuttlefish move.
   float cloudPhase = uv.x * 1.5 - u_time * 0.3;
   float cloudWave = pow(0.5 + 0.5 * sin(cloudPhase + fbm(uv * aspect * 1.0) * 2.5), 4.0);
   pigment *= 0.4 + 1.2 * cloudWave;
@@ -141,7 +141,7 @@ function compileShader(gl, type, src) {
 
 function applyFallback(canvas) {
   // Spectrum-strip CSS gradient so non-WebGL2 clients still see color.
-  // This is chrome, not the flamboyant-cuttlefish content above -- it
+  // This is chrome, not the flamboyant-cuttlefish content above; it
   // reads the live theme accents rather than carrying its own palette.
   const style = getComputedStyle(document.documentElement)
   const stops = [

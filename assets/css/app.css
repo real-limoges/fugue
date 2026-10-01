@@ -130,3 +130,90 @@
 .tooltip-card--right {
   right: 0;
 }
+
+/* /amigos is Arrested Development themed: white type on burnt orange, the
+   same in both site themes. Overriding DaisyUI's color variables on the
+   page's root restyles every utility inside it (bg-base-100,
+   text-base-content/60, border-secondary...) without per-element classes.
+   White on this orange is about 4.6:1, which clears WCAG AA for body text.
+   Callbacks and foreshadowing keep their non-color cues (solid vs. dashed,
+   up vs. down); the two near-whites only reinforce them. */
+.amigos-page {
+  --color-base-100: oklch(56% 0.17 42);
+  --color-base-200: oklch(50% 0.16 40);
+  --color-base-300: oklch(45% 0.15 38);
+  --color-base-content: oklch(99% 0.005 80);
+  --color-secondary: oklch(97% 0.03 90);
+  --color-accent: oklch(91% 0.12 95);
+  --color-neutral: oklch(20% 0.01 60);
+  --color-neutral-content: oklch(96% 0 0);
+  --amigos-blue: oklch(40% 0.2 262);
+
+  /* Archivo stands in for Antique Olive, the show's logo face, which has
+     no free web version. Only this page uses it, so other pages never
+     download its files. */
+  font-family: "Archivo", ui-sans-serif, system-ui, sans-serif;
+
+  /* Full-bleed orange without widening the page: the shadow paints the
+     gutters, and the clip keeps it from spilling vertically. */
+  background: var(--color-base-100);
+  color: var(--color-base-content);
+  box-shadow: 0 0 0 100vmax var(--color-base-100);
+  clip-path: inset(0 -100vmax);
+}
+
+/* The /amigos clutter: a marker hand for the scrawls and a typewriter face
+   for the rubber stamps, so the mess does not look typeset. */
+.amigos-scrawl {
+  font-family: "Permanent Marker", "Archivo", cursive;
+}
+
+.amigos-stamp {
+  font-family: "Special Elite", ui-monospace, monospace;
+}
+
+/* The logo look: heavy, narrowed capitals. */
+.amigos-display {
+  font-weight: 900;
+  font-stretch: 75%;
+  text-transform: uppercase;
+  letter-spacing: -0.005em;
+}
+
+/* /amigos: entrance animations for the pinned stage. Keyframes animate only
+   opacity and transform, because Tailwind v4's translate and rotate
+   utilities are separate properties that position the annotations. Every
+   use is behind `motion-safe:`, so reduced-motion readers never see them. */
+@theme {
+  --animate-amigos-in: amigos-in 700ms ease-out both;
+  --animate-amigos-slide: amigos-slide 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  --animate-amigos-draw: amigos-draw 2400ms ease-in-out both;
+  --animate-amigos-stamp: amigos-stamp 260ms cubic-bezier(0.3, 1.6, 0.5, 1) both;
+
+  @keyframes amigos-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+  }
+
+  @keyframes amigos-slide {
+    from {
+      opacity: 0;
+      transform: translateY(2rem);
+    }
+  }
+
+  @keyframes amigos-stamp {
+    from {
+      opacity: 0;
+      transform: scale(1.6);
+    }
+  }
+
+  @keyframes amigos-draw {
+    from {
+      transform: scaleY(0);
+    }
+  }
+}

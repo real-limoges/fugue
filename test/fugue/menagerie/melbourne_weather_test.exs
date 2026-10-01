@@ -4,10 +4,7 @@ defmodule Fugue.Menagerie.MelbourneWeatherTest do
   alias Fugue.Menagerie.MelbourneWeather
 
   test "rows/0 returns a non-empty list of date-keyed maps" do
-    rows = MelbourneWeather.rows()
-    assert length(rows) > 0
-
-    sample = hd(rows)
+    sample = hd(MelbourneWeather.rows())
     assert is_binary(sample.date)
     assert Map.has_key?(sample, :prcp)
     assert Map.has_key?(sample, :tavg)
@@ -15,6 +12,12 @@ defmodule Fugue.Menagerie.MelbourneWeatherTest do
     assert Map.has_key?(sample, :tmin)
     assert Map.has_key?(sample, :wspd_max)
     assert Map.has_key?(sample, :wspd_mean)
+  end
+
+  test "every date is an ISO date string" do
+    for row <- MelbourneWeather.rows() do
+      assert row.date =~ ~r/\A\d{4}-\d{2}-\d{2}\z/
+    end
   end
 
   test "rows are in chronological order" do

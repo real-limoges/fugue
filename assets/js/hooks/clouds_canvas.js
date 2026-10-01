@@ -1,8 +1,7 @@
 import * as clouds from "../../vendor/petri/js/clouds.js"
 
-// Composition lives here. The WASM is physics-only -- it gives us a
-// raw qc field (NX*NZ Float32Array) and an applyBubble primitive. We
-// pick the view window, palette, tones, and forcing schedule.
+// Composition lives here. The WASM is physics-only: it gives us a raw qc
+// field (NX*NZ Float32Array). We pick the view window, palette and tones.
 
 // --- Render config -----------------------------------------------------
 
@@ -15,7 +14,7 @@ const VIEW_X1 = 5500 // m  (5 km wide)
 const VIEW_Z0 = 0 // m
 const VIEW_Z1 = 2500 // m  (2.5 km tall)
 
-// Sky gradient: smooth lerp horizon -> zenith. No bands -- the band look
+// Sky gradient: smooth lerp horizon -> zenith. No bands; the band look
 // fights the painterly clouds.
 const SKY_ZENITH = [32, 72, 140] // deep cobalt
 const SKY_HORIZON = [244, 220, 188] // warm peach
@@ -70,18 +69,11 @@ const BARN_TRIM = [232, 224, 200]
 const BARN_ROOF = [56, 44, 40]
 const BARN_DOOR = [36, 28, 28]
 
-// --- Forcing config ----------------------------------------------------
+// --- Pre-seed -----------------------------------------------------------
 
-// JS owns when bubbles fire. For now, sustained discrete clusters --
-// next step is to swap this for distributed always-on forcing.
-const BUBBLE_PERIOD_FRAMES = 350 // sim frames between cluster fires
-const STEPS_PER_FRAME = 2
+// The opening scene. East-coast plains, no storm.
 
-// Pre-seed: drop a curated set of multi-lobed clusters at staggered ages
-// so the opening frame already shows 4 cumulus distributed across the
-// view, varying maturity left->right. East-coast plains, no storm.
-
-const PRESEED_WIND = 3.0 // m/s (live loop drift)
+const PRESEED_WIND = 3.0 // m/s
 
 // Direct-paint cumulus: clouds already exist at altitude, no surface
 // thermal spinup. Each cluster is many overlapping Gaussian qc blobs,
@@ -170,7 +162,7 @@ function valueNoise(x, y) {
 }
 
 // Deposit a Gaussian blob of qc directly into the WASM grid. Skips the
-// thermal-bubble-rises-and-condenses path entirely -- the cloud is here,
+// thermal-bubble-rises-and-condenses path entirely: the cloud is here,
 // at altitude, now.
 function paintGaussian(qc, NX, NZ, DX, DZ, cx_m, cz_m, sigma_m, peak) {
   const inv2s2 = 1 / (2 * sigma_m * sigma_m)
@@ -388,16 +380,6 @@ function renderFrame(rgba, qc) {
   drawForeground(rgba)
 }
 
-// --- Forcing schedule --------------------------------------------------
-
-function fireCluster(simFrameCount) {
-  // One fat thermal in the middle of the visible window. JS picks
-  // x in world coords, the WASM does the actual perturbation.
-  const xc_norm = 0.3 + Math.random() * 0.4 // 30%..70% of domain
-  const xc_m = xc_norm * clouds.grid.widthM
-  clouds.applyBubble(xc_m, 150, 4.0, 320)
-}
-
 // --- Hook --------------------------------------------------------------
 
 export const CloudsCanvas = {
@@ -416,10 +398,8 @@ export const CloudsCanvas = {
       const rgba = new Uint8ClampedArray(CANVAS_W * CANVAS_H * 4)
       const qc = clouds.getQC()
 
-      // Pre-seed: paint cumulus directly into the qc field at altitude.
-      // The clouds are already there -- no surface convection. A few
-      // sim steps after painting smooth the Gaussian sums via advection
-      // without dissipating much.
+      // Paint cumulus directly into the qc field at altitude; the clouds are
+      // already there, with no surface convection to grow them.
       const NX = clouds.grid.NX,
         NZ = clouds.grid.NZ
       const DX = clouds.grid.DX,
@@ -429,29 +409,15 @@ export const CloudsCanvas = {
           paintGaussian(qc, NX, NZ, DX, DZ, c.cx + lobe.dx, c.cz + lobe.dz, lobe.sigma, lobe.peak)
         }
       }
-      // Skip post-paint sim steps for now -- saturation adjustment will
-      // evaporate freshly painted qc if qv isn't also raised.
-      //
-      // There used to be a click handler here firing applyBubble into the
-      // qc field. Nothing steps the solver and nothing re-renders, so the
-      // bubble was never integrated and the click did nothing visible.
-      // Removed along with the canvas cursor:pointer that advertised it.
-      // Restoring interaction means restoring the render loop first.
-
-      // Render the painted state once. The WASM saturation step would
-      // evaporate freshly painted qc (subsaturated qv), so we don't step
-      // here -- the scene is a fixed painting for now. Animation/drift
-      // is the next iteration.
+      // Render the painted state once, without stepping the solver: its
+      // saturation adjustment would evaporate the painted qc, since qv is not
+      // raised to match. Nothing re-renders after this, so the scene is a
+      // still painting and takes no clicks; interaction needs a render loop
+      // first.
       renderFrame(rgba, qc)
       ctx.putImageData(new ImageData(rgba, CANVAS_W, CANVAS_H), 0, 0)
-
-      this._stopLoop = () => {}
     } catch (err) {
       console.error("[CloudsCanvas] mount failed:", err)
     }
-  },
-
-  destroyed() {
-    if (this._stopLoop) this._stopLoop()
   },
 }

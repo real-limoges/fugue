@@ -3,7 +3,7 @@ defmodule Fugue.Mood.DataFrame do
   Date-spine and gap-detection helpers, ported from Ish's
   `Ish.Analysis.DataFrame`. Rows are plain maps (`%{date:, sleep:,
   anxiety:, sensitivity:, outlook:, speed:}`, dimensions `nil` when
-  missing) rather than a tabular-data-library structure -- Ish's
+  missing) rather than a tabular-data-library structure: Ish's
   `dataframe` dependency was confirmed to do nothing beyond typed
   named-column storage here, so plain `Enum`/`Map` row-of-maps replicate
   it with zero risk.

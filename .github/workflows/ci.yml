@@ -7,9 +7,17 @@ on:
     paths-ignore:
       - 'priv/static/menagerie/melbourne_weather.csv'
   pull_request:
+  # Weekly, so a quiet stretch with no pushes still surfaces a broken
+  # dependency, a stale action or a new advisory.
+  schedule:
+    - cron: "0 14 * * 1"
 
 env:
   MIX_ENV: test
+  # Part of the _build cache key: artifacts from another toolchain must not be
+  # restored. Keep in step with .tool-versions and the Dockerfile.
+  ELIXIR_VERSION: "1.20.4"
+  OTP_VERSION: "29.1"
 
 jobs:
   test:
@@ -18,45 +26,75 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: true
 
       - name: Set up Elixir & OTP
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: "1.18"
-          otp-version: "27"
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
 
       - name: Cache deps
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: deps
           key: ${{ runner.os }}-mix-${{ hashFiles('**/mix.lock') }}
           restore-keys: ${{ runner.os }}-mix-
 
       - name: Cache build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: _build
-          key: ${{ runner.os }}-build-${{ hashFiles('**/mix.lock') }}
-          restore-keys: ${{ runner.os }}-build-
+          key: ${{ runner.os }}-build-${{ env.ELIXIR_VERSION }}-${{ env.OTP_VERSION }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ runner.os }}-build-${{ env.ELIXIR_VERSION }}-${{ env.OTP_VERSION }}-
 
       - name: Install dependencies
         run: mix deps.get
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: "20"
+          # vitest 5 needs Node 22.12 or later.
+          node-version: "24"
           cache: npm
           cache-dependency-path: assets/package-lock.json
 
-      - name: Install asset deps (Prettier)
+      - name: Install asset deps (Prettier, vitest)
         run: npm --prefix assets ci
 
-      - name: Precommit checks (compile + format + test)
+      - name: Precommit checks (compile, format, credo, JS tests, tests with coverage)
         run: mix precommit
+
+  # Advisories fail this job on the weekly run and on PRs. It stays out of the
+  # deploy path: deploy.yml calls this workflow on push, and a new advisory in
+  # an unrelated package should not block shipping a fix.
+  audit:
+    name: Dependency audit
+    if: github.event_name == 'schedule' || github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Elixir & OTP
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
+
+      - name: Retired Hex packages
+        run: mix deps.get && mix hex.audit
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+
+      - name: npm advisories in shipped packages
+        run: npm --prefix assets audit --omit=dev --audit-level=moderate
 
   docker:
     name: Docker Build
@@ -64,7 +102,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: true
 

@@ -19,9 +19,9 @@ defmodule Fugue.Fuzzy.FCM do
   end
 
   @doc """
-  Deterministic pseudo-seeding (not true randomness -- load-bearing for
-  reproducible tests, do not swap for real randomness), row-normalized so
-  each point's membership across clusters sums to 1.
+  Deterministic pseudo-seeding, row-normalized so each point's membership
+  across clusters sums to 1. It is not true randomness, and must not become
+  it: reproducible tests depend on it.
   """
   def init_membership(n, c) do
     for i <- 0..(n - 1) do

@@ -38,10 +38,9 @@ defmodule FugueWeb.ColorLive.Splashes do
   def metamer_pair_count, do: length(@metamer_pairs)
 
   # ----- Section 1 hero: iridescent papillae -----
-  # Cuttlefish-papillae thickness map driven by a Voronoi field, illuminated
-  # by thin-film interference math. Cursor proximity sets the effective
-  # viewing angle so the rainbow shifts as the reader hovers. Fragment
-  # shader lives in assets/js/hooks/iridescence.js. The canvas is the hook
+  # Thin-film interference over a domain-warped fbm thickness field (no
+  # cells), in a flamboyant-cuttlefish palette; the cursor nudges the
+  # palette's phase. Fragment shader lives in assets/js/hooks/iridescence.js. The canvas is the hook
   # element directly (matches CloudsCanvas convention); phx-update="ignore"
   # keeps LiveView from clobbering it on re-render.
 
@@ -54,10 +53,9 @@ defmodule FugueWeb.ColorLive.Splashes do
         phx-update="ignore"
         class="block w-full rounded border border-base-content/10 bg-base-200/30"
         style="aspect-ratio: 5 / 3;"
-      >
-      </canvas>
+      ></canvas>
       <.figure_source
-        note="thin-film interference over a Voronoi thickness map; cursor proximity is the viewing angle. WebGL2, no WASM and no shader build step."
+        note="thin-film interference over a swirling noise thickness map; moving the cursor nudges the colors. WebGL2, no WASM and no shader build step."
         repo={{"fugue", "assets/js/hooks/iridescence.js"}}
       />
     </figure>
@@ -636,8 +634,7 @@ defmodule FugueWeb.ColorLive.Splashes do
             <span
               class="block h-full rounded"
               style={"width: #{Float.round(a.response * 100, 1)}%; background: #{a.color};"}
-            >
-            </span>
+            ></span>
           </span>
           <span class="w-12 text-right text-base-content/70 tabular-nums">
             {Float.round(a.response, 2)}
@@ -880,8 +877,7 @@ defmodule FugueWeb.ColorLive.Splashes do
             <span
               class="inline-block w-2 h-2 rounded-sm border border-base-content/20"
               style={"background: #{@source_a}"}
-            >
-            </span>
+            ></span>
             {@source_a}
           </div>
           <div
@@ -896,8 +892,7 @@ defmodule FugueWeb.ColorLive.Splashes do
             <span
               class="inline-block w-2 h-2 rounded-sm border border-base-content/20"
               style={"background: #{@source_b}"}
-            >
-            </span>
+            ></span>
             {@source_b}
           </div>
           <div
