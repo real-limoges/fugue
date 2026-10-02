@@ -149,9 +149,8 @@
   --color-neutral-content: oklch(96% 0 0);
   --amigos-blue: oklch(40% 0.2 262);
 
-  /* Archivo stands in for Antique Olive, the show's logo face, which has
-     no free web version. Only this page uses it, so other pages never
-     download its files. */
+  /* Archivo for body text; headings use `.amigos-display` below. Only this
+     page uses it, so other pages never download its files. */
   font-family: "Archivo", ui-sans-serif, system-ui, sans-serif;
 
   /* Full-bleed orange without widening the page: the shadow paints the
@@ -172,10 +171,13 @@
   font-family: "Special Elite", ui-monospace, monospace;
 }
 
-/* The logo look: heavy, narrowed capitals. */
+/* The logo look. The show sets its logo in Antique Olive Black, which has
+   no free web version; Paytone One is the closest free match, humanist
+   with a large x-height. It has one weight, so 400 keeps the browser from
+   faking a bolder one. */
 .amigos-display {
-  font-weight: 900;
-  font-stretch: 75%;
+  font-family: "Paytone One", "Archivo", ui-sans-serif, sans-serif;
+  font-weight: 400;
   text-transform: uppercase;
   letter-spacing: -0.005em;
 }

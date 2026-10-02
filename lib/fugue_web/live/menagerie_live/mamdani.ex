@@ -102,7 +102,7 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
         </p>
       </div>
 
-      <form phx-change="update_mamdani_inputs" class="mb-4">
+      <form id="mamdani-inputs" phx-change="update_mamdani_inputs" class="mb-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <label class="block bg-base-200 rounded-lg p-3">
             <div class="flex items-center justify-between mb-1">

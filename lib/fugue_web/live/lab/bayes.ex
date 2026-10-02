@@ -379,7 +379,7 @@ defmodule FugueWeb.LabLive.Bayes do
 
       <.density_chart chart={@chart} />
 
-      <form phx-change="set_threshold" class="mt-4 flex items-center gap-4">
+      <form id="bayes-threshold" phx-change="set_threshold" class="mt-4 flex items-center gap-4">
         <label class="text-xs font-mono text-base-content/60">Threshold</label>
         <input
           type="range"
