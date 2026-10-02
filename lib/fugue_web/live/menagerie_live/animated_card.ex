@@ -104,6 +104,10 @@ defmodule FugueWeb.MenagerieLive.AnimatedCard do
      |> Phoenix.LiveView.push_event(event_name, defaults)}
   end
 
+  attr :id, :string,
+    default: "slider-params",
+    doc: "DOM id, which LiveView needs for form recovery. Override if a page renders two grids."
+
   attr :sliders, :list, required: true, doc: "List of `%Slider{}` configs."
   attr :params, :map, required: true, doc: "Current param map keyed by slider key."
 
@@ -118,7 +122,7 @@ defmodule FugueWeb.MenagerieLive.AnimatedCard do
   """
   def slider_grid(assigns) do
     ~H"""
-    <form phx-change="update_params" class={@class}>
+    <form id={@id} phx-change="update_params" class={@class}>
       <label :for={slider <- @sliders} class="block bg-base-200 rounded-lg p-3">
         <div class="flex items-center justify-between mb-1">
           <span class="text-xs font-semibold text-base-content/75">{slider.label}</span>

@@ -85,6 +85,8 @@ defmodule FugueWeb.AmigosLiveTest do
     assert has_element?(view, "#amigos-counter", "only #{Amigos.counted_count()} of them")
     refute has_element?(view, "#amigos-counter", "#{length(Amigos.layers())}")
     assert has_element?(view, "#amigos-late-footnote", "That count is wrong.")
+    assert has_element?(view, "#amigos-ann svg")
+    refute has_element?(view, "#amigos-ann img")
 
     assert has_element?(view, "#layer-ann"),
            "Ann has to be on the page the counter leaves her out of"

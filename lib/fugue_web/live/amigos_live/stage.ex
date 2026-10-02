@@ -73,7 +73,7 @@ defmodule FugueWeb.AmigosLive.Stage do
     ~H"""
     <p
       id="amigos-spine"
-      class="absolute top-[5%] left-1/2 -translate-x-1/2 w-[min(40rem,56%)] text-lg sm:text-2xl leading-snug font-medium"
+      class="absolute top-[5%] left-1/2 -translate-x-1/2 w-[min(40rem,56%)] text-center text-lg sm:text-2xl leading-snug font-medium"
     >
       Michael tells Gob he has no friends.<sup
         :if={on?(:ice_off_duty, @beat)}
