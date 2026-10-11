@@ -128,72 +128,91 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
 
     ~H"""
     <Tooltip.container id="calendar-heatmap" hook="CalendarTooltip">
-      <svg width={@svg_width} height={@svg_height} class={@svg_classes}>
-        <defs>
-          <pattern
-            id="gap-hatch"
-            width="4"
-            height="4"
-            patternUnits="userSpaceOnUse"
-            patternTransform="rotate(45)"
-          >
-            <line
-              x1="0"
-              y1="0"
-              x2="0"
-              y2="4"
-              style="stroke: color-mix(in oklch, var(--color-base-content) 45%, transparent);"
-              stroke-width="1"
-            />
-          </pattern>
-        </defs>
-
-        <%= for group <- @year_groups do %>
-          <text
-            x="0"
-            y={group.label_y}
-            text-anchor="start"
-            style="fill: color-mix(in oklch, var(--color-base-content) 65%, transparent);"
-            font-size="11px"
-            font-weight="bold"
-          >
-            {group.year}
-          </text>
-
-          <%= for wl <- group.weekday_labels do %>
-            <text
-              x={@weekday_label_x}
-              y={wl.y}
-              text-anchor="end"
-              style="fill: color-mix(in oklch, var(--color-base-content) 55%, transparent);"
-              font-size="9px"
+      <div class="calendar-container" style="position: relative; overflow: hidden;">
+        <svg width={@svg_width} height={@svg_height} class={@svg_classes}
+             role="grid"
+             aria-label="Daily mood entries heatmap"
+             aria-describedby="calendar-legend">
+          <defs>
+            <pattern
+              id="gap-hatch"
+              width="4"
+              height="4"
+              patternUnits="userSpaceOnUse"
+              patternTransform="rotate(45)"
             >
-              {wl.label}
-            </text>
-          <% end %>
-
-          <g transform={group.g_transform}>
-            <%= for cell <- group.cells do %>
-              <rect
-                class={cell.class}
-                data-date={cell.date}
-                data-tooltip={cell.tooltip_html}
-                width={@cell_size}
-                height={@cell_size}
-                rx="2"
-                x={cell.x}
-                y={cell.y}
-                fill={cell.fill}
-                stroke-width={cell.stroke_width}
-                stroke-dasharray={cell.stroke_dasharray}
-                style={"cursor: #{if cell.is_gap, do: "default", else: "pointer"}; stroke: #{cell.stroke};"}
-                phx-click={!cell.is_gap && "day_selected"}
-                phx-value-date={!cell.is_gap && cell.date}
+              <line
+                x1="0"
+                y1="0"
+                x2="0"
+                y2="4"
+                style="stroke: color-mix(in oklch, var(--color-base-content) 45%, transparent);"
+                stroke-width="1"
               />
+            </pattern>
+          </defs>
+
+          <%= for group <- @year_groups do %>
+            <text
+              x="0"
+              y={group.label_y}
+              text-anchor="start"
+              style="fill: color-mix(in oklch, var(--color-base-content) 65%, transparent);"
+              font-size="11px"
+              font-weight="bold"
+              aria-hidden="true"
+            >
+              {group.year}
+            </text>
+
+            <%= for wl <- group.weekday_labels do %>
+              <text
+                x={@weekday_label_x}
+                y={wl.y}
+                text-anchor="end"
+                style="fill: color-mix(in oklch, var(--color-base-content) 55%, transparent);"
+                font-size="9px"
+                aria-hidden="true"
+              >
+                {wl.label}
+              </text>
             <% end %>
-          </g>
-        <% end %>
-      </svg>
+
+            <g transform={group.g_transform}>
+              <%= for cell <- group.cells do %>
+                <rect
+                  class={cell.class}
+                  data-date={cell.date}
+                  data-tooltip={cell.tooltip_html}
+                  width={@cell_size}
+                  height={@cell_size}
+                  rx="2"
+                  x={cell.x}
+                  y={cell.y}
+                  fill={cell.fill}
+                  stroke-width={cell.stroke_width}
+                  stroke-dasharray={cell.stroke_dasharray}
+                  style={"cursor: #{if cell.is_gap, do: "default", else: "pointer"}; stroke: #{cell.stroke};"}
+                  phx-click={!cell.is_gap && "day_selected"}
+                  phx-value-date={!cell.is_gap && cell.date}
+                  role="gridcell"
+                  aria-label="{cell.date}: {cell.dominant_cluster_name} cluster ({cell.dominant_weight}% membership)"
+                  tabindex="0"
+                />
+              <% end %>
+            </g>
+          <% end %>
+        </svg>
+        
+        <!-- Virtualized viewport for large datasets -->
+        <div id="calendar-viewport" phx-hook="VirtualizedCalendar" phx-update="ignore" 
+             style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; overflow: hidden;">
+          <div style="width: 100%; height: 100%; position: relative;">
+            <!-- This will be populated by the JS hook with visible cells only -->
+          </div>
+        </div>
+      </div>
+    </Tooltip.container>
 
       <style>
         .calendar-svg.has-highlight .day-cell { opacity: 0.15; }

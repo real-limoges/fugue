@@ -85,12 +85,14 @@ defmodule FugueWeb.MoodLive.TransitionSankey do
         viewBox={"0 0 #{@svg_width} #{@svg_height}"}
         preserveAspectRatio="xMidYMid meet"
         style="width: 100%;"
+        role="chart"
+        aria-label="Cluster transition flow diagram"
       >
         <%= if @any? do %>
-          <text x={fmt(@from_label_x)} y="14" text-anchor="middle" fill="#555" font-size="10px">
+          <text x={fmt(@from_label_x)} y="14" text-anchor="middle" fill="#555" font-size="10px" aria-hidden="true">
             from
           </text>
-          <text x={fmt(@to_label_x)} y="14" text-anchor="middle" fill="#555" font-size="10px">
+          <text x={fmt(@to_label_x)} y="14" text-anchor="middle" fill="#555" font-size="10px" aria-hidden="true">
             to
           </text>
         <% end %>
@@ -104,6 +106,9 @@ defmodule FugueWeb.MoodLive.TransitionSankey do
               d={link.d}
               fill={link.color}
               stroke={link.color}
+              role="region"
+              aria-label="Transition from {Map.get(@cluster_names, link.from, link.from)} to {Map.get(@cluster_names, link.to, link.to)}: {link.count} transitions"
+              tabindex="0"
             />
           <% end %>
 
@@ -120,6 +125,9 @@ defmodule FugueWeb.MoodLive.TransitionSankey do
               phx-click="cluster_selected"
               phx-value-cluster={n.id}
               style="cursor: pointer;"
+              role="button"
+              aria-label="Select {n.name} cluster"
+              tabindex="0"
             />
             <text
               class={"sankey-label " <> (if n.class =~ "dim", do: "dim", else: "")}
@@ -134,6 +142,9 @@ defmodule FugueWeb.MoodLive.TransitionSankey do
               phx-click="cluster_selected"
               phx-value-cluster={n.id}
               style="cursor: pointer;"
+              role="button"
+              aria-label="Select {n.name} cluster"
+              tabindex="0"
             >
               {n.name}
             </text>
