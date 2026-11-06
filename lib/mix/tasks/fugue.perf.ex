@@ -13,8 +13,7 @@ defmodule Mix.Tasks.Fugue.Perf do
   the bytes a term occupies once copied onto a process heap (which is what
   `assign/3` and `Task.await/2` do), not its encoded size on the wire.
 
-  This is a measuring tool for the performance work in `docs/roadmap.md`;
-  it changes nothing.
+  This is a measuring tool for performance work; it changes nothing.
   """
 
   use Mix.Task
@@ -27,6 +26,10 @@ defmodule Mix.Tasks.Fugue.Perf do
   def run(args) do
     {opts, _rest} = OptionParser.parse!(args, strict: [runs: :integer])
     runs = Keyword.get(opts, :runs, 5)
+
+    # 1..0 counts down in Elixir, so a zero or negative count would quietly
+    # run the pipeline twice or more instead of failing.
+    if runs < 1, do: Mix.raise("--runs must be at least 1, got #{runs}")
 
     Mix.Task.run("app.config")
 

@@ -43,7 +43,11 @@ npm-debug.log
 /assets/node_modules/
 /.idea/
 *.iml
-/docs/
+
+# docs/ is a private notes tree; only docs/reference/ is committed.
+# This also covers docs/html/, the generated html mirror.
+/docs/*
+!/docs/reference/
 
 docker-compose.yml
 
@@ -68,9 +72,6 @@ menagerie-*.png
 
 # the annoying MacOS thing
 .DS_Store
-
-# working notes and drafts; see docs/private-notes/README.md
-docs/private-notes/
 
 # Dialyzer PLTs; rebuilt locally, cached in CI
 /priv/plts/
