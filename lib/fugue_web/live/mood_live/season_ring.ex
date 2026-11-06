@@ -83,7 +83,7 @@ defmodule FugueWeb.MoodLive.SeasonRing do
         viewBox={"0 0 #{@size} #{@size}"}
         preserveAspectRatio="xMidYMid meet"
         style="width: 100%; max-width: 420px; margin: 0 auto; display: block;"
-        role="chart"
+        role="group"
         aria-label="Monthly cluster dominance visualization"
       >
         <g transform={"translate(#{@center},#{@center})"}>
@@ -111,8 +111,8 @@ defmodule FugueWeb.MoodLive.SeasonRing do
                     d={arc.d}
                     fill={arc.color}
                     stroke={arc.color}
-                    role="region"
-                    aria-label="{m.label}: {Map.get(@cluster_names, arc.cluster, arc.cluster)} cluster dominance"
+                    role="img"
+                    aria-label={"#{m.label}: #{Map.get(@cluster_names, arc.cluster, arc.cluster)} cluster dominance"}
                     tabindex="0"
                   />
                 <% end %>
@@ -120,8 +120,8 @@ defmodule FugueWeb.MoodLive.SeasonRing do
                   d={m.empty_path}
                   fill="transparent"
                   data-tooltip={m.tooltip}
-                  role="region"
-                  aria-label="{m.label}: {m.total} total entries"
+                  role="img"
+                  aria-label={"#{m.label}: #{m.total} total entries"}
                   tabindex="0"
                 />
               </g>
