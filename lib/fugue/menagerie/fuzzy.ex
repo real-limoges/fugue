@@ -4,6 +4,32 @@ defmodule Fugue.Menagerie.Fuzzy do
   No state, no I/O. Just math that the LiveView re-runs when parameters change.
   """
 
+  alias Fugue.Menagerie.MelbourneWeather
+
+  defmodule MF do
+    @moduledoc """
+    One triangular membership function: zero at `a` and `c`, one at the
+    peak `b`. `name` is the fuzzy set's label and `color` its hex swatch.
+    """
+
+    @enforce_keys [:name, :color, :a, :b, :c]
+    defstruct [:name, :color, :a, :b, :c]
+
+    @type t :: %__MODULE__{
+            name: String.t(),
+            color: String.t(),
+            a: number(),
+            b: number(),
+            c: number()
+          }
+  end
+
+  @typedoc "Normalized membership per fuzzy set name."
+  @type memberships :: %{String.t() => float()}
+
+  @typedoc "One day's memberships, keyed by its ISO-8601 date."
+  @type band_row :: %{date: String.t(), memberships: memberships()}
+
   # {name, default_peak_celsius, hex color}. Palette picked for maximum hue
   # contrast between adjacent bands rather than a literal temperature gradient
   # so stacked bands stay distinguishable without relying on red/green.
@@ -22,6 +48,7 @@ defmodule Fugue.Menagerie.Fuzzy do
   temperature axis; `spread` multiplies the triangle half-width so adjacent
   sets overlap more or less.
   """
+  @spec build_mfs(number(), number()) :: [MF.t(), ...]
   def build_mfs(center_offset, spread)
       when is_number(center_offset) and is_number(spread) do
     half = @default_half_width * spread
@@ -29,7 +56,7 @@ defmodule Fugue.Menagerie.Fuzzy do
     for {name, center, color} <- @base_mfs do
       peak = center + center_offset
 
-      %{
+      %MF{
         name: name,
         color: color,
         a: peak - half,
@@ -39,7 +66,11 @@ defmodule Fugue.Menagerie.Fuzzy do
     end
   end
 
-  @doc "Triangular membership: 0 outside [a, c], 1 at b, linear ramps on either side."
+  @doc """
+  Triangular membership: 0 outside [a, c], 1 at b, linear ramps on either
+  side. A non-numeric `x` (a missing reading) scores 0.
+  """
+  @spec triangular(number() | nil, number(), number(), number()) :: float()
   def triangular(x, a, b, c)
       when is_number(x) and is_number(a) and is_number(b) and is_number(c) do
     cond do
@@ -58,6 +89,7 @@ defmodule Fugue.Menagerie.Fuzzy do
   Returns a list of `[x, y]` pairs suitable for d3 line/area generators on
   the client; clients don't re-derive triangles, they just render.
   """
+  @spec sample_shape(MF.t(), number(), number(), pos_integer()) :: [[float()], ...]
   def sample_shape(mf, lo, hi, steps \\ 80)
       when is_number(lo) and is_number(hi) and is_integer(steps) and steps > 0 do
     span = hi - lo
@@ -73,6 +105,7 @@ defmodule Fugue.Menagerie.Fuzzy do
   the stacked area chart fill the full height even when raw memberships
   don't sum to 1 (e.g. when spread is narrow).
   """
+  @spec memberships(number(), [MF.t()]) :: memberships()
   def memberships(x, mfs) do
     raw = Enum.map(mfs, fn mf -> {mf.name, triangular(x, mf.a, mf.b, mf.c)} end)
     total = Enum.reduce(raw, 0.0, fn {_, v}, acc -> acc + v end)
@@ -88,6 +121,7 @@ defmodule Fugue.Menagerie.Fuzzy do
   For every weather row, compute fuzzy memberships on its TMAX value.
   Rows without a TMAX get all zeros (rendered as a gap in the chart).
   """
+  @spec bands([MelbourneWeather.row()], [MF.t()]) :: [band_row()]
   def bands(rows, mfs) do
     zero = Map.new(mfs, fn mf -> {mf.name, 0.0} end)
 

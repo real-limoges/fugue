@@ -33,6 +33,13 @@ defmodule FugueWeb.MoodLive.Annotations do
     # %{date: "2022-06-25", label: "got married", note: "what happened that day"},
   ]
 
+  @type t :: %{
+          required(:date) => String.t(),
+          required(:label) => String.t(),
+          optional(:note) => String.t()
+        }
+
   @doc "Returns all trajectory annotations in their authored order."
+  @spec all() :: [t()]
   def all, do: @annotations
 end

@@ -1,3 +1,4 @@
+// @ts-check
 /** A slowly drawn Thomas strange attractor, tinted by the user's cluster palette.
  *  Generative filler; no data, just a living scribble that rhymes with the trajectory hero. */
 
@@ -19,6 +20,31 @@ const FALLBACK_ASPECT = 0.62
 const DARK_FALLBACK_PALETTE = ["#b266ff", "#22d3ee", "#f472b6", "#facc15", "#4ade80"]
 const LIGHT_FALLBACK_PALETTE = ["#b45309", "#0e7490", "#7c3aed", "#be185d", "#15803d"]
 
+/** @typedef {[number, number, number]} Vec3 */
+/** @typedef {[number, number]} Vec2 */
+
+/**
+ * A sampled point on the attractor that owns one palette color; the stroke
+ * color at any moment is the color of the nearest basin.
+ * @typedef {object} Basin
+ * @property {number} x
+ * @property {number} y
+ * @property {number} z
+ * @property {number} i index into the palette
+ */
+
+/**
+ * @param {unknown} c
+ * @returns {c is string}
+ */
+function isNonEmptyString(c) {
+  return typeof c === "string" && c.length > 0
+}
+
+/**
+ * @param {Vec3} p
+ * @returns {Vec3}
+ */
 function thomasStep(p) {
   const [x, y, z] = p
   return [
@@ -28,11 +54,50 @@ function thomasStep(p) {
   ]
 }
 
+/**
+ * @typedef {object} State
+ * @property {string[]} customPalette
+ * @property {string[]} palette
+ * @property {string} bg
+ * @property {string} fade
+ * @property {() => void} _onThemeChanged
+ * @property {() => void} _repollTheme
+ * @property {() => void} _onResize
+ * @property {number} _raf
+ * @property {ResizeObserver} [_ro]
+ * @property {{xMin: number, xMax: number, yMin: number, yMax: number}} bounds
+ * @property {Vec3} p
+ * @property {Vec2} prev
+ * @property {Basin[]} basins
+ * @property {HTMLCanvasElement} [canvas]
+ * @property {CanvasRenderingContext2D} ctx
+ * @property {number} w
+ * @property {number} h
+ * @property {number} _projScale
+ * @property {number} _projCx
+ * @property {number} _projCy
+ * @property {number} _projXMid
+ * @property {number} _projYMid
+ */
+
+/**
+ * @typedef {object} Methods
+ * @property {() => void} applyThemeColors
+ * @property {() => void} warmup
+ * @property {() => void} setupCanvas
+ * @property {() => void} cacheProjection
+ * @property {(p: Vec3) => Vec2} project
+ * @property {(p: Vec3) => string} nearestColor
+ * @property {() => void} loop
+ */
+
+/** @type {import("../types").LiveHook<State, Methods>} */
 export const ClusterAttractor = {
   mounted() {
     const raw = this.el.dataset.colors || "[]"
     try {
-      this.customPalette = JSON.parse(raw).filter((c) => typeof c === "string" && c.length > 0)
+      const parsed = JSON.parse(raw)
+      this.customPalette = Array.isArray(parsed) ? parsed.filter(isNonEmptyString) : []
     } catch {
       this.customPalette = []
     }
@@ -78,7 +143,9 @@ export const ClusterAttractor = {
   },
 
   warmup() {
+    /** @type {Vec3} */
     let p = [0.1, 0.0, 0.0]
+    /** @type {Vec3[]} */
     const samples = []
     let xMin = Infinity,
       xMax = -Infinity,
@@ -126,6 +193,8 @@ export const ClusterAttractor = {
     this.el.appendChild(canvas)
 
     const ctx = canvas.getContext("2d")
+    // A fresh canvas always yields a 2d context; null here means a broken browser.
+    if (!ctx) throw new Error("ClusterAttractor: 2d canvas context unavailable")
     ctx.scale(dpr, dpr)
     ctx.fillStyle = this.bg
     ctx.fillRect(0, 0, w, h)

@@ -11,10 +11,28 @@ defmodule Fugue.Mood.DataFrame do
 
   alias Fugue.Mood.Entry
 
+  @typedoc "Every day from the first entry to the last, absent days included."
+  @type spine :: [Entry.t()]
+
+  @typedoc """
+  An interior run of absent days: its first day, its length, and the
+  present days that bracket it.
+  """
+  @type gap :: %{
+          start: Date.t(),
+          length: pos_integer(),
+          before: Date.t(),
+          after: Date.t()
+        }
+
+  @typedoc "A complete day as a clustering input."
+  @type present_row :: %{date: Date.t(), point: [float()]}
+
   @doc """
   Build the full date-spine from the earliest to the latest entry
   (inclusive), filling in `nil` for any dimension on days with no entry.
   """
+  @spec fill_missing_dates([Entry.t()]) :: spine()
   def fill_missing_dates([]), do: []
 
   def fill_missing_dates(entries) do
@@ -24,10 +42,7 @@ defmodule Fugue.Mood.DataFrame do
     max_date = Enum.max(dates, Date)
 
     for date <- Date.range(min_date, max_date) do
-      case Map.get(by_date, date) do
-        nil -> %{date: date, sleep: nil, anxiety: nil, sensitivity: nil, outlook: nil, speed: nil}
-        entry -> entry
-      end
+      Map.get_lazy(by_date, date, fn -> Entry.absent(date) end)
     end
   end
 
@@ -37,6 +52,7 @@ defmodule Fugue.Mood.DataFrame do
   date range are not reported (there's no bracketing present day to
   compute a transition from/to).
   """
+  @spec identify_gaps(spine()) :: [gap()]
   def identify_gaps(spine) when length(spine) < 2, do: []
 
   def identify_gaps(spine) do
@@ -61,6 +77,7 @@ defmodule Fugue.Mood.DataFrame do
   end
 
   @doc "Rows where all 5 dimensions are present, as `%{date:, point: [...]}` in spine order."
+  @spec extract_present_rows(spine()) :: [present_row()]
   def extract_present_rows(spine) do
     spine
     |> Enum.filter(&Entry.complete?/1)
@@ -68,5 +85,6 @@ defmodule Fugue.Mood.DataFrame do
   end
 
   @doc "Rows where all 5 dimensions are present, as entries (the inverse of `fill_missing_dates/1`)."
+  @spec extract_entries(spine()) :: [Entry.t()]
   def extract_entries(spine), do: Enum.filter(spine, &Entry.complete?/1)
 end

@@ -82,9 +82,9 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
     mf_names = Enum.map(assigns.mfs, & &1.name)
     mf_colors = Map.new(assigns.mfs, &{&1.name, &1.color})
 
-    {layers, year_lines, date_ticks, band_labels, series_json} =
+    {layers, year_lines, date_ticks, band_labels, hover} =
       if series == [] do
-        {[], [], [], [], "[]"}
+        {[], [], [], [], %{xs: "", dates: "", pcts: ""}}
       else
         dates = Enum.map(series, & &1.date)
         {min_d, max_d} = date_range(dates)
@@ -110,19 +110,15 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
             }
           end)
 
+        # Every day is drawn, as straight segments with coordinates to a
+        # tenth of a unit. Smoothed curves at full float precision made the
+        # paths ~660 KB, resent on every slider tick (performance baseline
+        # P2, 2026-11-05); with ~2.4 days per pixel the smoothing wasn't
+        # visible anyway.
         layers =
           Enum.map(mf_names, fn name ->
-            upper =
-              Enum.map(stacked, fn p ->
-                {_, _, y1} = List.keyfind(p.slices, name, 0)
-                {p.x, band_y.(y1)}
-              end)
-
-            lower =
-              Enum.map(stacked, fn p ->
-                {_, y0, _} = List.keyfind(p.slices, name, 0)
-                {p.x, band_y.(y0)}
-              end)
+            upper = Enum.map(stacked, fn p -> {p.x, band_y.(slice_edge(p, name, 2))} end)
+            lower = Enum.map(stacked, fn p -> {p.x, band_y.(slice_edge(p, name, 1))} end)
 
             %{name: name, color: Map.get(mf_colors, name, "#666"), d: area_path(upper, lower)}
           end)
@@ -159,14 +155,20 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
               end)
           end
 
-        # Per-day data for the hover tooltip, one row per day.
-        # Shipped as JSON in a data attr; tiny JS hook bisects by x position.
-        series_json =
-          stacked
-          |> Enum.map(fn p -> %{x: p.x, date: p.date, mems: p.memberships} end)
-          |> Jason.encode!()
+        # Per-day data for the hover tooltip, as three plain attributes
+        # rather than one JSON blob, so the parts that never change (x and
+        # date) are sent once and a slider tick only resends the percents.
+        # Percents per day are in mfs order, the order the tooltip lists.
+        hover = %{
+          xs: Enum.map_join(stacked, ",", &SvgMath.fmt(Float.round(&1.x, 1))),
+          dates: Enum.map_join(stacked, ",", & &1.date),
+          pcts:
+            Enum.map_join(stacked, ";", fn p ->
+              Enum.map_join(mf_names, ",", &round(Map.get(p.memberships, &1, 0) * 100))
+            end)
+        }
 
-        {layers, year_lines, date_ticks, band_labels, series_json}
+        {layers, year_lines, date_ticks, band_labels, hover}
       end
 
     y_ticks =
@@ -185,7 +187,7 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
         date_ticks: date_ticks,
         band_labels: band_labels,
         y_ticks: y_ticks,
-        series_json: series_json,
+        hover: hover,
         mfs_json: mfs_json,
         svg_width: @width,
         shapes_height: @shapes_h,
@@ -276,7 +278,9 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
             viewBox={"0 0 #{@svg_width} #{@bands_height}"}
             preserveAspectRatio="xMidYMid meet"
             style="width: 100%; display: block;"
-            data-series={@series_json}
+            data-xs={@hover.xs}
+            data-dates={@hover.dates}
+            data-pcts={@hover.pcts}
             data-mfs={@mfs_json}
             data-inner-w={@inner_w}
             data-inner-h={@bands_inner_h}
@@ -391,19 +395,21 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
     """
   end
 
-  defp area_path(upper, lower) do
-    upper_path = SvgMath.basis_path(upper)
-    lower_path = SvgMath.basis_path(Enum.reverse(lower))
-
-    lower_continued =
-      case lower_path do
-        "M" <> rest -> "L" <> rest
-        "" -> ""
-        other -> other
-      end
-
-    upper_path <> lower_continued <> "Z"
+  # Bottom (edge 1) or top (edge 2) of one layer's slice on one day.
+  defp slice_edge(point, name, edge) do
+    point.slices |> List.keyfind(name, 0) |> elem(edge)
   end
+
+  # The band's top edge left to right, then its bottom edge back, closed.
+  defp area_path(upper, lower) do
+    case upper ++ Enum.reverse(lower) do
+      [] -> ""
+      [first | rest] -> "M" <> coord(first) <> Enum.map_join(rest, "", &("L" <> coord(&1))) <> "Z"
+    end
+  end
+
+  defp coord({x, y}),
+    do: SvgMath.fmt(Float.round(x / 1, 1)) <> "," <> SvgMath.fmt(Float.round(y / 1, 1))
 
   defp date_range([first | _] = dates) do
     parsed = Enum.map(dates, &Date.from_iso8601!/1)

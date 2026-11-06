@@ -107,24 +107,30 @@
 
 /* This file is for your main application CSS */
 
+/* Theme color variables for consistent theming */
+:root {
+  --chart-primary: oklch(72% 0.25 330);
+  --chart-secondary: oklch(75% 0.2 200);
+  --chart-accent: oklch(78% 0.22 140);
+  --chart-neutral: oklch(30% 0.05 300);
+  --chart-bg: oklch(18% 0.04 300);
+  --chart-text: oklch(92% 0.02 300);
+}
+
+/* Reusable tooltip styles */
+.tooltip-card {
+  @apply absolute pointer-events-none bg-neutral text-neutral-content p-3.5 rounded-lg border border-neutral-content/12 shadow-lg text-sm leading-relaxed whitespace-nowrap z-10 opacity-0 transition-opacity;
+}
+
+.tooltip-card--right {
+  right: 0;
+}
+
 /* Shared tooltip card. Content is server-rendered HTML; the JS hook owns
    only positioning. The `--right` modifier anchors the tooltip to the
    right edge of its container (used by the calendar grid). */
 .tooltip-card {
-  position: absolute;
-  pointer-events: none;
-  background: var(--color-neutral);
-  color: var(--color-neutral-content);
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid color-mix(in oklch, var(--color-neutral-content) 12%, transparent);
-  box-shadow: 0 4px 16px color-mix(in oklch, black 40%, transparent);
-  font-size: 12px;
-  line-height: 1.5;
-  white-space: nowrap;
-  z-index: 100;
-  opacity: 0;
-  transition: opacity 0.1s;
+  @apply absolute pointer-events-none bg-neutral text-neutral-content p-3.5 rounded-lg border border-neutral-content/12 shadow-lg text-sm leading-relaxed whitespace-nowrap z-10 opacity-0 transition-opacity;
 }
 
 .tooltip-card--right {

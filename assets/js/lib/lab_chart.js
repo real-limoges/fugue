@@ -1,24 +1,56 @@
+// @ts-check
 // Shared chart primitives + canonical dataset for /lab pages.
+
+/** @typedef {(v: number) => number} Scale */
 
 export const Z_95 = 1.96
 
 const MARGIN = { top: 30, right: 45, bottom: 50, left: 60 }
 
+/**
+ * `n` evenly spaced values from `a` to `b` inclusive.
+ * @param {number} a
+ * @param {number} b
+ * @param {number} n
+ * @returns {number[]}
+ */
 export function linspace(a, b, n) {
   const step = (b - a) / (n - 1)
   return Array.from({ length: n }, (_, i) => a + i * step)
 }
 
+/**
+ * @template {keyof SVGElementTagNameMap} K
+ * @param {K} tag
+ * @param {Record<string, string | number>} [attrs]
+ * @returns {SVGElementTagNameMap[K]} e.g. SVGSVGElement for "svg"
+ */
 export function svgNS(tag, attrs = {}) {
   const el = document.createElementNS("http://www.w3.org/2000/svg", tag)
-  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v)
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v))
   return el
 }
 
+/**
+ * @param {number[]} xs
+ * @param {number[]} ys
+ * @param {Scale} scaleX
+ * @param {Scale} scaleY
+ * @returns {string} an SVG path `d`
+ */
 export function polylinePath(xs, ys, scaleX, scaleY) {
   return xs.map((x, i) => `${i === 0 ? "M" : "L"}${scaleX(x)},${scaleY(ys[i])}`).join(" ")
 }
 
+/**
+ * Closed path along `upper` left to right, then `lower` right to left.
+ * @param {number[]} xs
+ * @param {number[]} lower
+ * @param {number[]} upper
+ * @param {Scale} scaleX
+ * @param {Scale} scaleY
+ * @returns {string} an SVG path `d`
+ */
 export function bandPath(xs, lower, upper, scaleX, scaleY) {
   const top = xs.map((x, i) => `${i === 0 ? "M" : "L"}${scaleX(x)},${scaleY(upper[i])}`).join(" ")
   const bottom = [...xs]
@@ -31,11 +63,16 @@ export function bandPath(xs, lower, upper, scaleX, scaleY) {
   return `${top} ${bottom} Z`
 }
 
+/**
+ * @param {number} v
+ * @returns {string}
+ */
 function formatTick(v) {
   if (Number.isInteger(v)) return String(v)
   return v.toFixed(2).replace(/0+$/, "").replace(/\.$/, "")
 }
 
+/** @returns {Promise<typeof import("/vendor/glissando/glissando.js").WasmGamlssModel>} */
 export async function loadGlissando() {
   const mod = await import("/vendor/glissando/glissando.js")
   await mod.default({ module_or_path: "/vendor/glissando/glissando_bg.wasm" })
@@ -44,6 +81,36 @@ export async function loadGlissando() {
 
 // Builds an SVG with grid, axes, tick labels, and axis labels for the given config.
 // Returns { svg, scaleX, scaleY, innerW, innerH, W, H } so callers can layer paths on top.
+/**
+ * @typedef {object} FrameConfig
+ * @property {HTMLElement} container measured for width; not appended to
+ * @property {number} xMin
+ * @property {number} xMax
+ * @property {number} yMin
+ * @property {number} yMax
+ * @property {number[]} xTicks
+ * @property {number[]} yTicks
+ * @property {string} xLabel
+ * @property {string} yLabel
+ * @property {(v: number) => string} [xTickFormat]
+ * @property {(v: number) => string} [yTickFormat]
+ */
+
+/**
+ * @typedef {object} Frame
+ * @property {SVGSVGElement} svg
+ * @property {Scale} scaleX
+ * @property {Scale} scaleY
+ * @property {number} innerW
+ * @property {number} innerH
+ * @property {number} W
+ * @property {number} H
+ */
+
+/**
+ * @param {FrameConfig} config
+ * @returns {Frame}
+ */
 export function buildFrame({
   container,
   xMin,
@@ -64,7 +131,9 @@ export function buildFrame({
   const innerW = W - MARGIN.left - MARGIN.right
   const innerH = H - MARGIN.top - MARGIN.bottom
 
+  /** @type {Scale} */
   const scaleX = (x) => MARGIN.left + ((x - xMin) / (xMax - xMin)) * innerW
+  /** @type {Scale} */
   const scaleY = (y) => MARGIN.top + innerH - ((y - yMin) / (yMax - yMin)) * innerH
 
   const svg = svgNS("svg", { width: W, height: H })
@@ -167,6 +236,12 @@ export function buildFrame({
   return { svg, scaleX, scaleY, innerW, innerH, W, H }
 }
 
+/**
+ * @param {Array<[number, number]>} data `[x, y]` points
+ * @param {Scale} scaleX
+ * @param {Scale} scaleY
+ * @returns {SVGElement} a `<g>` of circles
+ */
 export function buildScatter(data, scaleX, scaleY) {
   const g = svgNS("g")
   for (const [x, y] of data) {

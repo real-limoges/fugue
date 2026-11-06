@@ -6,10 +6,12 @@ defmodule FugueWeb.MenagerieLive.Index do
 
   use FugueWeb, :live_view
 
+  @impl true
   def mount(_params, _session, socket) do
     {:ok, socket}
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="max-w-4xl mx-auto py-8">
@@ -19,7 +21,9 @@ defmodule FugueWeb.MenagerieLive.Index do
         </p>
         <h1 class="text-2xl font-mono font-semibold text-base-content mb-3">Math playgrounds</h1>
         <p class="text-sm text-base-content/50 leading-relaxed max-w-2xl">
-          Self-contained experiments. Drag the sliders and watch what happens.
+          Little sims to poke at. Most of them are a couple of simple rules
+          run thousands of times, and the sliders are there so you can break
+          them (please do, nothing here minds).
         </p>
       </header>
 
@@ -30,9 +34,9 @@ defmodule FugueWeb.MenagerieLive.Index do
           title="Triangular temperature bands"
           accent="primary"
         >
-          Reshape triangular membership bands over four years of Melbourne daily
-          temperatures. Every day holds partial membership in five overlapping
-          fuzzy sets at once. Drag the sliders to see the gradient reshape.
+          Four years of Melbourne weather sorted into cold, cool, mild, warm and
+          hot, except no day has to pick just one. Drag the sliders and every
+          day in the dataset gets re-sorted at once.
         </.card>
 
         <.card
@@ -41,9 +45,10 @@ defmodule FugueWeb.MenagerieLive.Index do
           title="Mamdani fan controller"
           accent="primary"
         >
-          An old-school rule of thumb wired up as a fuzzy controller: hot and
-          humid means run hard, cold means off. Watch seven weighted rules fire
-          in real time and turn two crisp inputs into a crisp fan speed.
+          An old-school rule of thumb (hot and sticky, crank the fan; cold,
+          turn it off), written down as seven fuzzy rules. Move the
+          temperature and humidity and watch each rule vote on how fast the
+          fan should spin.
         </.card>
 
         <.card
@@ -52,10 +57,10 @@ defmodule FugueWeb.MenagerieLive.Index do
           title="Boids playground"
           accent="accent"
         >
-          Each bird follows three simple rules: separate from neighbors, align
-          with them, cohere toward the flock. Drag the force sliders and watch
-          tight flocks form, schools stream past each other, or the whole crowd
-          dissolve into chaos.
+          Each bird knows three things (don't crowd your neighbors, point where
+          they're pointing, stay near the group) and nothing about the flock as
+          a whole. Push the sliders and it tightens up, streams past itself like
+          a school of fish, or falls apart completely.
         </.card>
 
         <.card
@@ -64,9 +69,10 @@ defmodule FugueWeb.MenagerieLive.Index do
           title="Classical vs quantum walk"
           accent="secondary"
         >
-          Two walkers start at the center. The classical one drifts into a bell;
-          the quantum one races out into two horns at the edges. Drag the
-          decoherence slider to drain the weirdness back out.
+          Two walkers start in the middle and flip coins. The normal one ends up
+          in a bell curve, like you'd expect; the quantum one ends up mostly at
+          the two far edges, which nobody expects the first time. One slider
+          drains the quantum back out.
         </.card>
 
         <.card
@@ -75,10 +81,10 @@ defmodule FugueWeb.MenagerieLive.Index do
           title="Three ways to count"
           accent="secondary"
         >
-          Three curves on one chart, one for each rule particles can follow
-          about whether they're allowed to share a state. Drag the temperature:
-          hot and they lie right on top of each other, cold and they peel into
-          three dramatically different shapes.
+          Particles follow one of three rules about sharing a spot, and when
+          it's hot you honestly can't tell which. Cool things down and the three
+          curves come apart into shapes that look like they belong to different
+          problems.
         </.card>
 
         <.card
@@ -87,10 +93,10 @@ defmodule FugueWeb.MenagerieLive.Index do
           title="Abelian sandpile"
           accent="warning"
         >
-          Drop grains onto a grid. When a cell hits four it topples, cascading
-          to neighbors. The system tunes itself to a critical state. Avalanche
-          sizes follow a power law that nobody programmed in. Watch the
-          log-log histogram converge to a straight line as grains accumulate.
+          Drop sand on a grid; any cell holding four grains tips over onto its
+          neighbors, which can tip over theirs, and so on. Nobody tells the pile
+          how big its avalanches should be, and the histogram straightens into a
+          power law anyway.
         </.card>
       </div>
 

@@ -10,6 +10,17 @@ defmodule FugueWeb.PageHTML do
 
   @github "https://github.com/real-limoges"
 
+  @typedoc """
+  One row on `/code`. `pages` pairs a link label with the route it points
+  at, and is empty for a repo that serves no page.
+  """
+  @type repo :: %{
+          name: String.t(),
+          lang: String.t(),
+          blurb: String.t(),
+          pages: [{String.t(), String.t()}]
+        }
+
   @doc """
   Repos that are actually running when you load a page here.
 
@@ -20,6 +31,7 @@ defmodule FugueWeb.PageHTML do
   them into `Fugue.Fuzzy` and `Fugue.Mood`, which is why neither is
   listed anymore.
   """
+  @spec running() :: [repo(), ...]
   def running do
     [
       %{
@@ -69,6 +81,7 @@ defmodule FugueWeb.PageHTML do
   Anything here is a promise I haven't kept. Move an entry into
   `running/0` when it starts serving a route, not when it starts working.
   """
+  @spec in_the_shop() :: [repo()]
   def in_the_shop do
     [
       %{

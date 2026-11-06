@@ -41,6 +41,7 @@ defmodule Fugue.Mood.Data do
   side to leave that bound open, matching Ish's optional `from`/`to` query
   params.
   """
+  @spec between(Date.t() | nil, Date.t() | nil) :: [Entry.t()]
   def between(from, to) do
     Enum.filter(@entries, fn entry ->
       (is_nil(from) or Date.compare(entry.date, from) != :lt) and

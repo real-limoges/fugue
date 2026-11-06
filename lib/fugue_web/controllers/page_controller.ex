@@ -2,10 +2,12 @@ defmodule FugueWeb.PageController do
   @moduledoc false
   use FugueWeb, :controller
 
+  @spec home(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def home(conn, _params) do
     render(conn, :home)
   end
 
+  @spec about(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def about(conn, _params) do
     render(conn, :about,
       page_title: "About",
@@ -14,6 +16,7 @@ defmodule FugueWeb.PageController do
     )
   end
 
+  @spec code(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def code(conn, _params) do
     render(conn, :code,
       page_title: "Code",

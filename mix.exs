@@ -15,7 +15,24 @@ defmodule Fugue.MixProject do
       # Coverage is reported, not gated: the default 90% threshold would fail
       # the build on day one.
       test_coverage: [summary: [threshold: 0]],
-      listeners: [Phoenix.CodeReloader]
+      listeners: [Phoenix.CodeReloader],
+      dialyzer: dialyzer()
+    ]
+  end
+
+  # Dialyzer checks the @spec annotations; the compiler's type checker does
+  # not. The PLT (the table of library types) takes minutes to build cold, so
+  # it lives in priv/plts/, which is gitignored locally and cached in CI.
+  # `:mix` is added because lib/mix/tasks/ calls into it, `:ex_unit` because
+  # precommit runs in the test env, which compiles test/support/.
+  defp dialyzer do
+    [
+      plt_local_path: "priv/plts",
+      plt_core_path: "priv/plts",
+      plt_add_apps: [:mix, :ex_unit],
+      flags: [:missing_return, :extra_return],
+      ignore_warnings: ".dialyzer_ignore.exs",
+      list_unused_filters: true
     ]
   end
 
@@ -65,7 +82,8 @@ defmodule Fugue.MixProject do
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
       {:stream_data, "~> 1.0", only: :test},
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false}
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
     ]
   end
 
@@ -93,6 +111,7 @@ defmodule Fugue.MixProject do
       "assets.format": ["cmd npm --prefix assets run format"],
       "assets.format.check": ["cmd npm --prefix assets run format:check"],
       "assets.test": ["cmd npm --prefix assets test"],
+      "assets.typecheck": ["cmd npm --prefix assets run typecheck"],
       "assets.build": [
         "compile",
         "cmd sh -c 'mkdir -p priv/static/vendor/petri/wasm && cp assets/vendor/petri/wasm/*.wasm priv/static/vendor/petri/wasm/'",
@@ -120,7 +139,9 @@ defmodule Fugue.MixProject do
         "deps.unlock --check-unused",
         "format --check-formatted",
         "credo --strict",
+        "dialyzer",
         "assets.format.check",
+        "assets.typecheck",
         "assets.test",
         "test --warnings-as-errors --cover"
       ]

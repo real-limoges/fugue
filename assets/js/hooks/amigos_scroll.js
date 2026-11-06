@@ -1,3 +1,4 @@
+// @ts-check
 // Scroll driver for /amigos. Reports the highest beat marker the reader has
 // scrolled past the middle of the viewport, going down or back up; the
 // server owns what each beat shows. Readers who prefer reduced motion are
@@ -5,6 +6,20 @@
 
 const REDUCED_MOTION = "(prefers-reduced-motion: reduce)"
 
+/**
+ * @typedef {object} State
+ * @property {number} lastBeat
+ * @property {number | null} frame pending animation frame, if any
+ * @property {() => void} onScroll
+ * @property {() => void} onTop
+ */
+
+/**
+ * @typedef {object} Methods
+ * @property {() => void} report
+ */
+
+/** @type {import("../types").LiveHook<State, Methods>} */
 export const AmigosScroll = {
   mounted() {
     this.lastBeat = Number(this.el.dataset.beat)
@@ -50,7 +65,7 @@ export const AmigosScroll = {
     const markers = this.el.querySelectorAll("[data-beat-marker]")
     const reached = Array.from(markers)
       .filter((marker) => marker.getBoundingClientRect().top <= middle)
-      .map((marker) => Number(marker.dataset.beatMarker))
+      .map((marker) => Number(marker.getAttribute("data-beat-marker")))
     const beat = Math.max(1, ...reached)
 
     if (beat !== this.lastBeat) {

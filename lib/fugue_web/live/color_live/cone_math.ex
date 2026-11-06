@@ -5,6 +5,8 @@ defmodule FugueWeb.ColorLive.ConeMath do
   cone-label nudges live here so they're testable without booting a socket.
   """
 
+  alias Fugue.Color.Cones
+
   # ----- Cone plot -----
 
   @lambda_min 380.0
@@ -22,31 +24,44 @@ defmodule FugueWeb.ColorLive.ConeMath do
   # The canonical baseline is intentionally omitted.
   @cone_shift %{l: -15.0, m: 0.0, s: 0.0}
 
+  @spec lambda_min() :: float()
   def lambda_min, do: @lambda_min
+
+  @spec lambda_max() :: float()
   def lambda_max, do: @lambda_max
 
+  @spec cone_x_of(number()) :: float()
   def cone_x_of(lambda) do
     span = @plot_x_right - @plot_x_left
     @plot_x_left + (lambda - @lambda_min) / (@lambda_max - @lambda_min) * span
   end
 
+  @spec cone_y_of(number()) :: number()
   def cone_y_of(response) do
     span = @plot_y_bottom - @plot_y_top
     @plot_y_bottom - response * span
   end
 
+  @spec cone_peak(Cones.cone()) :: float()
   def cone_peak(cone), do: @cone_peak[cone]
+
+  @spec cone_shift(Cones.cone()) :: float()
   def cone_shift(cone), do: @cone_shift[cone]
+
+  @spec cone_label(Cones.cone()) :: String.t()
   def cone_label(:l), do: "L"
   def cone_label(:m), do: "M"
   def cone_label(:s), do: "S"
 
   # Horizontal nudge (in nm) so L and M labels don't collide when their
   # peaks land close together.
+  @spec cone_label_dx(Cones.cone()) :: integer()
   def cone_label_dx(:l), do: 12
   def cone_label_dx(:m), do: -4
   def cone_label_dx(_), do: 0
 
+  @doc "SVG `points` for one cone's response curve, sampled every 2 nm."
+  @spec cone_curve_points(Cones.cone()) :: String.t()
   def cone_curve_points(cone) do
     shift = @cone_shift[cone]
 
@@ -55,7 +70,7 @@ defmodule FugueWeb.ColorLive.ConeMath do
     |> Stream.take_while(&(&1 <= @lambda_max))
     |> Enum.map_join(" ", fn lambda ->
       x = Float.round(cone_x_of(lambda), 2)
-      y = Float.round(cone_y_of(Fugue.Color.Cones.response(cone, lambda - shift)), 2)
+      y = Float.round(cone_y_of(Cones.response(cone, lambda - shift)), 2)
       "#{x},#{y}"
     end)
   end
@@ -108,22 +123,32 @@ defmodule FugueWeb.ColorLive.ConeMath do
   # Chromaticity (x, y) -> SVG (x, y) inside an 80x90 viewBox, with y flipped
   # so chromaticity-y grows upward. 100x scale: chromaticity 0.5 -> SVG 50.
   @gamut_view_h 90
+  @spec chrom_x(number()) :: number()
   def chrom_x(x), do: x * 100
+
+  @spec chrom_y(number()) :: number()
   def chrom_y(y), do: @gamut_view_h - y * 100 - 5
 
+  @spec locus_polyline_points() :: String.t()
   def locus_polyline_points do
     Enum.map_join(@spectral_locus, " ", fn {_lambda, x, y} ->
       "#{Float.round(chrom_x(x), 2)},#{Float.round(chrom_y(y), 2)}"
     end)
   end
 
+  @spec gamut_polygon_points([{float(), float()}]) :: String.t()
   def gamut_polygon_points(points) do
     Enum.map_join(points, " ", fn {x, y} ->
       "#{Float.round(chrom_x(x), 2)},#{Float.round(chrom_y(y), 2)}"
     end)
   end
 
+  @spec srgb_points() :: String.t()
   def srgb_points, do: gamut_polygon_points(@gamut_srgb)
+
+  @spec p3_points() :: String.t()
   def p3_points, do: gamut_polygon_points(@gamut_dci_p3)
+
+  @spec rec2020_points() :: String.t()
   def rec2020_points, do: gamut_polygon_points(@gamut_rec2020)
 end

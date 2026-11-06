@@ -15,6 +15,7 @@ defmodule FugueWeb.MoodLive.DateRange do
       iex> FugueWeb.MoodLive.DateRange.from_iso_strings(["2026-04-30", "2022-04-01", "2024-08-15"])
       {~D[2022-04-01], ~D[2026-04-30]}
   """
+  @spec from_iso_strings([String.t(), ...]) :: {Date.t(), Date.t()}
   def from_iso_strings([first | _] = dates) do
     parsed = Enum.map(dates, &Date.from_iso8601!/1)
     {Enum.min(parsed, Date), Enum.max(parsed, Date)}
@@ -33,6 +34,7 @@ defmodule FugueWeb.MoodLive.DateRange do
       iex> FugueWeb.MoodLive.DateRange.format(nil)
       ""
   """
+  @spec format({String.t(), String.t()} | nil) :: String.t()
   def format(nil), do: ""
   def format({from, to}), do: "#{from} to #{to}"
 end

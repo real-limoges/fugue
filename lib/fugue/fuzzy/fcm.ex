@@ -6,12 +6,29 @@ defmodule Fugue.Fuzzy.FCM do
   column per cluster).
   """
 
+  @typedoc "A point or a center: one float per dimension."
+  @type point :: [float()]
+
+  @typedoc "Rows are points, columns are clusters; each row sums to 1."
+  @type membership :: [[float()]]
+
+  @type config :: %{
+          clusters: pos_integer(),
+          fuzziness: float(),
+          epsilon: float(),
+          max_iter: pos_integer()
+        }
+
+  @type result :: %{centers: [point()], membership: membership(), iterations: pos_integer()}
+
   @doc "Default config: `fuzziness: 2.0, epsilon: 1e-5, max_iter: 100`."
+  @spec default_config(pos_integer()) :: config()
   def default_config(clusters) do
     %{clusters: clusters, fuzziness: 2.0, epsilon: 1.0e-5, max_iter: 100}
   end
 
-  @doc "Run FCM on `xs` (a list of points). Returns `%{centers:, membership:, iterations:}`."
+  @doc "Run FCM on `xs` (a non-empty list of points). Returns `%{centers:, membership:, iterations:}`."
+  @spec run(config(), [point(), ...]) :: result()
   def run(config, xs) do
     u0 = init_membership(length(xs), config.clusters)
     {centers, membership, iterations} = iterate(config, xs, u0)
@@ -23,15 +40,19 @@ defmodule Fugue.Fuzzy.FCM do
   across clusters sums to 1. It is not true randomness, and must not become
   it: reproducible tests depend on it.
   """
+  @spec init_membership(non_neg_integer(), pos_integer()) :: membership()
   def init_membership(n, c) do
-    for i <- 0..(n - 1) do
-      raw = for j <- 0..(c - 1), do: 1.0 + 0.1 * :math.sin(i * 7 + j * 13)
+    # `//1`: without an explicit step, `0..(n - 1)` with n = 0 counts down
+    # through 0 and -1 and seeds two rows for zero points.
+    for i <- 0..(n - 1)//1 do
+      raw = for j <- 0..(c - 1)//1, do: 1.0 + 0.1 * :math.sin(i * 7 + j * 13)
       total = Enum.sum(raw)
       Enum.map(raw, &(&1 / total))
     end
   end
 
   @doc "Weighted centroid update: `center_j[dim] = sum_i(u_ij^m * x_i[dim]) / sum_i(u_ij^m)`."
+  @spec update_centers(float(), membership(), [point(), ...]) :: [point()]
   def update_centers(m, u, xs) do
     c = u |> hd() |> length()
     d = xs |> hd() |> length()
@@ -57,6 +78,7 @@ defmodule Fugue.Fuzzy.FCM do
   special case when any distance is exactly 0 (hard-assigns membership 1
   to that cluster, 0 elsewhere).
   """
+  @spec update_membership(float(), [point()], [point()]) :: membership()
   def update_membership(m, centers, xs) do
     power = 2 / (m - 1)
 
@@ -77,6 +99,7 @@ defmodule Fugue.Fuzzy.FCM do
   end
 
   @doc "Euclidean distance between two points."
+  @spec distance(point(), point()) :: float()
   def distance(a, b) do
     a
     |> Enum.zip(b)
@@ -86,6 +109,7 @@ defmodule Fugue.Fuzzy.FCM do
   end
 
   @doc "True when the max absolute cell-wise difference between two membership matrices is below `eps`."
+  @spec converged?(float(), membership(), membership()) :: boolean()
   def converged?(eps, old, new) do
     max_diff =
       old
@@ -99,6 +123,8 @@ defmodule Fugue.Fuzzy.FCM do
   end
 
   @doc "Fixed-point loop: recompute centers/membership until convergence or `max_iter`."
+  @spec iterate(config(), [point(), ...], membership()) ::
+          {[point()], membership(), pos_integer()}
   def iterate(%{fuzziness: m, epsilon: eps, max_iter: max_iter}, xs, u0) do
     do_iterate(m, eps, max_iter, xs, u0, 0)
   end

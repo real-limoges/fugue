@@ -1,3 +1,4 @@
+// @ts-check
 import { setupDprCanvas, attachResizeRedraw, attachThemeRedraw } from "../lib/canvas_figure.js"
 
 // Three occupation histograms overlaid: Maxwell-Boltzmann, Bose-Einstein,
@@ -14,10 +15,16 @@ import { setupDprCanvas, attachResizeRedraw, attachThemeRedraw } from "../lib/ca
 const LEVELS = 30
 const Y_MIN = 0.01
 
+/** @typedef {"MB" | "BE" | "FD"} Statistics */
+
 // getComputedStyle resolves var() to a literal oklch() string, and canvas
 // 2D accepts that string directly as fillStyle/strokeStyle, with no var()
 // needed since it's already resolved. Alpha is bolted on by inserting a
 // "/ N" before the closing paren, same trick CSS's own oklch() syntax uses.
+/**
+ * @param {string} oklch
+ * @param {number} alpha
+ */
 function withAlpha(oklch, alpha) {
   return oklch.replace(/\)\s*$/, ` / ${alpha})`)
 }
@@ -41,6 +48,12 @@ function energyLevels() {
   return e
 }
 
+/**
+ * @param {Statistics} kind
+ * @param {Float64Array} energies
+ * @param {number} T
+ * @param {number} mu
+ */
 function sumOccupation(kind, energies, T, mu) {
   let sum = 0
   for (const e of energies) {
@@ -56,6 +69,12 @@ function sumOccupation(kind, energies, T, mu) {
   return sum
 }
 
+/**
+ * @param {Statistics} kind
+ * @param {Float64Array} energies
+ * @param {number} T
+ * @param {number} N
+ */
 function solveMu(kind, energies, T, N) {
   if (kind === "MB") {
     let Z = 0
@@ -67,7 +86,10 @@ function solveMu(kind, energies, T, N) {
   const eMax = energies[energies.length - 1]
   const scale = Math.max(T, 1)
 
-  let lo, hi
+  /** @type {number} */
+  let lo
+  /** @type {number} */
+  let hi
   if (kind === "BE") {
     lo = e0 - 200 * scale
     // Strictly below the ground state, close enough that the boson
@@ -88,6 +110,12 @@ function solveMu(kind, energies, T, N) {
   return (lo + hi) / 2
 }
 
+/**
+ * @param {Statistics} kind
+ * @param {Float64Array} energies
+ * @param {number} T
+ * @param {number} mu
+ */
 function occupation(kind, energies, T, mu) {
   const n = new Float64Array(energies.length)
   for (let i = 0; i < energies.length; i++) {
@@ -104,6 +132,10 @@ function occupation(kind, energies, T, mu) {
   return n
 }
 
+/**
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {[number, number][]} pts
+ */
 function drawCurve(ctx, pts) {
   ctx.beginPath()
   for (let i = 0; i < pts.length; i++) {
@@ -114,9 +146,15 @@ function drawCurve(ctx, pts) {
   ctx.stroke()
 }
 
+/**
+ * @param {HTMLCanvasElement} canvas
+ * @param {number} T
+ * @param {number} N
+ */
 function draw(canvas, T, N) {
   const { dpr, cssWidth: cssW, cssHeight: cssH } = setupDprCanvas(canvas)
   const ctx = canvas.getContext("2d")
+  if (!ctx) return
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, cssW, cssH)
   const colors = resolveColors()
@@ -148,7 +186,9 @@ function draw(canvas, T, N) {
   const logYMax = Math.log10(yMax)
   const logSpan = logYMax - logYMin
 
+  /** @param {number} i */
   const xToPx = (i) => padL + (i / (LEVELS - 1)) * plotW
+  /** @param {number} n */
   const yToPx = (n) => {
     const clamped = Math.max(Y_MIN, Math.min(n, yMax))
     const lg = Math.log10(clamped)
@@ -198,7 +238,9 @@ function draw(canvas, T, N) {
   ctx.fillText("occupation (log) ↑", padL - 44, padT - 8)
 
   // Build polylines for each distribution
+  /** @param {Float64Array} arr */
   const toPts = (arr) => {
+    /** @type {[number, number][]} */
     const out = new Array(LEVELS)
     for (let i = 0; i < LEVELS; i++) out[i] = [xToPx(i), yToPx(arr[i])]
     return out
@@ -280,17 +322,42 @@ function draw(canvas, T, N) {
   ctx.fillText("Maxwell-Boltzmann", lx + lineLen + 8, ly + rowH * 2 + 10)
 }
 
+/**
+ * @typedef {object} State
+ * @property {HTMLCanvasElement} canvas
+ * @property {number} logT
+ * @property {number} N
+ * @property {{stop: () => void}} [_resize]
+ * @property {{stop: () => void}} [_theme]
+ */
+
+/**
+ * @typedef {object} Methods
+ * @property {() => void} render
+ */
+
+// Slider values arrive as strings from the form or numbers from the
+// defaults map, so both are parsed the same way.
+/** @typedef {{log_temperature: string | number, particles: string | number}} StatsParams */
+
+/** @type {import("../types").LiveHook<State, Methods>} */
 export const QuantumStats = {
   mounted() {
-    this.logT = parseFloat(this.el.dataset.log_temperature)
-    this.N = parseInt(this.el.dataset.particles, 10)
+    if (!(this.el instanceof HTMLCanvasElement))
+      throw new Error("QuantumStats must mount on a <canvas>")
+    this.canvas = this.el
+    this.logT = parseFloat(this.el.dataset.log_temperature ?? "")
+    this.N = parseInt(this.el.dataset.particles ?? "", 10)
     this.render()
 
-    this.handleEvent("quantum_stats:set_params", ({ log_temperature, particles }) => {
-      this.logT = parseFloat(log_temperature)
-      this.N = parseInt(particles, 10)
-      this.render()
-    })
+    this.handleEvent(
+      "quantum_stats:set_params",
+      (/** @type {StatsParams} */ { log_temperature, particles }) => {
+        this.logT = parseFloat(String(log_temperature))
+        this.N = parseInt(String(particles), 10)
+        this.render()
+      }
+    )
 
     this._resize = attachResizeRedraw(this.el, () => this.render())
     this._theme = attachThemeRedraw(() => this.render())
@@ -303,6 +370,6 @@ export const QuantumStats = {
 
   render() {
     const T = Math.pow(10, this.logT)
-    draw(this.el, T, this.N)
+    draw(this.canvas, T, this.N)
   },
 }

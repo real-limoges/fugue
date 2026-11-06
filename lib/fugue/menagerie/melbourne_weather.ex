@@ -40,17 +40,30 @@ defmodule Fugue.Menagerie.MelbourneWeather do
           }
         end)
 
+  if @rows == [], do: raise(CompileError, description: "#{@csv_path} has no data rows")
+
+  @type row :: %{
+          date: String.t(),
+          prcp: float() | nil,
+          tavg: float() | nil,
+          tmax: float() | nil,
+          tmin: float() | nil,
+          wspd_max: float() | nil,
+          wspd_mean: float() | nil
+        }
+
   @doc "All parsed rows in date order."
+  @spec rows() :: [row(), ...]
   def rows, do: @rows
 
-  @doc "First and last dates in the bundled dataset, or nil if empty."
-  def date_range do
-    case @rows do
-      [] -> nil
-      [first | _] = rows -> {first.date, List.last(rows).date}
-    end
-  end
+  @doc """
+  First and last ISO-8601 dates in the bundled dataset. Never empty: the
+  module refuses to compile against a CSV with no data rows.
+  """
+  @spec date_range() :: {String.t(), String.t()}
+  def date_range, do: {hd(@rows).date, List.last(@rows).date}
 
   @doc "Row count."
+  @spec count() :: pos_integer()
   def count, do: length(@rows)
 end

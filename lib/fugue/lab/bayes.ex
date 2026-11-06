@@ -15,6 +15,7 @@ defmodule Fugue.Lab.Bayes do
   A `rows` x `cols` belief grid shaped like a Gaussian bump centered on
   `{peak_row, peak_col}`, normalized to sum to 1.
   """
+  @spec search_prior(pos_integer(), pos_integer(), {number(), number()}, number()) :: [float()]
   def search_prior(rows, cols, {peak_row, peak_col}, sigma) do
     raw =
       for r <- 0..(rows - 1), c <- 0..(cols - 1) do
@@ -30,6 +31,7 @@ defmodule Fugue.Lab.Bayes do
   drops to 0 and the rest are rescaled to sum to 1. A grid with no mass
   left stays all zeros.
   """
+  @spec search_miss([float()], non_neg_integer()) :: [float()]
   def search_miss(grid, i) do
     zeroed = List.replace_at(grid, i, 0.0)
     if Enum.sum(zeroed) <= 0, do: zeroed, else: normalize(zeroed)
@@ -39,6 +41,7 @@ defmodule Fugue.Lab.Bayes do
   The Gamma posterior `{alpha, beta}` after seeing `count` events over
   `years` years, starting from the Gamma prior `{alpha, beta}`.
   """
+  @spec rate_posterior({number(), number()}, non_neg_integer(), number()) :: {number(), number()}
   def rate_posterior({alpha, beta}, count, years), do: {alpha + count, beta + years}
 
   @doc """
@@ -46,6 +49,7 @@ defmodule Fugue.Lab.Bayes do
   algorithm. Its running time grows with the mean, which is fine for the
   small means the page uses (up to about 20).
   """
+  @spec poisson_sample(number()) :: non_neg_integer()
   def poisson_sample(mean), do: poisson_step(:math.exp(-mean), 1.0, 0)
 
   defp poisson_step(limit, p, k) do

@@ -1,3 +1,4 @@
+// @ts-check
 // Iridescent thin-film surface for /color section 1. The film thickness is
 // domain-warped fbm (flowing swirls, deliberately no cells), colored through
 // a flamboyant-cuttlefish palette; moving the cursor nudges the palette's
@@ -127,8 +128,15 @@ void main() {
 }
 `
 
+/**
+ * @param {WebGL2RenderingContext} gl
+ * @param {number} type gl.VERTEX_SHADER or gl.FRAGMENT_SHADER
+ * @param {string} src
+ * @returns {WebGLShader | null} null if the shader failed to compile
+ */
 function compileShader(gl, type, src) {
   const sh = gl.createShader(type)
+  if (!sh) return null
   gl.shaderSource(sh, src)
   gl.compileShader(sh)
   if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
@@ -139,6 +147,7 @@ function compileShader(gl, type, src) {
   return sh
 }
 
+/** @param {HTMLCanvasElement} canvas */
 function applyFallback(canvas) {
   // Spectrum-strip CSS gradient so non-WebGL2 clients still see color.
   // This is chrome, not the flamboyant-cuttlefish content above; it
@@ -155,11 +164,22 @@ function applyFallback(canvas) {
   canvas.style.background = `linear-gradient(90deg,${stops[0]} 0%,${stops[1]} 25%,${stops[2]} 50%,${stops[3]} 70%,${stops[4]} 85%,${stops[5]} 100%)`
 }
 
+/**
+ * @typedef {object} State
+ * @property {() => void} [_stopLoop] set once the WebGL loop is running
+ * @property {boolean} [_destroyed] set by destroyed(); mounted() checks it after its await
+ */
+
+/** @type {import("../types").LiveHook<State>} */
 export const IridescenceCanvas = {
   async mounted() {
     try {
       await new Promise((r) => requestAnimationFrame(r))
+      // Destroyed during that frame: start nothing destroyed() can't stop.
+      if (this._destroyed) return
       const canvas = this.el
+      if (!(canvas instanceof HTMLCanvasElement))
+        throw new Error("IridescenceCanvas needs a <canvas>")
       const rect = canvas.getBoundingClientRect()
       const dpr = Math.min(window.devicePixelRatio || 1, 2)
       const W = Math.max(1, Math.floor(rect.width * dpr))
@@ -211,12 +231,18 @@ export const IridescenceCanvas = {
       let cx = 0.5
       let cy = 0.5
 
+      /**
+       * @param {number} clientX
+       * @param {number} clientY
+       */
       const updateCursor = (clientX, clientY) => {
         const r = canvas.getBoundingClientRect()
         cx = (clientX - r.left) / r.width
         cy = 1 - (clientY - r.top) / r.height
       }
+      /** @param {MouseEvent} e */
       const onMouseMove = (e) => updateCursor(e.clientX, e.clientY)
+      /** @param {TouchEvent} e */
       const onTouchMove = (e) => {
         if (e.touches.length > 0) {
           updateCursor(e.touches[0].clientX, e.touches[0].clientY)
@@ -226,6 +252,7 @@ export const IridescenceCanvas = {
       canvas.addEventListener("touchmove", onTouchMove, { passive: true })
 
       const start = performance.now()
+      /** @type {number | null} */
       let rafId = null
       const loop = () => {
         const t = (performance.now() - start) / 1000
@@ -249,6 +276,7 @@ export const IridescenceCanvas = {
   },
 
   destroyed() {
+    this._destroyed = true
     if (this._stopLoop) this._stopLoop()
   },
 }

@@ -83,10 +83,12 @@ defmodule FugueWeb.MenagerieLive.Boids do
     }
   }
 
+  @impl true
   def mount(_params, _session, socket) do
     {:ok, assign(socket, params: @defaults, sliders: @sliders)}
   end
 
+  @impl true
   def handle_event("update_params", form, socket) do
     AnimatedCard.handle_update_params(form, socket, @sliders, "boids:set_params")
   end
@@ -104,6 +106,7 @@ defmodule FugueWeb.MenagerieLive.Boids do
     AnimatedCard.handle_reset(socket, @defaults, "boids:reset")
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="boids-menagerie p-4 max-w-6xl mx-auto">
@@ -116,11 +119,14 @@ defmodule FugueWeb.MenagerieLive.Boids do
       <div class="mb-4">
         <h1 class="text-2xl font-bold text-base-content">Boids playground</h1>
         <p class="text-sm text-base-content/60 mt-1 max-w-3xl leading-relaxed">
-          Each bird follows three simple rules: steer away from crowded neighbors,
-          turn toward the average heading of the flock, and drift toward the local
-          center of mass. Small changes to any of the three produce wildly
-          different group behavior: tight flocks, streaming schools, or ragged
-          chaos.
+          Every bird runs the same three rules: get out of a crowded neighbor's
+          way, turn toward wherever the birds around it are heading, and drift
+          toward the middle of whoever's nearby. None of them can see the whole
+          flock, and the flock happens anyway. It's really touchy about the mix,
+          too; nudge one force and you get a tight ball, a stream of fish, or
+          birds ricocheting off each other. The presets are a starting point,
+          the sliders are for finding your own. (It's also the flock running
+          behind the home page, if you'd been wondering.)
         </p>
       </div>
 

@@ -1196,10 +1196,15 @@ defmodule Fugue.Color.Cones do
 
   @cones %{l: @l_table, m: @m_table, s: @s_table}
 
+  @typedoc "Long, medium, or short wavelength cone."
+  @type cone :: :l | :m | :s
+
   @doc "Inclusive lower bound of tabulated wavelengths (nm)."
+  @spec lambda_min() :: pos_integer()
   def lambda_min, do: @lambda_min
 
   @doc "Inclusive upper bound of tabulated wavelengths (nm)."
+  @spec lambda_max() :: pos_integer()
   def lambda_max, do: @lambda_max
 
   @doc """
@@ -1207,6 +1212,7 @@ defmodule Fugue.Color.Cones do
   wavelength `lambda` (nm). Linearly interpolates between adjacent table
   entries; clamps outside [#{@lambda_min}, #{@lambda_max}].
   """
+  @spec response(cone(), number()) :: float()
   def response(cone, lambda) when cone in [:l, :m, :s] do
     table = Map.fetch!(@cones, cone)
 

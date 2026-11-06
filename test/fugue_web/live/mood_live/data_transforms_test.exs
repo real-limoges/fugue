@@ -82,17 +82,15 @@ defmodule FugueWeb.MoodLive.DataTransformsTest do
       refute "raw_1" in names
     end
 
-    test "propagates fpc and iterations" do
+    test "propagates iterations" do
       raw = %{
         "clusters" => [%{"name" => "a"}],
         "membership" => [[1.0]],
-        "fpc" => 0.87,
         "iterations" => 42
       }
 
       result = DataTransforms.parse_analysis(raw, fake_entries(1))
 
-      assert result.fpc == 0.87
       assert result.iterations == 42
     end
 

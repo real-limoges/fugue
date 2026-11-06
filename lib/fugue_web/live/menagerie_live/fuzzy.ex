@@ -17,14 +17,11 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
   @bands_lo 0.0
   @bands_hi 48.0
 
+  @impl true
   def mount(_params, _session, socket) do
     mfs = Fuzzy.build_mfs(@default_center_offset, @default_spread)
 
-    {first_date, last_date} =
-      case MelbourneWeather.date_range() do
-        nil -> {"", ""}
-        {f, l} -> {f, l}
-      end
+    {first_date, last_date} = MelbourneWeather.date_range()
 
     socket =
       socket
@@ -44,6 +41,7 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
     {:ok, socket}
   end
 
+  @impl true
   def handle_event(
         "update_fuzzy_params",
         %{"center_offset" => co_str, "spread" => s_str},
@@ -85,6 +83,7 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
     )
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="fuzzy-menagerie p-4 max-w-6xl mx-auto">
@@ -97,10 +96,11 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
       <div class="mb-4">
         <h1 class="text-2xl font-bold text-base-content">Fuzzy temperature bands</h1>
         <p class="text-sm text-base-content/60 mt-1 max-w-3xl leading-relaxed">
-          Hard categories lose the gradient. A 22°C day isn't exactly <em>mild</em>
-          and exactly nothing else. It leans mild, a little cool, a little warm.
-          Five overlapping triangular membership functions let every day hold partial
-          membership in every fuzzy set at once.
+          Is 22°C <em>mild</em>? Kind of. It's also a little warm and a little
+          cool, and making it pick one box throws that away. Fuzzy sets don't
+          make it pick: there are five overlapping triangles along the
+          temperature axis, and a day belongs to each one exactly as much as
+          that triangle is tall at its temperature.
         </p>
         <p class="text-xs text-base-content/45 mt-3 max-w-3xl">
           Data: {@row_count} days of daily max temperatures from Melbourne Airport

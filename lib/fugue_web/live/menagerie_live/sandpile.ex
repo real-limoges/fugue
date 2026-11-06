@@ -24,10 +24,12 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
     )
   ]
 
+  @impl true
   def mount(_params, _session, socket) do
     {:ok, assign(socket, params: @defaults, sliders: @sliders)}
   end
 
+  @impl true
   def handle_event("set_mode", %{"mode" => mode}, socket) when mode in ["center", "random"] do
     new_params = Map.put(socket.assigns.params, "mode", mode)
 
@@ -45,6 +47,7 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
     AnimatedCard.handle_reset(socket, @defaults, "sandpile:reset")
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="sandpile-menagerie p-4 max-w-6xl mx-auto">
@@ -57,11 +60,16 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
       <div class="mb-4">
         <h1 class="text-2xl font-bold text-base-content">Abelian sandpile</h1>
         <p class="text-sm text-base-content/60 mt-1 max-w-3xl leading-relaxed">
-          Drop grains one at a time. When a cell reaches four it topples,
-          sending one grain to each neighbor. The cascade can be tiny or
-          enormous, and over time the system tunes itself to a critical state
-          where avalanche sizes follow a power law. Nobody sets that up; it
-          just happens. Click anywhere on the grid to drop a grain by hand.
+          OK so, every cell holds some sand. Drop a grain, and when a cell gets
+          to four it tips over, one grain to each neighbor, and those neighbors
+          might tip over too. Most drops do nothing at all; every so often one
+          grain sets off half the grid. Nobody tuned it to do that, the pile
+          drifts there on its own and then sits right at the edge (physicists
+          call this self-organized criticality, which is a long way of saying
+          it keeps almost falling over). The histogram is avalanche sizes on a
+          log-log scale, and give it a while (or crank the grains per frame)
+          and it straightens out into a line. Click the grid to drop grains
+          yourself.
         </p>
       </div>
 

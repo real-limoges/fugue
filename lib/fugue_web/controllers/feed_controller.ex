@@ -2,6 +2,9 @@ defmodule FugueWeb.FeedController do
   @moduledoc false
   use FugueWeb, :controller
 
+  alias FugueWeb.Updates.Entry
+
+  @spec rss(Plug.Conn.t(), map()) :: Plug.Conn.t()
   def rss(conn, _params) do
     xml = render_rss(FugueWeb.Updates.entries(), FugueWeb.Endpoint.url())
 
@@ -27,7 +30,7 @@ defmodule FugueWeb.FeedController do
     """
   end
 
-  defp render_item(entry, base_url) do
+  defp render_item(%Entry{} = entry, base_url) do
     link = base_url <> entry.url
     pub_date = rfc822(entry.date)
 

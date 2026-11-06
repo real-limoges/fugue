@@ -11,6 +11,7 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
   alias Fugue.Menagerie.Mamdani, as: MamdaniLogic
   import FugueWeb.MenagerieLive.Parse
 
+  @impl true
   def mount(_params, _session, socket) do
     socket =
       assign(socket,
@@ -23,6 +24,7 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
     {:ok, socket}
   end
 
+  @impl true
   def handle_event("menagerie:mamdani_ready", _params, socket) do
     {:noreply, refresh_mamdani(socket)}
   end
@@ -76,6 +78,7 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
     })
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="mamdani-menagerie p-4 max-w-6xl mx-auto">
@@ -88,17 +91,18 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
       <div class="mb-4">
         <h1 class="text-2xl font-bold text-base-content">Mamdani fan controller</h1>
         <p class="text-sm text-base-content/60 mt-1 max-w-3xl leading-relaxed">
-          An old-school rule of thumb, wired up as a fuzzy controller: if it's hot
-          and humid, run the fan hard; if it's cold, leave it off. Two crisp inputs
-          get fuzzified into overlapping term sets, seven rules fire with varying
-          strength, the output terms get clipped and aggregated, and the centroid
-          of that aggregated shape is the crisp fan speed.
+          An old-school rule of thumb: hot and humid, run the fan hard; cold,
+          leave it off. Fuzzy control takes it more or less as-is. The temperature and humidity get read as how
+          cold, warm or hot and how dry, comfortable or humid it is (all at once,
+          in partial amounts), each of the seven rules fires about as hard as its
+          conditions are true, and the fan speed is where their votes balance out
+          (technically the centroid of the shape they make together, which is
+          the bottom chart).
         </p>
         <p class="text-xs text-base-content/45 mt-3 max-w-3xl">
-          Math runs server-side through <code class="text-base-content/60">Fugue.Fuzzy</code>
-          (ported from Hazy, the Haskell fuzzy-logic library this used to call out to
-          over HTTP). Drag the sliders to watch the rule firings, output shape, and
-          defuzzified crisp value respond.
+          The math runs server-side in <code class="text-base-content/60">Fugue.Fuzzy</code>,
+          which used to be Hazy, a Haskell library this page called over HTTP;
+          it's plain Elixir now. Drag the sliders and watch which rules light up.
         </p>
       </div>
 

@@ -11,6 +11,7 @@ defmodule FugueWeb.MoodLive.SvgMath do
   Returns an SVG path `d` string drawing a smooth curve through the given
   points using the same uniform B-spline approach as d3.curveBasis.
   """
+  @spec basis_path([{number(), number()}]) :: String.t()
   def basis_path([]), do: ""
   def basis_path([{x, y}]), do: "M#{fmt(x)},#{fmt(y)}"
   def basis_path([{x0, y0}, {x1, y1}]), do: "M#{fmt(x0)},#{fmt(y0)}L#{fmt(x1)},#{fmt(y1)}"
@@ -53,6 +54,7 @@ defmodule FugueWeb.MoodLive.SvgMath do
   end
 
   @doc "Compact decimal formatting suitable for SVG coordinates."
+  @spec fmt(number()) :: String.t()
   def fmt(n) when is_integer(n), do: Integer.to_string(n)
   def fmt(n) when is_float(n), do: :erlang.float_to_binary(n, [:compact, decimals: 2])
 end

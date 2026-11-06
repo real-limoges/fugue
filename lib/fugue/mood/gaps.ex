@@ -6,7 +6,27 @@ defmodule Fugue.Mood.Gaps do
   positionally aligned to look up a day's cluster membership).
   """
 
-  alias Fugue.Mood.DataFrame
+  alias Fugue.Mood.{Cluster, DataFrame}
+
+  @typedoc "Membership degree by cluster name."
+  @type memberships :: %{String.t() => float()}
+
+  @typedoc """
+  A gap with the memberships of the days that bracket it. Either side is
+  `%{}` when that day was not clustered.
+  """
+  @type transition :: %{
+          gap: DataFrame.gap(),
+          before: memberships(),
+          after: memberships(),
+          cluster_changed: boolean()
+        }
+
+  @type result :: %{
+          transitions: [transition()],
+          length_distribution: %{pos_integer() => pos_integer()},
+          imputed_memberships: %{Date.t() => memberships()}
+        }
 
   @doc """
   `%{transitions:, length_distribution:, imputed_memberships:}`: per-gap
@@ -14,6 +34,7 @@ defmodule Fugue.Mood.Gaps do
   flags, a histogram of gap lengths, and a linear day-fraction
   interpolation of per-cluster membership for every day inside each gap.
   """
+  @spec analyze(DataFrame.spine(), Cluster.result()) :: result()
   def analyze(spine, cluster_result) do
     gaps = DataFrame.identify_gaps(spine)
 

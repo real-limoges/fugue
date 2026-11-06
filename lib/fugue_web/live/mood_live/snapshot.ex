@@ -14,7 +14,8 @@ defmodule FugueWeb.MoodLive.Snapshot do
   """
 
   alias FugueWeb.MoodLive.{Annotations, DataTransforms}
-  alias FugueWeb.MoodLive.Structs.{AnalysisResult, GapData}
+  alias FugueWeb.MoodLive.DataTransforms, as: DT
+  alias FugueWeb.MoodLive.Structs.{AnalysisResult, CalendarDay, GapData}
 
   @enforce_keys [
     :smoothed_daily,
@@ -42,9 +43,40 @@ defmodule FugueWeb.MoodLive.Snapshot do
 
   defstruct @enforce_keys
 
-  @type t :: %__MODULE__{}
+  @type stream_point :: %{date: DT.iso_date(), memberships: DT.memberships()}
 
-  @spec from([map()], %AnalysisResult{}, %GapData{} | nil) :: t()
+  @type distribution_point :: %{
+          dimensions: %{DT.dimension() => float() | nil},
+          cluster: DT.cluster_id() | nil
+        }
+
+  @type distribution_cluster :: %{id: DT.cluster_id(), name: String.t(), color: String.t()}
+
+  @type t :: %__MODULE__{
+          smoothed_daily: [DT.daily()],
+          full_date_range: %{start: DT.iso_date(), end: DT.iso_date()} | nil,
+          mood_transitions: [DT.mood_transition()],
+          timeline_segments: [DT.segment()],
+          stats: DT.stats(),
+          cluster_names: %{DT.cluster_id() => String.t()},
+          trajectory_points: [DT.trajectory_point()],
+          trajectory_annotations: [Annotations.t()],
+          calendar_days: [CalendarDay.t()],
+          transition_dates: [DT.iso_date()],
+          radar_centroids: [DT.centroid()],
+          radar_dimensions: [DT.dimension(), ...],
+          stream_series: [stream_point()],
+          mood_flowers_list: [DT.mood_flower()],
+          flower_dimensions: [DT.dimension(), ...],
+          distribution_points: [distribution_point()],
+          distribution_clusters: [distribution_cluster()],
+          season_months: [DT.season_month(), ...],
+          ambiguity_bins: [DT.ambiguity_bin(), ...],
+          ambiguity_threshold: float(),
+          drift_dimensions: [DT.drift(), ...]
+        }
+
+  @spec from([DT.wire_entry()], AnalysisResult.t(), GapData.t() | nil) :: t()
   def from(entries, %AnalysisResult{} = analysis, gaps) do
     smoothed_daily =
       entries

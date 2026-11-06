@@ -7,9 +7,55 @@ defmodule FugueWeb.LabLive.Charts do
 
   @margin %{top: 30, right: 45, bottom: 50, left: 60}
 
+  @typedoc "Pixel margins around a chart's plotting area."
+  @type margin :: %{
+          top: non_neg_integer(),
+          right: non_neg_integer(),
+          bottom: non_neg_integer(),
+          left: non_neg_integer()
+        }
+
+  @typedoc "Maps a data value to a screen coordinate."
+  @type scale :: (number() -> float())
+
+  defmodule Frame do
+    @moduledoc """
+    A chart's viewport, built by `FugueWeb.LabLive.Charts.axis_frame/1`:
+    the outer and inner sizes, the margins, the data-to-screen scales, and
+    the tick positions already placed in screen space.
+    """
+
+    @enforce_keys [
+      :width,
+      :height,
+      :inner_w,
+      :inner_h,
+      :margin,
+      :scale_x,
+      :scale_y,
+      :x_ticks,
+      :y_ticks
+    ]
+    defstruct @enforce_keys
+
+    @type t :: %__MODULE__{
+            width: number(),
+            height: number(),
+            inner_w: number(),
+            inner_h: number(),
+            margin: FugueWeb.LabLive.Charts.margin(),
+            scale_x: FugueWeb.LabLive.Charts.scale(),
+            scale_y: FugueWeb.LabLive.Charts.scale(),
+            x_ticks: [%{value: number(), x: float()}],
+            y_ticks: [%{value: number(), y: float()}]
+          }
+  end
+
+  @spec margin() :: margin()
   def margin, do: @margin
 
   @doc "Inclusive [a, b] grid of n points."
+  @spec linspace(number(), number(), pos_integer()) :: [float(), ...]
   def linspace(a, b, n) when n > 1 do
     step = (b - a) / (n - 1)
     for i <- 0..(n - 1), do: a + i * step
@@ -19,6 +65,7 @@ defmodule FugueWeb.LabLive.Charts do
   Normalized Gamma(α, β) density evaluated at xs. Computed in log-space and
   renormalized over the grid to stay numerically stable for large α.
   """
+  @spec gamma_density([number(), ...], number(), number()) :: [float()]
   def gamma_density(xs, alpha, beta) do
     log_pdf = Enum.map(xs, &gamma_log_pdf(&1, alpha, beta))
     max_lp = log_pdf |> Enum.reject(&is_nil/1) |> Enum.max(fn -> 0.0 end)
@@ -36,6 +83,7 @@ defmodule FugueWeb.LabLive.Charts do
   end
 
   @doc "Right-tail probability P(X > threshold) by rectangle rule."
+  @spec tail_probability([number(), ...], [number()], number()) :: float()
   def tail_probability(xs, pdf, threshold) do
     [x0, x1 | _] = xs
     dx = x1 - x0
@@ -51,6 +99,7 @@ defmodule FugueWeb.LabLive.Charts do
   end
 
   @doc "SVG path d-string for a polyline through (xs, ys) under scale fns."
+  @spec polyline_path([number()], [number()], scale(), scale()) :: String.t()
   def polyline_path(xs, ys, scale_x, scale_y) do
     xs
     |> Enum.zip(ys)
@@ -65,6 +114,8 @@ defmodule FugueWeb.LabLive.Charts do
   Closed polygon path for the area under (xs, ys) restricted to x >= threshold.
   Returns nil when no points fall in the tail.
   """
+  @spec tail_polygon_path([number()], [number()], number(), scale(), scale()) ::
+          String.t() | nil
   def tail_polygon_path(xs, ys, threshold, scale_x, scale_y) do
     pairs =
       xs
@@ -92,6 +143,7 @@ defmodule FugueWeb.LabLive.Charts do
   Returns a frame description: viewport size, scale functions, and tick
   positions in screen space. Templates layer paths/labels on top.
   """
+  @spec axis_frame(keyword()) :: Frame.t()
   def axis_frame(opts) do
     width = Keyword.fetch!(opts, :width)
     height = Keyword.get(opts, :height, 420)
@@ -106,7 +158,7 @@ defmodule FugueWeb.LabLive.Charts do
     scale_x = fn x -> @margin.left + (x - x_min) / (x_max - x_min) * inner_w end
     scale_y = fn y -> @margin.top + inner_h - (y - y_min) / (y_max - y_min) * inner_h end
 
-    %{
+    %Frame{
       width: width,
       height: height,
       inner_w: inner_w,
@@ -120,6 +172,7 @@ defmodule FugueWeb.LabLive.Charts do
   end
 
   @doc "Tick label format: integers as-is, floats trimmed of trailing zeros."
+  @spec format_tick(number()) :: String.t()
   def format_tick(v) when is_integer(v), do: Integer.to_string(v)
 
   def format_tick(v) when is_float(v) do

@@ -139,9 +139,28 @@ defmodule FugueWeb.LabLive.GamDatasets do
   @ids Enum.map(@datasets, & &1.id)
   @by_id Map.new(@datasets, &{&1.id, &1})
 
+  @typedoc "How a layer or caption is drawn; the view maps each to classes."
+  @type accent :: :white_dash | :white_dim | :gray | :primary
+
+  @typedoc """
+  One scatter problem. `layers` are the toggleable fits (their `id`s are
+  what the JS hook receives); `captions` explain each fit in turn.
+  """
+  @type dataset :: %{
+          id: String.t(),
+          label: String.t(),
+          title: String.t(),
+          blurb: String.t(),
+          layers: [%{id: String.t(), label: String.t(), accent: accent()}],
+          captions: [%{glyph: String.t(), accent: accent(), text: String.t()}]
+        }
+
+  @spec all() :: [dataset(), ...]
   def all, do: @datasets
 
+  @spec ids() :: [String.t(), ...]
   def ids, do: @ids
 
+  @spec fetch(String.t()) :: {:ok, dataset()} | :error
   def fetch(id), do: Map.fetch(@by_id, id)
 end

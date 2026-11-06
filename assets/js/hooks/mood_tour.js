@@ -1,6 +1,9 @@
+// @ts-check
 // Guided spotlight tour over the /mood page.
 // Dims the page via a box-shadow trick, walks through 5 chapters,
 // completion sets the mood-skip-intro flag so the preamble collapses.
+
+import { requireElement } from "../lib/dom.js"
 
 const FLAG_KEY = "mood-skip-intro"
 
@@ -110,6 +113,7 @@ const STYLES = `
   }
 `
 
+/** @param {boolean} v */
 function setSkipped(v) {
   try {
     if (v) localStorage.setItem(FLAG_KEY, "1")
@@ -117,22 +121,60 @@ function setSkipped(v) {
   } catch (_e) {}
 }
 
+/**
+ * A part of the card that buildCard wrote.
+ * @param {HTMLElement} card
+ * @param {string} selector
+ */
+const cardPart = (card, selector) => requireElement(card, selector, HTMLElement)
+
+/** @typedef {(typeof STEPS)[number]} Step */
+
+/**
+ * @typedef {object} State
+ * @property {number} index current step, -1 before the first
+ * @property {boolean} active
+ * @property {HTMLElement | null} currentTarget the spotlit element
+ * @property {number | undefined} spotlightTimer pending spotlight, cancelled on step change
+ * @property {HTMLDivElement | null} card
+ * @property {(e: MouseEvent) => void} clickHandler
+ * @property {(e: KeyboardEvent) => void} keyHandler
+ */
+
+/**
+ * @typedef {object} Methods
+ * @property {() => void} injectStyles
+ * @property {() => void} buildCard
+ * @property {() => void} teardownCard
+ * @property {() => void} clearSpotlight
+ * @property {() => void} start
+ * @property {() => void} next
+ * @property {() => void} prev
+ * @property {(step: Step) => void} apply
+ * @property {() => void} finish
+ * @property {() => void} cancel
+ */
+
+/** @type {import("../types").LiveHook<State, Methods>} */
 export const MoodTour = {
   mounted() {
     this.injectStyles()
     this.index = -1
     this.active = false
     this.currentTarget = null
+    this.spotlightTimer = undefined
     this.card = null
 
+    /** @param {MouseEvent} e */
     this.clickHandler = (e) => {
-      if (e.target.closest("[data-start-tour]")) {
+      if (e.target instanceof Element && e.target.closest("[data-start-tour]")) {
         e.preventDefault()
         this.start()
       }
     }
     document.addEventListener("click", this.clickHandler)
 
+    /** @param {KeyboardEvent} e */
     this.keyHandler = (e) => {
       if (!this.active) return
       if (e.key === "Escape") {
@@ -186,6 +228,7 @@ export const MoodTour = {
     `
     document.body.appendChild(this.card)
     this.card.addEventListener("click", (e) => {
+      if (!(e.target instanceof Element)) return
       const btn = e.target.closest("[data-tour-action]")
       if (!btn) return
       const action = btn.getAttribute("data-tour-action")
@@ -201,6 +244,10 @@ export const MoodTour = {
   },
 
   clearSpotlight() {
+    // A step change inside the 260ms scroll wait would otherwise let the old
+    // timer spotlight the step being left, and nothing would ever clear it.
+    clearTimeout(this.spotlightTimer)
+    this.spotlightTimer = undefined
     if (this.currentTarget) {
       this.currentTarget.classList.remove("mood-tour-spotlight")
       this.currentTarget = null
@@ -233,32 +280,34 @@ export const MoodTour = {
   },
 
   apply(step) {
+    const card = this.card
+    if (!card) return
+
     const target = document.getElementById(step.id)
     if (!target) {
       this.next()
       return
     }
     // <details> targets: open them so the spotlight highlights actual content
-    if (target.tagName === "DETAILS" && !target.open) target.open = true
+    if (target instanceof HTMLDetailsElement && !target.open) target.open = true
 
     target.scrollIntoView({ behavior: "smooth", block: "center" })
     // Wait for the smooth scroll to settle before applying the shadow,
     // otherwise the dim layer shifts mid-animation.
-    setTimeout(() => {
+    this.spotlightTimer = window.setTimeout(() => {
       target.classList.add("mood-tour-spotlight")
       this.currentTarget = target
     }, 260)
 
-    this.card.querySelector("[data-tour-title]").textContent = step.title
-    this.card.querySelector("[data-tour-body]").textContent = step.body
-    this.card.querySelector("[data-tour-counter]").textContent =
-      `${this.index + 1} / ${STEPS.length}`
+    cardPart(card, "[data-tour-title]").textContent = step.title
+    cardPart(card, "[data-tour-body]").textContent = step.body
+    cardPart(card, "[data-tour-counter]").textContent = `${this.index + 1} / ${STEPS.length}`
 
-    const primary = this.card.querySelector("[data-tour-primary]")
-    primary.innerHTML = this.index === STEPS.length - 1 ? "Done" : "Next &rsaquo;"
+    cardPart(card, "[data-tour-primary]").innerHTML =
+      this.index === STEPS.length - 1 ? "Done" : "Next &rsaquo;"
 
-    const prevBtn = this.card.querySelector('[data-tour-action="prev"]')
-    prevBtn.style.visibility = this.index === 0 ? "hidden" : "visible"
+    cardPart(card, '[data-tour-action="prev"]').style.visibility =
+      this.index === 0 ? "hidden" : "visible"
   },
 
   finish() {

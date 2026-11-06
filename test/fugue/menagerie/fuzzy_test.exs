@@ -80,7 +80,7 @@ defmodule Fugue.Menagerie.FuzzyTest do
     end
 
     test "hits 1.0 at the peak when the peak lies on a sample point" do
-      mf = %{a: 0.0, b: 10.0, c: 20.0, name: "t", color: "#fff"}
+      mf = %Fuzzy.MF{a: 0.0, b: 10.0, c: 20.0, name: "t", color: "#fff"}
       samples = Fuzzy.sample_shape(mf, 0.0, 20.0, 20)
 
       peak = Enum.find(samples, fn [x, _] -> x == 10.0 end)

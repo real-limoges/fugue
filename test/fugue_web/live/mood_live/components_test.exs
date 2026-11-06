@@ -139,7 +139,7 @@ defmodule FugueWeb.MoodLive.ComponentsTest do
       refute html =~ ~s|class="day-cell|
     end
 
-    test "renders one rect per day with data-date + tooltip JSON" do
+    test "renders one rect per day with compact tooltip data, not tooltip HTML" do
       days = [
         %CalendarDay{
           date: "2026-01-01",
@@ -164,8 +164,12 @@ defmodule FugueWeb.MoodLive.ComponentsTest do
 
       assert html =~ ~s(data-date="2026-01-01")
       assert html =~ ~s(data-date="2026-01-02")
-      # data-tooltip carries server-rendered HTML; the hook only positions it.
-      assert html =~ "data-tooltip="
+      # The CalendarTooltip hook builds the card from these; per-cell HTML made
+      # the first /mood diff several megabytes.
+      assert html =~ ~s(data-dims="sleep=6")
+      assert html =~ ~s(data-mems="c0=0.9;c1=0.1")
+      assert html =~ "data-clusters="
+      refute html =~ "data-tooltip="
       assert html =~ ~s(phx-click="day_selected")
     end
 
@@ -513,6 +517,20 @@ defmodule FugueWeb.MoodLive.ComponentsTest do
       assert html =~ "sankey-link highlight"
       assert html =~ "sankey-link dim"
     end
+
+    test "aria-labels interpolate cluster names and counts" do
+      html =
+        render_component(&TransitionSankey.sankey/1,
+          transitions: [%{date: "2026-01-08", from: "c0", to: "c1"}],
+          cluster_ids: ["c0", "c1"],
+          cluster_colors: @colors,
+          cluster_names: @names
+        )
+
+      assert html =~ ~s(aria-label="Transition from Red to Green: 1 transitions")
+      assert html =~ ~s(aria-label="Select Red cluster")
+      refute html =~ ~r/aria-label="[^"]*\{/
+    end
   end
 
   # --- SeasonRing ----------------------------------------------------------
@@ -565,6 +583,22 @@ defmodule FugueWeb.MoodLive.ComponentsTest do
 
       assert html =~ ~s|stroke-dasharray="2,2"|
       refute html =~ ~s|class="season-arc|
+    end
+
+    test "aria-labels interpolate month, cluster name, and total" do
+      months = for _ <- 0..11, do: %{total: 10, counts: %{"c0" => 6, "c1" => 4}}
+
+      html =
+        render_component(&SeasonRing.ring/1,
+          months: months,
+          cluster_ids: ["c0", "c1"],
+          cluster_names: @names,
+          cluster_colors: @colors
+        )
+
+      assert html =~ ~s(aria-label="Jan: Red cluster dominance")
+      assert html =~ ~s(aria-label="Jan: 10 total entries")
+      refute html =~ ~r/aria-label="[^"]*\{/
     end
   end
 

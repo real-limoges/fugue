@@ -1,3 +1,4 @@
+// @ts-check
 import { CalendarTooltip } from "./calendar_tooltip"
 import { HoverTooltip } from "./hover_tooltip"
 import { TemporalBrush } from "./temporal_brush"

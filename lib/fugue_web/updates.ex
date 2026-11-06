@@ -4,8 +4,10 @@ defmodule FugueWeb.Updates do
   RSS feed. Add an entry here when something ships.
   """
 
+  alias FugueWeb.Updates.Entry
+
   @entries [
-    %{
+    %Entry{
       title: "¡Amigos!",
       description:
         "A recap of one Arrested Development episode that keeps adding layers " <>
@@ -13,13 +15,13 @@ defmodule FugueWeb.Updates do
       url: "/amigos",
       date: ~D[2026-10-01]
     },
-    %{
+    %Entry{
       title: "Light mode",
       description: "A light theme joins dark, toggleable from the header.",
       url: "/",
       date: ~D[2026-08-22]
     },
-    %{
+    %Entry{
       title: "Hazy and Ish folded into Fugue",
       description:
         "The fuzzy-logic and mood-analysis services are now in-process Elixir " <>
@@ -27,13 +29,13 @@ defmodule FugueWeb.Updates do
       url: "/mood",
       date: ~D[2026-08-03]
     },
-    %{
+    %Entry{
       title: "About and Code pages",
       description: "A small about-me page and a repo index (source links on every route).",
       url: "/about",
       date: ~D[2026-05-09]
     },
-    %{
+    %Entry{
       title: "Color chapter",
       description: "Philosophy-of-mind as color science, told through a protanopia thread.",
       url: "/color",
@@ -42,5 +44,6 @@ defmodule FugueWeb.Updates do
   ]
 
   @doc "All update entries, newest first."
+  @spec entries() :: [Entry.t(), ...]
   def entries, do: @entries
 end

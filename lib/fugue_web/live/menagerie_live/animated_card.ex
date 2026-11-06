@@ -78,6 +78,8 @@ defmodule FugueWeb.MenagerieLive.AnimatedCard do
   if nothing changed, otherwise assign + push the event with the full
   param map. Returns the standard `{:noreply, socket}` tuple.
   """
+  @spec handle_update_params(map(), Phoenix.LiveView.Socket.t(), [Slider.t()], String.t()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
   def handle_update_params(form, socket, sliders, event_name)
       when is_binary(event_name) do
     new_params = parse_params(form, socket.assigns.params, sliders)
@@ -97,6 +99,8 @@ defmodule FugueWeb.MenagerieLive.AnimatedCard do
   `event_name`. Most cards push the same event for reset as for update
   (so the JS hook has one entry point).
   """
+  @spec handle_reset(Phoenix.LiveView.Socket.t(), map(), String.t()) ::
+          {:noreply, Phoenix.LiveView.Socket.t()}
   def handle_reset(socket, defaults, event_name) when is_binary(event_name) do
     {:noreply,
      socket

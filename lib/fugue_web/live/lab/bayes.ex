@@ -36,6 +36,7 @@ defmodule FugueWeb.LabLive.Bayes do
   @posterior_color "#ff8a28"
   @prior_color "#888888"
 
+  @impl true
   def mount(_params, _session, socket) do
     {:ok,
      socket
@@ -55,6 +56,7 @@ defmodule FugueWeb.LabLive.Bayes do
      |> assign(:threshold_step, @threshold_step)}
   end
 
+  @impl true
   def handle_event("search_cell", %{"index" => i}, socket) do
     i = String.to_integer(i)
 
@@ -130,6 +132,7 @@ defmodule FugueWeb.LabLive.Bayes do
 
   defp random_cell, do: :rand.uniform(@cells) - 1
 
+  @impl true
   def render(assigns) do
     {pa, pb} = posterior(assigns)
 
@@ -152,11 +155,12 @@ defmodule FugueWeb.LabLive.Bayes do
           Bayesian, the noun
         </h1>
         <p class="text-sm text-base-content/60 leading-relaxed max-w-2xl">
-          Three small problems. Each one ends with a probability distribution
-          over the thing you didn't know. Whatever you want to know after that
-          is just an integral over it. The framework I work on at my day job
-          dresses this up; the dressing is there so the same trick scales up
-          to models that don't fit on a page.
+          "Bayesian" mostly gets used as an adjective, a vibe a model has. The
+          noun underneath is a distribution over the thing you didn't know, and
+          each of the three problems below ends with one; whatever you want to
+          ask after that is an integral over it. The framework I work on at my
+          day job dresses this up a lot, but the dressing is only there so the
+          same trick works on models that don't fit on a page.
         </p>
       </header>
 
@@ -223,10 +227,11 @@ defmodule FugueWeb.LabLive.Bayes do
     <section class="mb-14">
       <h2 class="text-lg font-semibold text-base-content mb-1">Where are the keys?</h2>
       <p class="text-base-content/60 text-sm mb-4 max-w-2xl">
-        Twenty-five rooms. The shading is where you think you left them --
-        your prior. Click a room to look. If they're not in there, the
-        room's mass collapses to zero and the rest of the grid soaks it up.
-        Same total probability, rearranged. Bayes' rule is the rearrangement.
+        Twenty-five rooms, and the shading is where you think you left your
+        keys (that's the prior). Click a room to look. If they're not in
+        there, that room drops to zero and its share gets spread over every
+        room you haven't checked, so the total never changes, it just moves
+        around; Bayes' rule is the bookkeeping for where it moves.
       </p>
 
       <div class="flex flex-col md:flex-row md:items-start gap-6">
@@ -288,8 +293,8 @@ defmodule FugueWeb.LabLive.Bayes do
           <p class="leading-relaxed pt-2 max-w-md">
             This is the rule that found the USS Scorpion in 1968 and
             Air France 447 in 2011. A prior over the ocean floor, narrowed
-            by every place the search team looked and didn't find anything.
-            The same thing you just did to the grid, on a much bigger grid.
+            by every place the search team looked and didn't find anything,
+            which is what you just did, on a grid the size of the ocean floor.
           </p>
         </div>
       </div>
@@ -348,9 +353,9 @@ defmodule FugueWeb.LabLive.Bayes do
           Gamma({Float.round(@prior_alpha, 1)}, {Float.round(@prior_beta, 1)})
         </code>
         prior times a Poisson likelihood is another Gamma, <code class="text-primary/70">Gamma({Float.round(@post_alpha, 1)}, {Float.round(@post_beta, 1)})</code>.
-        Same shape, sharper. For models without a clean conjugate, the framework
-        does the same thing numerically; the answer is the same kind of object
-        either way.
+        Same shape, only narrower. For models without a tidy conjugate pair the
+        framework does this numerically instead, and you still get the same kind
+        of object out the other end.
       </p>
     </section>
     """
@@ -371,10 +376,11 @@ defmodule FugueWeb.LabLive.Bayes do
     <section class="mb-6">
       <h2 class="text-lg font-semibold text-base-content mb-1">Asking the posterior a question</h2>
       <p class="text-base-content/60 text-sm mb-4 max-w-2xl">
-        You have a posterior; the section above made one. Reducing it to a
-        single number ("the rate is 3.5") throws away most of what's there.
-        Usually what you want to know is more like <em>is it above some threshold I care about?</em>
-        The posterior already has that. Move the threshold; read the integral off the curve.
+        The section above made a posterior, and squashing it down to one
+        number ("the rate is 3.5") throws away most of what's in it. What you
+        usually want to know is more like <em>is it above some threshold I care about?</em>
+        and the posterior already knows, so move the threshold and read the
+        integral off the curve.
       </p>
 
       <.density_chart chart={@chart} />

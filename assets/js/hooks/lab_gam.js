@@ -1,8 +1,58 @@
+// @ts-check
 // Multi-dataset GAM/GAMLSS lab via Glissando WASM.
 //
 // Each dataset declares three layers (linear / smooth-mean / smooth-mean+spread)
 // fit with different distribution families. Layers are fit lazily on first
 // dataset switch, then cached.
+
+/** @typedef {[number, number]} Point an `[x, y]` observation */
+
+/**
+ * The parsed output of `WasmGamlssModel.predict`: one array per distribution
+ * parameter, aligned with the grid. Only the parameters the family has are
+ * present, so a band function reads just the ones its family defines.
+ *
+ * @typedef {object} Prediction
+ * @property {number[]} mu
+ * @property {number[]} sigma
+ * @property {number[]} phi
+ */
+
+/** @typedef {{lower: number[], upper: number[]}} Band */
+
+/** @typedef {"linear" | "gam" | "gamlss"} LayerId */
+
+/** @typedef {Record<LayerId, boolean>} LayerToggles */
+
+/**
+ * @typedef {object} Layer
+ * @property {LayerId} id
+ * @property {string} color
+ * @property {boolean} [dashed]
+ * @property {Family} family
+ * @property {string} formula JSON formula for glissando
+ * @property {(pred: Prediction) => Band} [bandFn]
+ */
+
+/**
+ * @typedef {object} Dataset
+ * @property {string} xCol
+ * @property {string} xLabel
+ * @property {string} yLabel
+ * @property {number} xMin
+ * @property {number} xMax
+ * @property {number} yMin
+ * @property {number} yMax
+ * @property {number[]} xTicks
+ * @property {number[]} yTicks
+ * @property {(v: number) => string} [yTickFormat]
+ * @property {() => Point[]} data
+ * @property {Layer[]} layers
+ */
+
+/** @typedef {{mu: number[], lower?: number[], upper?: number[]}} LayerFit */
+
+/** @typedef {{data: Point[], gridXs: number[], layerFits: Record<string, LayerFit>}} DatasetFit */
 
 import {
   Z_95,
@@ -22,6 +72,10 @@ const COLOR_SHAPE_SPREAD = "#ff8a28"
 
 // ---- PRNG + sampling helpers (deterministic synthetic data) ---------------
 
+/**
+ * @param {number} seed
+ * @returns {() => number} uniform draws in [0, 1)
+ */
 function mulberry32(seed) {
   let s = seed >>> 0
   return function () {
@@ -33,6 +87,10 @@ function mulberry32(seed) {
   }
 }
 
+/**
+ * @param {() => number} rng
+ * @returns {(mu: number, sigma: number) => number}
+ */
 function makeNormal(rng) {
   return (mu, sigma) => {
     const u = rng() || 1e-9
@@ -46,6 +104,7 @@ function makeNormal(rng) {
 function genHousePrice() {
   const rng = mulberry32(91)
   const N = makeNormal(rng)
+  /** @type {Point[]} */
   const data = []
   for (let i = 0; i < 65; i++) {
     const sqft = 600 + ((4500 - 600) * i) / 64 + (rng() - 0.5) * 80
@@ -63,6 +122,7 @@ function genHousePrice() {
 function genBayBridge() {
   const rng = mulberry32(42)
   const N = makeNormal(rng)
+  /** @type {Point[]} */
   const data = []
   for (let day = 0; day < 4; day++) {
     for (let h = 5; h <= 22; h++) {
@@ -84,6 +144,7 @@ function genBayBridge() {
 function genPizza() {
   const rng = mulberry32(13)
   const N = makeNormal(rng)
+  /** @type {Point[]} */
   const data = []
   for (let i = 0; i < 60; i++) {
     const dist = 0.5 + (i / 59) * 8 + (rng() - 0.5) * 0.3
@@ -99,6 +160,7 @@ function genPizza() {
 function genShotSuccess() {
   const rng = mulberry32(7)
   const N = makeNormal(rng)
+  /** @type {Point[]} */
   const data = []
   for (let trial = 0; trial < 3; trial++) {
     for (let d = 0; d <= 40; d += 2) {
@@ -118,6 +180,10 @@ function genShotSuccess() {
 // Symmetric ±Z·sigma. Used for Gaussian and StudentT (StudentT ignores nu;
 // the t-quantile widening is small at our sample sizes and the visual lesson
 // is about heavy-tailed likelihood, not band width).
+/**
+ * @param {Prediction} pred
+ * @returns {Band}
+ */
 function bandSymmetricSigma(pred) {
   return {
     lower: pred.mu.map((mu, i) => mu - Z_95 * pred.sigma[i]),
@@ -125,6 +191,10 @@ function bandSymmetricSigma(pred) {
   }
 }
 
+/**
+ * @param {Prediction} pred
+ * @returns {Band}
+ */
 function bandGammaCV(pred) {
   return {
     lower: pred.mu.map((mu, i) => mu - Z_95 * mu * pred.sigma[i]),
@@ -132,6 +202,10 @@ function bandGammaCV(pred) {
   }
 }
 
+/**
+ * @param {Prediction} pred
+ * @returns {Band}
+ */
 function bandPoisson(pred) {
   return {
     lower: pred.mu.map((mu) => Math.max(0, mu - Z_95 * Math.sqrt(mu))),
@@ -139,6 +213,10 @@ function bandPoisson(pred) {
   }
 }
 
+/**
+ * @param {Prediction} pred
+ * @returns {Band}
+ */
 function bandNB(pred) {
   return {
     lower: pred.mu.map((mu, i) => Math.max(0, mu - Z_95 * Math.sqrt(mu + mu * mu * pred.sigma[i]))),
@@ -146,6 +224,10 @@ function bandNB(pred) {
   }
 }
 
+/**
+ * @param {Prediction} pred
+ * @returns {Band}
+ */
 function bandBeta(pred) {
   return {
     lower: pred.mu.map((mu, i) => {
@@ -170,6 +252,12 @@ const FAMILY_PARAMS = {
   Beta: ["mu", "phi"],
 }
 
+/** @typedef {keyof typeof FAMILY_PARAMS} Family */
+
+/**
+ * @param {string} col
+ * @param {number} n
+ */
 function smoothTerm(col, n) {
   return {
     Smooth: { PSpline1D: { col_name: col, n_splines: n, degree: 3, penalty_order: 2 } },
@@ -184,6 +272,12 @@ const FIT_CONFIG = JSON.stringify({ max_iterations: 80, tolerance: 0.005 })
 
 // mode: "linear" (intercept + linear mu) | "smooth_mu" (smooth mu, intercept spread)
 //     | "smooth_spread" (smooth mu, smooth spread parameter: sigma or phi)
+/**
+ * @param {Family} family
+ * @param {string} col
+ * @param {"linear" | "smooth_mu" | "smooth_spread"} mode
+ * @returns {string} the formula as JSON
+ */
 function makeFormula(family, col, mode) {
   const params = FAMILY_PARAMS[family]
   const muTerms =
@@ -195,6 +289,7 @@ function makeFormula(family, col, mode) {
             throw new Error(`unknown formula mode: ${mode}`)
           })()
 
+  /** @type {Record<string, object[]>} */
   const result = { mu: muTerms }
   for (const p of params) {
     if (p === "mu") continue
@@ -209,6 +304,7 @@ function makeFormula(family, col, mode) {
 
 // ---- Dataset registry -----------------------------------------------------
 
+/** @type {Record<string, Dataset>} */
 const DATASETS = {
   house_price: {
     xCol: "sqft",
@@ -360,12 +456,37 @@ const DATASETS = {
 
 // Wait for one paint plus a macrotask, so the browser has time to render
 // status text and process any queued user events before the next blocking fit.
+/** @returns {Promise<void>} */
 function yieldToBrowser() {
   return new Promise((resolve) => {
     requestAnimationFrame(() => setTimeout(resolve, 0))
   })
 }
 
+/**
+ * @typedef {object} State
+ * @property {typeof import("/vendor/glissando/glissando.js").WasmGamlssModel | null} _wasm
+ * @property {Record<string, DatasetFit>} _cache
+ * @property {LayerToggles} _layers
+ * @property {boolean} _destroyed
+ * @property {string | null} _pending dataset to show once its fit is cached
+ * @property {string | null} _currentId
+ * @property {HTMLDivElement} _loading
+ * @property {SVGSVGElement} [_svg] unset until the first dataset renders
+ */
+
+/**
+ * @typedef {object} Methods
+ * @property {(err: unknown) => void} showError
+ * @property {(text: string) => void} showStatus
+ * @property {() => void} hideStatus
+ * @property {(id: string) => void} switchDataset
+ * @property {(id: string) => DatasetFit} fitDataset
+ * @property {(id: string) => void} renderDataset
+ * @property {() => void} applyLayers
+ */
+
+/** @type {import("../types").LiveHook<State, Methods>} */
 export const LabGam = {
   async mounted() {
     this._wasm = null
@@ -384,15 +505,23 @@ export const LabGam = {
     container.appendChild(loading)
     this._loading = loading
 
-    this.handleEvent("lab_gam:set_dataset", ({ dataset_id, layers }) => {
-      this._layers = layers || this._layers
-      this.switchDataset(dataset_id)
-    })
+    this.handleEvent(
+      "lab_gam:set_dataset",
+      /** @param {{dataset_id: string, layers?: LayerToggles}} payload */
+      ({ dataset_id, layers }) => {
+        this._layers = layers || this._layers
+        this.switchDataset(dataset_id)
+      }
+    )
 
-    this.handleEvent("lab_gam:set_layers", ({ layers }) => {
-      this._layers = layers
-      this.applyLayers()
-    })
+    this.handleEvent(
+      "lab_gam:set_layers",
+      /** @param {{layers: LayerToggles}} payload */
+      ({ layers }) => {
+        this._layers = layers
+        this.applyLayers()
+      }
+    )
 
     // Server replies with the current dataset_id + layers; keeps the JS hook
     // in sync after a LiveView reconnect, where server-side layer_state
@@ -453,7 +582,8 @@ export const LabGam = {
 
   showError(err) {
     if (this._loading) {
-      this._loading.textContent = `Error: ${err.message}`
+      const message = err instanceof Error ? err.message : String(err)
+      this._loading.textContent = `Error: ${message}`
       this._loading.style.color = "#f88"
     }
     console.error("[LabGam]", err)
@@ -494,6 +624,8 @@ export const LabGam = {
   },
 
   fitDataset(id) {
+    const wasm = this._wasm
+    if (!wasm) throw new Error("glissando not loaded")
     const cfg = DATASETS[id]
     const data = cfg.data()
     const xs = data.map((d) => d[0])
@@ -503,16 +635,14 @@ export const LabGam = {
     const gridXs = linspace(cfg.xMin, cfg.xMax, GRID_N)
     const gridJson = JSON.stringify({ [cfg.xCol]: gridXs })
 
+    /** @type {Record<string, LayerFit>} */
     const layerFits = {}
     for (const layer of cfg.layers) {
-      const model = this._wasm.fitWithConfig(
-        yJson,
-        dataJson,
-        layer.formula,
-        layer.family,
-        FIT_CONFIG
-      )
+      const model = wasm.fitWithConfig(yJson, dataJson, layer.formula, layer.family, FIT_CONFIG)
+      // predict returns JSON text; its shape is glissando's, see Prediction.
+      /** @type {Prediction} */
       const pred = JSON.parse(model.predict(gridJson))
+      /** @type {LayerFit} */
       const fit = { mu: pred.mu }
       if (layer.bandFn) {
         const band = layer.bandFn(pred)
@@ -549,6 +679,7 @@ export const LabGam = {
           })
         )
       }
+      /** @type {Record<string, string>} */
       const lineAttrs = {
         d: polylinePath(cached.gridXs, fit.mu, scaleX, scaleY),
         stroke: layer.color,
@@ -570,9 +701,11 @@ export const LabGam = {
   // these three slots. Toggle state in the LiveView mirrors this.
   applyLayers() {
     if (!this._svg) return
-    for (const id of ["linear", "gam", "gamlss"]) {
+    /** @type {LayerId[]} */
+    const ids = ["linear", "gam", "gamlss"]
+    for (const id of ids) {
       const el = this._svg.getElementById(`lab-gam-layer-${id}`)
-      if (el) el.style.display = this._layers[id] ? "" : "none"
+      if (el instanceof SVGElement) el.style.display = this._layers[id] ? "" : "none"
     }
   },
 }

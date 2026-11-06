@@ -35,6 +35,7 @@ defmodule FugueWeb.ColorLive.Splashes do
   # the echo of section 3, not a re-cycle). Index into the list above.
   @remainder_pair_index 7
 
+  @spec metamer_pair_count() :: pos_integer()
   def metamer_pair_count, do: length(@metamer_pairs)
 
   # ----- Section 1 hero: iridescent papillae -----

@@ -1,13 +1,31 @@
+// @ts-check
 // Generic hover tooltip: positions a floating div near the cursor whose
 // content comes from a `data-tooltip` attribute on any descendant. Content
 // is rendered server-side; the hook just positions and shows/hides.
+
+/**
+ * @typedef {object} State
+ * @property {HTMLDivElement} tip
+ * @property {(e: MouseEvent) => void} onOver
+ * @property {(e: MouseEvent) => void} onMove
+ * @property {(e: MouseEvent) => void} onOut
+ */
+
+/**
+ * @typedef {object} Methods
+ * @property {(e: MouseEvent) => void} position
+ */
+
+/** @type {import("../types").LiveHook<State, Methods>} */
 export const HoverTooltip = {
   mounted() {
     this.tip = document.createElement("div")
     this.tip.className = "tooltip-card"
     this.el.appendChild(this.tip)
 
+    /** @param {MouseEvent} e */
     this.onOver = (e) => {
+      if (!(e.target instanceof Element)) return
       const target = e.target.closest("[data-tooltip]")
       if (!target) return
       const html = target.getAttribute("data-tooltip")
@@ -16,17 +34,26 @@ export const HoverTooltip = {
       this.position(e)
       this.tip.style.opacity = "1"
     }
+    /** @param {MouseEvent} e */
     this.onMove = (e) => {
       if (this.tip.style.opacity === "1") this.position(e)
     }
+    /** @param {MouseEvent} e */
     this.onOut = (e) => {
-      const to = e.relatedTarget?.closest?.("[data-tooltip]")
+      const to = e.relatedTarget instanceof Element && e.relatedTarget.closest("[data-tooltip]")
       if (!to) this.tip.style.opacity = "0"
     }
 
     this.el.addEventListener("mouseover", this.onOver)
     this.el.addEventListener("mousemove", this.onMove)
     this.el.addEventListener("mouseout", this.onOut)
+  },
+
+  // A LiveView patch to this container drops children the server didn't
+  // render, which includes the card; put it back so hover keeps working
+  // after a selection.
+  updated() {
+    if (!this.tip.isConnected) this.el.appendChild(this.tip)
   },
 
   position(e) {

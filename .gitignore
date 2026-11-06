@@ -71,3 +71,6 @@ menagerie-*.png
 
 # working notes and drafts; see docs/private-notes/README.md
 docs/private-notes/
+
+# Dialyzer PLTs; rebuilt locally, cached in CI
+/priv/plts/

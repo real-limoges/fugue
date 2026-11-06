@@ -1,3 +1,4 @@
+// @ts-check
 // Utilities for hooks that draw a static figure parameterized by named
 // values, recomputing on phx events and redrawing on resize. Today:
 // quantum_walk, quantum_stats. No RAF loop.
@@ -8,6 +9,10 @@
 // Returns the css size so callers can use it for layout math; they should
 // also call `ctx.setTransform(dpr, 0, 0, dpr, 0, 0)` so coordinates stay
 // in CSS pixels.
+/**
+ * @param {HTMLCanvasElement} canvas
+ * @returns {{dpr: number, cssWidth: number, cssHeight: number}}
+ */
 export function setupDprCanvas(canvas) {
   const dpr = window.devicePixelRatio || 1
   const cssWidth = canvas.clientWidth
@@ -21,6 +26,11 @@ export function setupDprCanvas(canvas) {
 
 // Re-run `render` whenever `el` resizes. Returns `{ stop }` for the
 // hook's destroyed().
+/**
+ * @param {Element} el
+ * @param {() => void} render
+ * @returns {{stop: () => void}}
+ */
 export function attachResizeRedraw(el, render) {
   const observer = new ResizeObserver(() => render())
   observer.observe(el)
@@ -31,6 +41,10 @@ export function attachResizeRedraw(el, render) {
 
 // Re-run `render` whenever the site theme is toggled (see
 // hooks/theme_toggle.js). Returns `{ stop }` for the hook's destroyed().
+/**
+ * @param {() => void} render
+ * @returns {{stop: () => void}}
+ */
 export function attachThemeRedraw(render) {
   window.addEventListener("fugue:theme-changed", render)
   return {

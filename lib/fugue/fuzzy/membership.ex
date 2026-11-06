@@ -5,7 +5,10 @@ defmodule Fugue.Fuzzy.Membership do
   `(float -> float)` closure, matching Hazy's `MembershipFn = Double -> Degree`.
   """
 
+  alias Fugue.Fuzzy.Inference.Types
+
   @doc "Triangular membership: 0 outside [a, c], 1 at b, linear ramps on either side."
+  @spec triangular(number(), number(), number()) :: Types.mf()
   def triangular(a, b, c) do
     fn x ->
       cond do
@@ -18,6 +21,7 @@ defmodule Fugue.Fuzzy.Membership do
   end
 
   @doc "Trapezoidal membership: 0 outside [a, d], 1 on the plateau [b, c], linear ramps between."
+  @spec trapezoidal(number(), number(), number(), number()) :: Types.mf()
   def trapezoidal(a, b, c, d) do
     fn x ->
       cond do
@@ -31,11 +35,13 @@ defmodule Fugue.Fuzzy.Membership do
   end
 
   @doc "Gaussian membership centered at `mu` with standard deviation `sigma`."
+  @spec gaussian(number(), number()) :: Types.mf()
   def gaussian(mu, sigma) do
     fn x -> :math.exp(-((x - mu) * (x - mu) / (2 * sigma * sigma))) end
   end
 
   @doc "Logistic sigmoid membership, transitioning around `center` at the given `slope`."
+  @spec sigmoid(number(), number()) :: Types.mf()
   def sigmoid(center, slope) do
     fn x -> 1 / (1 + :math.exp(-(slope * (x - center)))) end
   end

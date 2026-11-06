@@ -10,6 +10,7 @@ defmodule FugueWeb.ColorLive do
 
   alias FugueWeb.ColorLive.Splashes
 
+  @impl true
   def mount(_params, _session, socket) do
     {:ok,
      socket
@@ -24,6 +25,7 @@ defmodule FugueWeb.ColorLive do
      |> assign(:metamer_index, 0)}
   end
 
+  @impl true
   def handle_event("toggle_protanope", _params, socket) do
     {:noreply, assign(socket, :protanope, !socket.assigns.protanope)}
   end
@@ -61,6 +63,7 @@ defmodule FugueWeb.ColorLive do
     {:noreply, assign(socket, :wcs_language, Enum.at(langs, new_i))}
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <article class="px-4 py-8 max-w-3xl mx-auto">

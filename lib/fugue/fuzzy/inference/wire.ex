@@ -12,8 +12,23 @@ defmodule Fugue.Fuzzy.Inference.Wire do
   library rather than under the mood-specific modules.
   """
 
-  alias Fugue.Fuzzy.Inference.Mamdani
+  alias Fugue.Fuzzy.Inference.{Mamdani, Types}
   alias Fugue.Fuzzy.Membership
+
+  @typedoc """
+  A wire-format request: the JSON shape Ish's `POST /inference/mamdani`
+  accepted, string keys throughout. Its nested parts are described in
+  `build_fis/2`'s doc rather than typed field by field, since they arrive
+  from a JSON-shaped builder and are decoded immediately.
+  """
+  @type request :: %{required(String.t()) => term()}
+
+  @typedoc """
+  A wire-format response: `Types.inference_trace/0` with string keys and
+  `[x, y]` points. Typespecs cannot name individual string keys, so the
+  four keys are listed in `run_request/1`'s doc instead.
+  """
+  @type response :: %{String.t() => term()}
 
   @doc """
   Run a wire-format Mamdani request (string-keyed map, matching the JSON
@@ -21,13 +36,20 @@ defmodule Fugue.Fuzzy.Inference.Wire do
   "rule_strengths" => ..., "output_curves" => %{var => [[x, y], ...]},
   "crisp" => ...}`.
   """
+  @spec run_request(request()) :: response()
   def run_request(%{"mfs" => mfs, "rules" => rules, "values" => values}) do
     fis = build_fis(mfs, rules)
     trace = Mamdani.trace(fis, values)
     encode_response(trace)
   end
 
-  @doc "Decode a wire-format `mfs`/`rules` pair into an FIS."
+  @doc """
+  Decode a wire-format `mfs`/`rules` pair into an FIS. `mfs` is
+  `%{"inputs" => [var], "outputs" => [var]}` where each var is
+  `%{"name" => _, "bounds" => [lo, hi], "terms" => [%{"name" => _, "params" => [a, b, c]}]}`;
+  each rule is `%{"if" => [%{"var" => _, "term" => _}], "then" => [...]}`.
+  """
+  @spec build_fis(%{required(String.t()) => [map()]}, [map()]) :: Types.fis()
   def build_fis(%{"inputs" => inputs, "outputs" => outputs}, rules) do
     %{
       inputs: Map.new(inputs, &{&1["name"], decode_var(&1)}),

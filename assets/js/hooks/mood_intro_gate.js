@@ -1,3 +1,4 @@
+// @ts-check
 // Manages the "skip intro / show intro" state for the mood page.
 // One flag in localStorage: mood-skip-intro = '1' means the preamble and
 // sandbox are hidden and a small "show intro" link appears near Chapter 1.
@@ -12,6 +13,7 @@ function isSkipped() {
   }
 }
 
+/** @param {boolean} skipped */
 function setSkipped(skipped) {
   try {
     if (skipped) localStorage.setItem(FLAG_KEY, "1")
@@ -19,11 +21,24 @@ function setSkipped(skipped) {
   } catch (_e) {}
 }
 
+/**
+ * @typedef {object} State
+ * @property {(e: MouseEvent) => void} clickHandler
+ */
+
+/**
+ * @typedef {object} Methods
+ * @property {(skipped: boolean) => void} applyState
+ */
+
+/** @type {import("../types").LiveHook<State, Methods>} */
 export const MoodIntroGate = {
   mounted() {
     this.applyState(isSkipped())
 
+    /** @param {MouseEvent} e */
     this.clickHandler = (e) => {
+      if (!(e.target instanceof Element)) return
       if (e.target.closest("[data-skip-intro]")) {
         e.preventDefault()
         setSkipped(true)

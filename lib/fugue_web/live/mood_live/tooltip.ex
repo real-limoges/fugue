@@ -2,8 +2,10 @@ defmodule FugueWeb.MoodLive.Tooltip do
   @moduledoc """
   Wrapper for cursor-following tooltip surfaces used across /mood components.
   Pairs the `HoverTooltip` (default) or `CalendarTooltip` JS hook with a
-  positioned div; child SVGs/elements set `data-tooltip` to provide the
-  server-rendered HTML the hook displays on hover.
+  positioned div. Under `HoverTooltip`, child SVGs/elements set
+  `data-tooltip` to provide the server-rendered HTML the hook displays on
+  hover; `CalendarTooltip` builds its HTML from compact per-cell data
+  instead (see `FugueWeb.MoodLive.CalendarGrid`).
   """
 
   use Phoenix.Component
@@ -12,11 +14,12 @@ defmodule FugueWeb.MoodLive.Tooltip do
   attr :hook, :string, default: "HoverTooltip"
   attr :class, :string, default: nil
   attr :style, :string, default: ""
+  attr :rest, :global, include: ~w(data-clusters)
   slot :inner_block, required: true
 
   def container(assigns) do
     ~H"""
-    <div id={@id} phx-hook={@hook} class={@class} style={"position: relative; #{@style}"}>
+    <div id={@id} phx-hook={@hook} class={@class} style={"position: relative; #{@style}"} {@rest}>
       {render_slot(@inner_block)}
     </div>
     """
