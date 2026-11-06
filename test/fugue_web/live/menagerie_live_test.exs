@@ -55,7 +55,7 @@ defmodule FugueWeb.MenagerieLiveTest do
       assert html =~ ~r/20\d\d-\d\d-\d\d/
     end
 
-    test "server-renders the bands SVG with per-day JSON for the hover hook", %{conn: conn} do
+    test "server-renders the bands SVG with per-day hover data", %{conn: conn} do
       {:ok, _view, html} = live(conn, "/menagerie/fuzzy")
 
       # Shapes panel (MF triangle outlines).
@@ -64,11 +64,13 @@ defmodule FugueWeb.MenagerieLiveTest do
       assert html =~ ~s(class="band")
       # Crosshair line carrying the bands-crosshair class.
       assert html =~ "bands-crosshair"
-      # data-series is the per-day JSON payload BandsHover uses on hover.
-      assert html =~ "data-series="
-      # Should contain a date from the bundled CSV range.
-      # data-series is an attribute value, so quotes are HTML-escaped.
-      assert html =~ ~r/date&quot;:&quot;20\d\d-\d\d-\d\d&quot;/
+      # BandsHover reads x, date and percents per day from three plain
+      # attributes (see bands_hover.js); dates come from the bundled CSV.
+      assert html =~ ~r/data-xs="0(\.0)?,/
+      assert html =~ ~r/data-dates="20\d\d-\d\d-\d\d,20\d\d-\d\d-\d\d,/
+      # One group per day, five integer percents (one per fuzzy set).
+      assert html =~ ~r/data-pcts="\d+,\d+,\d+,\d+,\d+;/
+      refute html =~ "data-series="
     end
 
     test "changing spread re-renders bands with an updated series", %{conn: conn} do

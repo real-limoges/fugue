@@ -49,6 +49,13 @@ export const HoverTooltip = {
     this.el.addEventListener("mouseout", this.onOut)
   },
 
+  // A LiveView patch to this container drops children the server didn't
+  // render, which includes the card; put it back so hover keeps working
+  // after a selection.
+  updated() {
+    if (!this.tip.isConnected) this.el.appendChild(this.tip)
+  },
+
   position(e) {
     const r = this.el.getBoundingClientRect()
     this.tip.style.top = e.clientY - r.top + 12 + "px"

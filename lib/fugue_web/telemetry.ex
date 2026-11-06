@@ -55,12 +55,33 @@ defmodule FugueWeb.Telemetry do
         unit: {:native, :millisecond}
       ),
 
+      # LiveView Metrics, tagged by view module so a slow page is named.
+      summary("phoenix.live_view.mount.stop.duration",
+        tags: [:view],
+        tag_values: &live_view_tag/1,
+        unit: {:native, :millisecond}
+      ),
+      summary("phoenix.live_view.handle_event.stop.duration",
+        tags: [:view, :event],
+        tag_values: &live_view_tag/1,
+        unit: {:native, :millisecond}
+      ),
+      summary("phoenix.live_view.render.stop.duration",
+        tags: [:view],
+        tag_values: &live_view_tag/1,
+        unit: {:native, :millisecond}
+      ),
+
       # VM Metrics
       summary("vm.memory.total", unit: {:byte, :kilobyte}),
       summary("vm.total_run_queue_lengths.total"),
       summary("vm.total_run_queue_lengths.cpu"),
       summary("vm.total_run_queue_lengths.io")
     ]
+  end
+
+  defp live_view_tag(%{socket: socket} = metadata) do
+    Map.merge(metadata, %{view: inspect(socket.view), event: Map.get(metadata, :event)})
   end
 
   defp periodic_measurements do

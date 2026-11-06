@@ -5,8 +5,14 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
   Replaces the former `CalendarHeatmap` JS hook (d3-based). Cell positions,
   fills, strokes, and strong-cluster membership are precomputed in Elixir; the
   component emits a single SVG whose per-cell classes reflect highlight /
-  gap / cluster-isolate state from assigns. A tiny `CalendarTooltip` JS hook
-  handles hover positioning only.
+  gap / cluster-isolate state from assigns.
+
+  Tooltips are not rendered per cell. Each cell carries its numbers in two
+  short attributes (`data-dims`, `data-mems`), the container carries the
+  cluster names and colors once (`data-clusters`), and the `CalendarTooltip`
+  hook builds the hover card from those. Rendering the card's HTML into all
+  ~1,460 cells made the first /mood diff about 5.8 MB, 3.2 MB of it tooltip
+  markup (performance baseline P1, 2026-11-05).
   """
 
   use Phoenix.Component
@@ -69,7 +75,7 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
 
     cells =
       Enum.map(assigns.days, fn day ->
-        build_cell(day, assigns.cluster_colors, assigns.cluster_names,
+        build_cell(day, assigns.cluster_colors,
           transition_set: transition_set,
           highlighted_set: highlighted_set,
           gap_set: gap_set,
@@ -122,12 +128,13 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
         svg_width: @left_margin + 53 * @cell_step + 20,
         svg_height: @top_margin + length(years) * (7 * @cell_step + @year_padding),
         svg_classes: svg_classes,
+        clusters_json: clusters_json(assigns.cluster_colors, assigns.cluster_names),
         cell_size: @cell_size,
         weekday_label_x: @left_margin - 4
       )
 
     ~H"""
-    <Tooltip.container id="calendar-heatmap" hook="CalendarTooltip">
+    <Tooltip.container id="calendar-heatmap" hook="CalendarTooltip" data-clusters={@clusters_json}>
       <svg
         width={@svg_width}
         height={@svg_height}
@@ -185,7 +192,8 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
               <rect
                 class={cell.class}
                 data-date={cell.date}
-                data-tooltip={cell.tooltip_html}
+                data-dims={cell.dims}
+                data-mems={cell.mems}
                 width={@cell_size}
                 height={@cell_size}
                 rx="2"
@@ -221,7 +229,7 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
 
   # --- Cell construction ---
 
-  defp build_cell(day, cluster_colors, cluster_names, opts) do
+  defp build_cell(day, cluster_colors, opts) do
     transition_set = Keyword.fetch!(opts, :transition_set)
     highlighted_set = Keyword.fetch!(opts, :highlighted_set)
     gap_set = Keyword.fetch!(opts, :gap_set)
@@ -254,7 +262,8 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
       stroke: cell_stroke(day, top_cluster, top_weight, cluster_colors, transition_set),
       stroke_width: cell_stroke_width(day, top_weight, transition_set),
       stroke_dasharray: if(day.is_gap, do: "2,1", else: "none"),
-      tooltip_html: build_tooltip_html(day, cluster_colors, cluster_names)
+      dims: dims_attr(day.dimensions),
+      mems: mems_attr(day.memberships)
     }
   end
 
@@ -348,78 +357,39 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
 
   defp gap_dates_set(_), do: MapSet.new()
 
-  # --- Tooltip HTML ---
+  # --- Tooltip data ---
   #
-  # Pre-rendered server-side so the JS hook only has to position + show/hide.
-  # Output is a plain HTML string assigned to `data-tooltip` on each cell.
+  # The hover card is built by the CalendarTooltip hook from these. Pairs are
+  # "key=value" joined by ";"; dimension names and cluster ids never contain
+  # either character. Dimension values are passed through as the server
+  # formats them, so the card shows exactly what it used to. Memberships are
+  # sorted strongest first, the order the card lists them in.
 
-  defp build_tooltip_html(day, cluster_colors, cluster_names) do
-    IO.iodata_to_binary([
-      "<strong style=\"font-size: 13px\">",
-      html_escape(day.date),
-      "</strong>",
-      gap_tag(day.is_gap),
-      dimensions_block(day.dimensions),
-      memberships_block(day.memberships, cluster_colors, cluster_names)
-    ])
+  defp dims_attr(nil), do: nil
+  defp dims_attr(dims) when map_size(dims) == 0, do: nil
+
+  defp dims_attr(dims) do
+    Enum.map_join(dims, ";", fn {k, v} -> "#{k}=#{v}" end)
   end
 
-  defp gap_tag(true),
-    do:
-      "<br><span style=\"color: color-mix(in oklch, var(--color-neutral-content) 55%, transparent); font-style: italic\">gap day</span>"
+  defp mems_attr(nil), do: nil
+  defp mems_attr(mems) when map_size(mems) == 0, do: nil
 
-  defp gap_tag(_), do: ""
-
-  defp dimensions_block(nil), do: ""
-  defp dimensions_block(dims) when map_size(dims) == 0, do: ""
-
-  defp dimensions_block(dims) do
-    rows =
-      Enum.map_join(dims, "", fn {k, v} ->
-        "<span style=\"color: color-mix(in oklch, var(--color-neutral-content) 65%, transparent)\">" <>
-          html_escape(to_string(k)) <>
-          "</span><strong>" <>
-          html_escape(to_string(v)) <>
-          "</strong>"
-      end)
-
-    "<div style=\"margin-top: 6px; display: grid; grid-template-columns: auto auto; gap: 1px 10px\">" <>
-      rows <> "</div>"
+  defp mems_attr(mems) do
+    mems
+    |> Enum.sort_by(fn {_id, weight} -> weight end, :desc)
+    |> Enum.map_join(";", fn {id, weight} -> "#{id}=#{Float.round(weight / 1, 4)}" end)
   end
 
-  defp memberships_block(nil, _, _), do: ""
-  defp memberships_block(mems, _, _) when map_size(mems) == 0, do: ""
-
-  defp memberships_block(mems, cluster_colors, cluster_names) do
-    rows =
-      mems
-      |> Enum.sort_by(fn {_k, v} -> v end, :desc)
-      |> Enum.map_join("", fn {id, weight} ->
-        membership_row(
-          Map.get(cluster_names, id, id),
-          Map.get(cluster_colors, id, "#888"),
-          weight
-        )
-      end)
-
-    "<div style=\"margin-top: 6px; border-top: 1px solid color-mix(in oklch, var(--color-neutral-content) 12%, transparent); padding-top: 5px\">" <>
-      rows <> "</div>"
+  # Sent once on the container: %{id => %{name, color}} for every cluster.
+  defp clusters_json(cluster_colors, cluster_names) do
+    cluster_colors
+    |> Map.keys()
+    |> Enum.concat(Map.keys(cluster_names))
+    |> Enum.uniq()
+    |> Map.new(fn id ->
+      {id, %{name: Map.get(cluster_names, id, id), color: Map.get(cluster_colors, id, "#888")}}
+    end)
+    |> Jason.encode!()
   end
-
-  defp membership_row(name, color, weight) do
-    pct = weight |> Kernel.*(100) |> round() |> Integer.to_string()
-    bar_w = weight |> Kernel.*(50) |> round() |> Integer.to_string()
-    safe_name = html_escape(to_string(name))
-    safe_color = html_escape(to_string(color))
-
-    "<div style=\"display: flex; align-items: center; gap: 5px; margin: 2px 0\">" <>
-      "<span style=\"color: #{safe_color}; font-size: 11px; white-space: nowrap\">#{safe_name}</span>" <>
-      "<div style=\"flex: 0 0 50px; height: 3px; background: color-mix(in oklch, var(--color-neutral-content) 10%, transparent); border-radius: 2px\">" <>
-      "<div style=\"width: #{bar_w}px; height: 3px; background: #{safe_color}; border-radius: 2px\"></div>" <>
-      "</div>" <>
-      "<span style=\"color: color-mix(in oklch, var(--color-neutral-content) 65%, transparent); font-size: 10px; white-space: nowrap\">#{pct}%</span>" <>
-      "</div>"
-  end
-
-  defp html_escape(s), do: s |> Phoenix.HTML.html_escape() |> Phoenix.HTML.safe_to_string()
 end

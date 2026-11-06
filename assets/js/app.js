@@ -1,7 +1,6 @@
 // @ts-check
 import "phoenix_html"
 import { initSplash } from "./petri_splash"
-import { initLego3D } from "./lego_3d"
 import { Socket } from "phoenix"
 import { LiveSocket } from "phoenix_live_view"
 import topbar from "../vendor/topbar"
@@ -40,6 +39,8 @@ if (document.getElementById("petri-canvas")) {
   }
 }
 
+// three.js is most of the bundle by weight and only /about uses it, so it is
+// loaded on demand; esbuild's --splitting puts it in its own chunk.
 if (document.getElementById("lego-stack")) {
-  initLego3D("lego-stack")
+  import("./lego_3d").then(({ initLego3D }) => initLego3D("lego-stack"))
 }

@@ -3,16 +3,8 @@ defmodule FugueWeb.MoodLive do
 
   use FugueWeb, :live_view
 
-  alias Fugue.Mood.Wire
-  alias FugueWeb.MoodLive.{DataTransforms, ExperiencePanel, Focus, Sections, Snapshot}
+  alias FugueWeb.MoodLive.{Dataset, DataTransforms, ExperiencePanel, Focus, Sections}
   alias FugueWeb.MoodLive.Structs.{AnalysisResult, GapData}
-
-  @default_k 3
-  @default_m 1.5
-
-  # Pinned so clusters stay stable as new entries land. Bump when promoting an epilogue.
-  @from ~D[2022-04-01]
-  @to ~D[2026-03-30]
 
   def mount(_params, _session, socket) do
     socket =
@@ -39,36 +31,19 @@ defmodule FugueWeb.MoodLive do
   end
 
   def handle_info(:load_data, socket) do
-    # Fugue.Mood.Wire computes from the bundled dataset in-process, with no
-    # I/O to fail. It is still parallelized via Task, since clustering and
-    # gap analysis are genuine CPU work over ~1000 points, run twice
-    # independently (see Fugue.Mood.Wire's moduledoc).
-    tasks = %{
-      data: Task.async(fn -> Wire.data(@from, @to) end),
-      analysis: Task.async(fn -> Wire.cluster(@default_k, @default_m, @from, @to) end),
-      gaps: Task.async(fn -> Wire.gaps(@from, @to) end)
-    }
-
-    results = Map.new(tasks, fn {key, task} -> {key, Task.await(task, 15_000)} end)
-
-    {:ok, entries} = results.data
-    {:ok, raw_analysis} = results.analysis
-    {:ok, raw_gaps} = results.gaps
-
-    analysis = DataTransforms.parse_analysis(raw_analysis, entries)
-    gaps = raw_gaps |> GapData.from_api() |> DataTransforms.remap_gap_keys(analysis.name_to_id)
-    snapshot = Snapshot.from(entries, analysis, gaps)
+    # Computed once per node and shared by every socket; see Dataset.
+    dataset = Dataset.load()
 
     socket =
       socket
       |> assign(
         loading: false,
-        entries: entries,
-        analysis: analysis,
-        gaps: gaps,
-        snapshot: snapshot
+        entries: dataset.entries,
+        analysis: dataset.analysis,
+        gaps: dataset.gaps,
+        snapshot: dataset.snapshot
       )
-      |> push_event("update-brush-timeline", %{dates: Enum.map(entries, & &1["date"])})
+      |> push_event("update-brush-timeline", %{dates: dataset.dates})
 
     {:noreply, socket}
   end

@@ -12,8 +12,11 @@ defmodule FugueWeb.Endpoint do
     same_site: "Lax"
   ]
 
+  # compress: permessage-deflate. LiveView diffs are repetitive markup, and the
+  # big ones (/mood's first render, /menagerie/fuzzy's slider updates) shrink
+  # several-fold (performance baseline P7, 2026-11-05).
   socket "/live", Phoenix.LiveView.Socket,
-    websocket: [connect_info: [session: @session_options]],
+    websocket: [connect_info: [session: @session_options], compress: true],
     longpoll: [connect_info: [session: @session_options]]
 
   if code_reloading? do
