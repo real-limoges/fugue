@@ -1,6 +1,9 @@
+// @ts-check
 // Interactive sandbox for teaching fuzzy clustering.
 // Self-contained: fake centers, a draggable point, live-computed memberships.
 // No server round-trips; everything is client-side.
+
+import { requireElement } from "../lib/dom.js"
 
 const VB_W = 500
 const VB_H = 150
@@ -109,12 +112,25 @@ const STYLES = `
   }
 `
 
+/**
+ * `k` evenly spaced cluster centers on [0, 1], inset from the ends.
+ * @param {number} k
+ * @returns {number[]}
+ */
 function centersFor(k) {
   if (k === 1) return [0.5]
   const margin = 0.12
   return Array.from({ length: k }, (_, i) => margin + (i / (k - 1)) * (1 - 2 * margin))
 }
 
+/**
+ * Fuzzy c-means membership of `x` in each center at fuzziness `m`.
+ * Sums to 1; a point on a center belongs to it entirely.
+ * @param {number} x
+ * @param {number[]} centers
+ * @param {number} m
+ * @returns {number[]}
+ */
 function memberships(x, centers, m) {
   const dists = centers.map((c) => Math.abs(x - c))
   const minD = Math.min(...dists)
@@ -125,9 +141,29 @@ function memberships(x, centers, m) {
   return dists.map((di) => 1 / dists.reduce((sum, dj) => sum + Math.pow(di / dj, exponent), 0))
 }
 
+/**
+ * @typedef {object} State
+ * @property {{pointX: number, m: number, k: number}} state point on [0, 1], fuzziness, cluster count
+ * @property {boolean} dragging
+ * @property {SVGSVGElement} svg
+ * @property {SVGCircleElement} pointEl
+ * @property {SVGGElement} centersG
+ * @property {SVGGElement} barG
+ * @property {SVGRectElement} hitbox
+ */
+
+/**
+ * @typedef {object} Methods
+ * @property {() => void} buildDom
+ * @property {() => void} wireInteractions
+ * @property {() => void} update
+ */
+
+/** @type {import("../types").LiveHook<State, Methods>} */
 export const MoodTourSandbox = {
   mounted() {
     this.state = { pointX: 0.42, m: 2.0, k: 3 }
+    this.dragging = false
     this.buildDom()
     this.wireInteractions()
     this.update()
@@ -158,19 +194,21 @@ export const MoodTourSandbox = {
       </div>
     `
 
-    this.svg = this.el.querySelector(".sandbox-svg")
-    this.pointEl = this.el.querySelector(".point")
-    this.centersG = this.el.querySelector(".centers")
-    this.barG = this.el.querySelector(".bar")
-    this.hitbox = this.el.querySelector(".hitbox")
+    this.svg = requireElement(this.el, ".sandbox-svg", SVGSVGElement)
+    this.pointEl = requireElement(this.el, ".point", SVGCircleElement)
+    this.centersG = requireElement(this.el, ".centers", SVGGElement)
+    this.barG = requireElement(this.el, ".bar", SVGGElement)
+    this.hitbox = requireElement(this.el, ".hitbox", SVGRectElement)
   },
 
   wireInteractions() {
+    // The pointer's position along the axis, 0 to 1. getScreenCTM is null
+    // while the SVG is not rendered; the point then stays where it was.
+    /** @param {PointerEvent} e */
     const pointerToNorm = (e) => {
-      const pt = this.svg.createSVGPoint()
-      pt.x = e.clientX
-      pt.y = e.clientY
-      const svgP = pt.matrixTransform(this.svg.getScreenCTM().inverse())
+      const ctm = this.svg.getScreenCTM()
+      if (!ctm) return this.state.pointX
+      const svgP = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse())
       return Math.max(0, Math.min(1, (svgP.x - PAD_X) / INNER_W))
     }
 
@@ -197,12 +235,14 @@ export const MoodTourSandbox = {
     this.hitbox.addEventListener("pointerup", release)
     this.hitbox.addEventListener("pointercancel", release)
 
-    this.el.querySelector('input[data-control="m"]').addEventListener("input", (e) => {
-      this.state.m = parseFloat(e.target.value)
+    const mInput = requireElement(this.el, 'input[data-control="m"]', HTMLInputElement)
+    mInput.addEventListener("input", () => {
+      this.state.m = parseFloat(mInput.value)
       this.update()
     })
-    this.el.querySelector('input[data-control="k"]').addEventListener("input", (e) => {
-      this.state.k = parseInt(e.target.value, 10)
+    const kInput = requireElement(this.el, 'input[data-control="k"]', HTMLInputElement)
+    kInput.addEventListener("input", () => {
+      this.state.k = parseInt(kInput.value, 10)
       this.update()
     })
   },
@@ -232,7 +272,7 @@ export const MoodTourSandbox = {
       })
       .join("")
 
-    this.el.querySelector('[data-readout="m"]').textContent = m.toFixed(2)
-    this.el.querySelector('[data-readout="k"]').textContent = String(k)
+    requireElement(this.el, '[data-readout="m"]', HTMLElement).textContent = m.toFixed(2)
+    requireElement(this.el, '[data-readout="k"]', HTMLElement).textContent = String(k)
   },
 }

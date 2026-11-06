@@ -7,7 +7,12 @@ defmodule Fugue.Fuzzy.Defuzzify do
   visualization).
   """
 
+  alias Fugue.Fuzzy.Inference.Types
+
   @default_resolution 200
+
+  @typedoc "A clipped consequent: a fuzzy set and the degree its rule fired at."
+  @type pair :: {Types.fuzzy_set(), Types.degree()}
 
   @type method ::
           :centroid
@@ -15,13 +20,14 @@ defmodule Fugue.Fuzzy.Defuzzify do
           | :mean_of_maximum
           | :smallest_of_max
           | :largest_of_max
-          | {:custom, ([{map(), float()}] -> float())}
+          | {:custom, ([pair()] -> float())}
 
   @doc """
   Sample the aggregated (max-clipped) membership curve across the combined
   universe of all clipped consequents. Returns `[]` when no consequents
   fire. Used to power the Mamdani inference trace's output curves.
   """
+  @spec sampled_aggregation([pair()]) :: Types.curve()
   def sampled_aggregation([]), do: []
 
   def sampled_aggregation(pairs) do
@@ -31,6 +37,7 @@ defmodule Fugue.Fuzzy.Defuzzify do
   end
 
   @doc "Defuzzify a list of `{fuzzy_set, degree}` pairs via the given method."
+  @spec defuzzify(method(), [pair()]) :: float()
   def defuzzify({:custom, fun}, pairs), do: fun.(pairs)
   def defuzzify(_method, []), do: 0.0
 

@@ -26,6 +26,7 @@ defmodule FugueWeb.MenagerieLive.AnimatedCard.Slider do
   Builds a `%Slider{}` from a keyword list. `cast` defaults to identity;
   `format` defaults to `default_format/1`.
   """
+  @spec new(keyword()) :: t()
   def new(opts) do
     opts
     |> Keyword.put_new_lazy(:cast, fn -> &Function.identity/1 end)
@@ -37,6 +38,7 @@ defmodule FugueWeb.MenagerieLive.AnimatedCard.Slider do
   Default value formatter. Integers print as-is. Floats trim trailing
   zeros but keep one decimal so `1.0` stays `1.0`, not `1`.
   """
+  @spec default_format(term()) :: String.t()
   def default_format(v) when is_integer(v), do: Integer.to_string(v)
 
   def default_format(v) when is_float(v) do

@@ -97,9 +97,24 @@ defmodule Fugue.Menagerie.Mamdani do
   @default_temperature 22.0
   @default_humidity 50.0
 
+  @typedoc """
+  A string-keyed, JSON-shaped map in the format
+  `Fugue.Fuzzy.Inference.Wire` decodes. Typespecs cannot name string keys,
+  so the per-key shape lives in the module attributes above.
+  """
+  @type wire :: %{String.t() => term()}
+
+  @typedoc "A rule's display text and the fan_speed term it votes for."
+  @type rule_summary :: %{text: String.t(), output_term: String.t()}
+
+  @spec default_temperature() :: float()
   def default_temperature, do: @default_temperature
+
+  @spec default_humidity() :: float()
   def default_humidity, do: @default_humidity
 
+  @doc "The input and output linguistic variables, as a wire `mfs` map."
+  @spec mfs() :: wire()
   def mfs do
     %{
       "inputs" => [@temperature_var, @humidity_var],
@@ -112,12 +127,18 @@ defmodule Fugue.Menagerie.Mamdani do
   consequent term. Used to color rule bars and per-rule clipped shapes in the
   playground viz by the consequent they vote for.
   """
+  @spec rule_summaries() :: [rule_summary(), ...]
   def rule_summaries do
     Enum.map(@rules, fn {desc, %{"then" => [%{"term" => term} | _]}} ->
       %{text: desc, output_term: term}
     end)
   end
 
+  @doc """
+  The full wire request for one crisp reading. Integer inputs are widened
+  to floats.
+  """
+  @spec request(number(), number()) :: wire()
   def request(temperature, humidity) do
     %{
       "mfs" => mfs(),

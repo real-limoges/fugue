@@ -4,7 +4,16 @@ defmodule Fugue.Mood.Fuzzify do
   rules, ported from Ish's `Ish.Analysis.Fuzzify`.
   """
 
+  alias Fugue.Fuzzy.Inference.Types
   alias Fugue.Fuzzy.Membership
+
+  @typedoc "A triangular term: name and `{a, b, c}` corners."
+  @type term_def :: %{name: String.t(), params: {number(), number(), number()}}
+
+  @typedoc "A variable as data, before its terms become membership functions."
+  @type var_def :: %{name: String.t(), bounds: {number(), number()}, terms: [term_def()]}
+
+  @type defs :: %{inputs: [var_def()], outputs: [var_def()]}
 
   @doc """
   Canonical default `MembershipFuncDefs`-equivalent config: 5 input vars
@@ -12,6 +21,7 @@ defmodule Fugue.Mood.Fuzzify do
   vars (wellbeing/activation, both 0-10), each with low/medium/high
   triangular terms.
   """
+  @spec default_membership_func_defs() :: defs()
   def default_membership_func_defs do
     %{
       inputs: [
@@ -29,6 +39,7 @@ defmodule Fugue.Mood.Fuzzify do
   end
 
   @doc "The 6 hardcoded mood rules."
+  @spec mood_rules() :: [Types.fuzzy_rule(), ...]
   def mood_rules do
     [
       %{antecedent: [{"sleep", "high"}, {"anxiety", "low"}], consequent: [{"wellbeing", "high"}]},
@@ -44,6 +55,7 @@ defmodule Fugue.Mood.Fuzzify do
   end
 
   @doc "Bridge wire-format var defs (as produced by this module) into `Fugue.Fuzzy.Inference.Types.linguistic_var/0`s."
+  @spec build_vars([var_def()]) :: %{String.t() => Types.linguistic_var()}
   def build_vars(var_defs) do
     Map.new(var_defs, fn v ->
       {v.name,
@@ -60,11 +72,13 @@ defmodule Fugue.Mood.Fuzzify do
   end
 
   @doc "Build a generic FIS from an arbitrary rule set plus membership-function defs."
+  @spec build_fis([Types.fuzzy_rule()], defs()) :: Types.fis()
   def build_fis(rules, defs) do
     %{inputs: build_vars(defs.inputs), outputs: build_vars(defs.outputs), rules: rules}
   end
 
   @doc "Mood-specific wrapper: always uses `mood_rules/0`."
+  @spec build_mood_fis(defs()) :: Types.fis()
   def build_mood_fis(defs), do: build_fis(mood_rules(), defs)
 
   defp var_def(name, bounds, low, medium, high) do

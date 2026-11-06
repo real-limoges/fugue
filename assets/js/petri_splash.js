@@ -1,57 +1,98 @@
+// @ts-check
 import { resolveThemeColors, buildColorTable } from "./lib/theme_colors.js"
 
+/**
+ * The part of a petri wrapper the splash loop drives once it is started.
+ * The wrappers are vendored, untyped JS imported by relative path, so their
+ * types are inferred from the source; this names the shape the loop needs.
+ * @typedef {object} PetriSim
+ * @property {(n: number) => void} step
+ * @property {() => Uint8Array} getPixels
+ */
+
+/**
+ * `start` loads the wrapper, initializes its WASM, and seeds a sim sized to
+ * the canvas; `steps` is how many sim steps run per animation frame.
+ * @typedef {object} SplashSim
+ * @property {(w: number, h: number) => Promise<PetriSim>} start
+ * @property {number} steps
+ */
+
+/** @type {Record<string, SplashSim>} */
 const sims = {
   boids: {
-    module: () => import("../vendor/petri/js/boids.js"),
-    setup: async (m, w, h) => {
+    start: async (w, h) => {
+      const m = await import("../vendor/petri/js/boids.js")
       await m.init()
       m.start(1500, w, h)
+      return m
     },
-    loop: (m) => m.step(1),
+    steps: 1,
   },
   langton: {
-    module: () => import("../vendor/petri/js/langton.js"),
-    setup: async (m, w, h) => {
+    start: async (w, h) => {
+      const m = await import("../vendor/petri/js/langton.js")
       await m.init()
       m.start(8, w, h)
+      return m
     },
-    loop: (m) => m.step(500),
+    steps: 500,
   },
   oscillators: {
-    module: () => import("../vendor/petri/js/oscillators.js"),
-    setup: async (m, w, h) => {
+    start: async (w, h) => {
+      const m = await import("../vendor/petri/js/oscillators.js")
       await m.init()
       m.start(w, h)
+      return m
     },
-    loop: (m) => m.step(2),
+    steps: 2,
   },
   sandpile: {
-    module: () => import("../vendor/petri/js/sandpile.js"),
-    setup: async (m, w, h) => {
+    start: async (w, h) => {
+      const m = await import("../vendor/petri/js/sandpile.js")
       await m.init()
       m.start(w, h)
+      return m
     },
-    loop: (m) => m.step(10),
+    steps: 10,
   },
 }
 
 // Memoize the color table across splash swaps so theme switches rebuild
 // the LUT exactly once per change rather than every animation tick.
+/** @type {string | null} */
 let cachedColors = null
+/** @type {Uint8Array | null} */
 let cachedRGBA = null
 
+/** @returns {Uint8Array} the color table for the current theme */
 function refreshColors() {
   const colors = resolveThemeColors()
   const key = colors.base.join(",") + "|" + colors.primary.join(",")
-  if (cachedColors !== key) {
+  if (cachedColors !== key || cachedRGBA === null) {
     cachedColors = key
     cachedRGBA = buildColorTable(colors.base, colors.primary)
   }
+  return cachedRGBA
 }
 
+/** @type {(() => void) | null} */
 let cleanup = null
 
+// Bumped on every initSplash call. Starting a sim awaits a WASM load, so a
+// second call can land while the first is still waiting; the first then sees
+// a newer generation when it wakes and gives up instead of starting a loop
+// nothing would ever cancel.
+let generation = 0
+
+/**
+ * @param {string} canvasId
+ * @param {string} simName
+ * @param {string} [readingId] element that shows a live activity readout
+ * @returns {Promise<(() => void) | null>} stops the splash
+ */
 export async function initSplash(canvasId, simName, readingId) {
+  const thisGeneration = ++generation
   if (cleanup) {
     cleanup()
     cleanup = null
@@ -61,7 +102,7 @@ export async function initSplash(canvasId, simName, readingId) {
   if (!sim) return null
 
   const canvas = document.getElementById(canvasId)
-  if (!canvas) return null
+  if (!(canvas instanceof HTMLCanvasElement)) return null
 
   const canvasW = window.innerWidth
   const canvasH = window.innerHeight
@@ -69,11 +110,12 @@ export async function initSplash(canvasId, simName, readingId) {
   canvas.height = canvasH
 
   const ctx = canvas.getContext("2d")
+  if (!ctx) return null
 
-  const mod = await sim.module()
-  await sim.setup(mod, canvasW, canvasH)
+  const mod = await sim.start(canvasW, canvasH)
+  if (thisGeneration !== generation) return null
 
-  refreshColors()
+  let lut = refreshColors()
   const pixelCount = canvasW * canvasH
   const rgbaBuffer = new Uint8ClampedArray(pixelCount * 4)
 
@@ -82,8 +124,13 @@ export async function initSplash(canvasId, simName, readingId) {
   const sampleStride = 64
   const sampleCount = Math.max(1, Math.floor(pixelCount / sampleStride))
   let lastReadingUpdate = 0
+  /** @type {number | null} */
   let activityEMA = null
 
+  /**
+   * @param {number} now
+   * @param {Uint8Array} intensity
+   */
   function updateReading(now, intensity) {
     if (!reading) return
     if (now - lastReadingUpdate < 250) return
@@ -100,16 +147,17 @@ export async function initSplash(canvasId, simName, readingId) {
     reading.textContent = `${simName} · ${activityEMA.toFixed(2)} · t+${mm}:${ss}`
   }
 
-  let rafId
+  let rafId = 0
   let frameCount = 0
 
-  function loop() {
-    sim.loop(mod)
+  // An arrow, not a function declaration, so the non-null `ctx` narrowing
+  // above carries into it.
+  const loop = () => {
+    mod.step(sim.steps)
 
-    if (++frameCount % 120 === 0) refreshColors()
+    if (++frameCount % 120 === 0) lut = refreshColors()
 
     const intensity = mod.getPixels()
-    const lut = cachedRGBA
 
     for (let i = 0; i < pixelCount; i++) {
       const lutOffset = intensity[i] * 4

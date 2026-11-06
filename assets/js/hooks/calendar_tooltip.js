@@ -1,13 +1,25 @@
+// @ts-check
 // Calendar tooltip: server-rendered HTML in `data-tooltip` on each cell.
 // JS only positions and shows/hides; right-anchored so the tooltip clears
 // the calendar surface even when the cell is on the far right edge.
+
+/**
+ * @typedef {object} State
+ * @property {HTMLDivElement} tip
+ * @property {(e: MouseEvent) => void} onEnter
+ * @property {() => void} onLeave
+ */
+
+/** @type {import("../types").LiveHook<State>} */
 export const CalendarTooltip = {
   mounted() {
     this.tip = document.createElement("div")
     this.tip.className = "tooltip-card tooltip-card--right"
     this.el.appendChild(this.tip)
 
+    /** @param {MouseEvent} e */
     this.onEnter = (e) => {
+      if (!(e.target instanceof Element)) return
       const cell = e.target.closest(".day-cell")
       if (!cell) return
       const html = cell.getAttribute("data-tooltip")

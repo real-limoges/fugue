@@ -1,18 +1,80 @@
+// @ts-check
 import * as d3 from "d3"
 
 // The /menagerie/mamdani playground. The server runs the inference and
 // pushes "update-mamdani" with the full result; render() draws it.
 //
 // Two things keep it smooth while a slider drags. First, render() builds
-// each panel's static parts (axes, term shapes, scales stashed on the node as
-// __scales) once, and afterwards only redraws the parts that move. Second,
-// slider input recomputes the input memberships locally (triangular() below
-// mirrors the server's) so the crisp line and degree dots follow the thumb
-// without waiting on the round trip; the server's push then catches the
-// rules and output panels up.
+// each panel's static parts (axes, term shapes, scales kept in panelScales
+// keyed by the panel node) once, and afterwards only redraws the parts that
+// move. Second, slider input recomputes the input memberships locally
+// (triangular() below mirrors the server's) so the crisp line and degree dots
+// follow the thumb without waiting on the round trip; the server's push then
+// catches the rules and output panels up.
+
+/** @typedef {[number, number]} Point */
+
+/**
+ * One fuzzy term: a triangle with feet at params[0] and params[2], peak at params[1].
+ * @typedef {object} Term
+ * @property {string} name
+ * @property {[number, number, number]} params
+ */
+
+/**
+ * @typedef {object} VarDef
+ * @property {string} name
+ * @property {[number, number]} bounds
+ * @property {Term[]} terms
+ */
+
+/**
+ * @typedef {object} Rule
+ * @property {string} text e.g. "IF temperature IS hot THEN fan IS high"
+ * @property {string} output_term
+ * @property {number | null} [strength]
+ */
+
+/**
+ * The "update-mamdani" payload the server pushes.
+ * @typedef {object} MamdaniData
+ * @property {{inputs?: VarDef[], outputs?: VarDef[]}} mfs
+ * @property {Rule[]} [rules]
+ * @property {Record<string, number | null>} inputs
+ * @property {Record<string, Record<string, number>>} input_degrees
+ * @property {Record<string, Point[]>} [output_curves]
+ * @property {Record<string, number | null>} [crisp]
+ */
+
+/**
+ * @typedef {object} Scales
+ * @property {d3.ScaleLinear<number, number>} x
+ * @property {d3.ScaleLinear<number, number>} y
+ * @property {number} innerW
+ * @property {number} innerH
+ */
+
+/** @typedef {d3.Selection<d3.BaseType, unknown, null, undefined>} Sel */
+
+/**
+ * @typedef {object} State
+ * @property {MamdaniData | null} data
+ * @property {(e: Event) => void} _onSliderInput
+ */
+
+/**
+ * @typedef {object} Methods
+ * @property {() => void} _updateInputsLocally
+ * @property {(g: Sel, varDef: VarDef, crispValue: number | null | undefined, degrees: Record<string, number>, scales: Scales) => void} _renderInputDynamics
+ * @property {() => void} render
+ * @property {(parent: Sel, varDef: VarDef) => void} _buildInputPanel
+ * @property {(container: Sel, rules: Rule[]) => void} renderRulesPanel
+ * @property {(container: Sel, varDef: VarDef, aggCurve: Point[], crispValue: number | null | undefined, rules: Rule[]) => void} renderOutputPanel
+ */
 
 const WIDTH = 820
 
+/** @type {Record<string, string>} */
 const FAN_COLORS = {
   off: "#9ca3af",
   low: "#60a5fa",
@@ -22,6 +84,25 @@ const FAN_COLORS = {
 
 const INPUT_TERM_COLORS = ["#60a5fa", "#f59e0b", "#ec4899"]
 
+// Each input panel's scales, set when its statics are built and read on
+// every redraw of the parts that move.
+/** @type {WeakMap<Element, Scales>} */
+const panelScales = new WeakMap()
+
+/**
+ * @param {Sel} panelEl
+ * @returns {Scales | undefined}
+ */
+function scalesFor(panelEl) {
+  const node = panelEl.node()
+  return node instanceof Element ? panelScales.get(node) : undefined
+}
+
+/**
+ * @param {number} x
+ * @param {[number, number, number]} params
+ * @returns {number}
+ */
 function triangular(x, [a, b, c]) {
   if (x <= a || x >= c) return 0
   if (x === b) return 1
@@ -29,8 +110,15 @@ function triangular(x, [a, b, c]) {
   return c === b ? 1 : (c - x) / (c - b)
 }
 
+/**
+ * @param {Term} term
+ * @param {[number, number]} bounds
+ * @param {number} [steps]
+ * @returns {Point[]}
+ */
 function sampleMf(term, bounds, steps = 160) {
   const [lo, hi] = bounds
+  /** @type {Point[]} */
   const out = []
   for (let i = 0; i <= steps; i++) {
     const x = lo + (i / steps) * (hi - lo)
@@ -39,21 +127,31 @@ function sampleMf(term, bounds, steps = 160) {
   return out
 }
 
+/**
+ * @param {Term} term
+ * @param {[number, number]} bounds
+ * @param {number} strength
+ * @param {number} [steps]
+ * @returns {Point[]}
+ */
 function clipTriangle(term, bounds, strength, steps = 160) {
   const s = Math.max(0, Math.min(1, strength))
   return sampleMf(term, bounds, steps).map(([x, y]) => [x, Math.min(y, s)])
 }
 
+/** @type {import("../types").LiveHook<State, Methods>} */
 export const MamdaniPlayground = {
   mounted() {
     this.data = null
 
-    this.handleEvent("update-mamdani", (data) => {
+    this.handleEvent("update-mamdani", (/** @type {MamdaniData} */ data) => {
       this.data = data
       this.render()
     })
 
+    /** @param {Event} e */
     this._onSliderInput = (e) => {
+      if (!(e.target instanceof HTMLInputElement)) return
       if (e.target.type !== "range" || !this.data) return
       if (e.target.name !== "temperature" && e.target.name !== "humidity") return
       this._updateInputsLocally()
@@ -74,11 +172,13 @@ export const MamdaniPlayground = {
 
     const tempEl = document.querySelector('input[name="temperature"]')
     const humEl = document.querySelector('input[name="humidity"]')
-    if (!tempEl || !humEl) return
+    if (!(tempEl instanceof HTMLInputElement) || !(humEl instanceof HTMLInputElement)) return
 
+    /** @type {Record<string, number>} */
     const values = { temperature: parseFloat(tempEl.value), humidity: parseFloat(humEl.value) }
     const inputVars = this.data.mfs.inputs || []
 
+    /** @type {Record<string, Record<string, number>>} */
     const degrees = {}
     inputVars.forEach((varDef) => {
       degrees[varDef.name] = {}
@@ -91,7 +191,7 @@ export const MamdaniPlayground = {
       const panelEl = d3.select(this.el).select(`[data-var="${varDef.name}"]`)
       if (panelEl.empty()) return
 
-      const scales = panelEl.node().__scales
+      const scales = scalesFor(panelEl)
       if (!scales) return
 
       const crispValue = values[varDef.name]
@@ -122,6 +222,7 @@ export const MamdaniPlayground = {
       .attr("stroke-width", 1.5)
       .attr("stroke-dasharray", "3,3")
 
+    /** @type {{color: string, degree: number, text: string, y: number}[]} */
     const degreeData = []
     varDef.terms.forEach((term, i) => {
       const color = INPUT_TERM_COLORS[i % INPUT_TERM_COLORS.length]
@@ -179,10 +280,9 @@ export const MamdaniPlayground = {
     const { mfs, rules, inputs, input_degrees, output_curves, crisp } = this.data
 
     // Create the stable container structure once
-    let container = d3.select(this.el).select(".mamdani-container")
-    if (container.empty()) {
+    if (d3.select(this.el).select(".mamdani-container").empty()) {
       this.el.innerHTML = ""
-      container = d3
+      const container = d3
         .select(this.el)
         .append("div")
         .attr("class", "mamdani-container")
@@ -200,6 +300,7 @@ export const MamdaniPlayground = {
       container.append("div").attr("class", "mamdani-rules")
       container.append("div").attr("class", "mamdani-output")
     }
+    const container = d3.select(this.el).select(".mamdani-container")
 
     // Input panels: build statics once, always update dynamics
     const inputRow = container.select(".mamdani-input-row")
@@ -216,21 +317,16 @@ export const MamdaniPlayground = {
     inputVars.forEach((varDef) => {
       const panelEl = inputRow.select(`[data-var="${varDef.name}"]`)
       if (panelEl.empty()) return
-      const scales = panelEl.node().__scales
+      const scales = scalesFor(panelEl)
       if (!scales) return
 
+      const crispValue = inputs[varDef.name]
       panelEl
         .select(".input-crisp-readout")
-        .text(typeof inputs[varDef.name] === "number" ? d3.format(".1f")(inputs[varDef.name]) : "-")
+        .text(typeof crispValue === "number" ? d3.format(".1f")(crispValue) : "-")
 
       const g = panelEl.select("svg g")
-      this._renderInputDynamics(
-        g,
-        varDef,
-        inputs[varDef.name],
-        input_degrees[varDef.name] || {},
-        scales
-      )
+      this._renderInputDynamics(g, varDef, crispValue, input_degrees[varDef.name] || {}, scales)
     })
 
     // Rules and output: always rebuild from server data
@@ -291,7 +387,8 @@ export const MamdaniPlayground = {
     const y = d3.scaleLinear().domain([0, 1]).range([innerH, 0])
 
     // Store scales for later dynamic updates
-    panel.node().__scales = { x, y, innerW, innerH }
+    const panelNode = panel.node()
+    if (panelNode) panelScales.set(panelNode, { x, y, innerW, innerH })
 
     g.append("line")
       .attr("x1", 0)
@@ -420,9 +517,10 @@ export const MamdaniPlayground = {
     const barAreaW = innerW - labelW - valueW - 12
 
     const y = d3
-      .scaleBand()
-      .domain(rules.map((_, i) => i))
-      .range([0, innerH])
+      .scaleBand(
+        rules.map((_, i) => i),
+        [0, innerH]
+      )
       .padding(0.22)
 
     const xs = d3.scaleLinear().domain([0, 1]).range([0, barAreaW])
@@ -432,6 +530,7 @@ export const MamdaniPlayground = {
       const strength = r.strength || 0
       const active = strength > 0.01
       const yy = y(i)
+      if (yy === undefined) return
       const bw = y.bandwidth()
 
       g.append("rect")
@@ -584,7 +683,7 @@ export const MamdaniPlayground = {
       .forEach((r) => {
         const term = termByName[r.output_term]
         const color = FAN_COLORS[r.output_term] || "#6b7280"
-        const clipped = clipTriangle(term, varDef.bounds, r.strength)
+        const clipped = clipTriangle(term, varDef.bounds, r.strength || 0)
 
         g.append("path").attr("d", area(clipped)).attr("fill", color).attr("fill-opacity", 0.22)
       })

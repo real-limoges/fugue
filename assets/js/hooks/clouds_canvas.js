@@ -1,4 +1,8 @@
+// @ts-check
 import * as clouds from "../../vendor/petri/js/clouds.js"
+
+// Channels may be fractional mid-computation; Uint8ClampedArray rounds on store.
+/** @typedef {[number, number, number]} Rgb */
 
 // Composition lives here. The WASM is physics-only: it gives us a raw qc
 // field (NX*NZ Float32Array). We pick the view window, palette and tones.
@@ -16,7 +20,9 @@ const VIEW_Z1 = 2500 // m  (2.5 km tall)
 
 // Sky gradient: smooth lerp horizon -> zenith. No bands; the band look
 // fights the painterly clouds.
+/** @type {Rgb} */
 const SKY_ZENITH = [32, 72, 140] // deep cobalt
+/** @type {Rgb} */
 const SKY_HORIZON = [244, 220, 188] // warm peach
 
 // Cloud rendering knobs
@@ -32,8 +38,11 @@ const TRANSMIT_K = 350 // optical-depth coefficient (lower = brighter cores)
 // 3-stop luminance ramp for cloud color. Lightness is the volume cue;
 // hue is decorative. Pumped contrast (deep cool shadow -> warm-white
 // highlight) to match real cumulus.
+/** @type {Rgb} */
 const RAMP_SHADOW = [36, 52, 84]
+/** @type {Rgb} */
 const RAMP_MID = [180, 188, 208]
+/** @type {Rgb} */
 const RAMP_HI = [255, 252, 240]
 
 // Sub-grid cauliflower. Two octaves drive different things:
@@ -54,6 +63,7 @@ const NORMAL_EPS_M = 25 // m, finite diff for normal-noise gradient
 const HORIZON_PY = 300 // top of ground band (px from top of canvas)
 
 // Ground bands: each entry is [py_start, [r,g,b]]; last band runs to bottom.
+/** @type {[number, Rgb][]} */
 const GROUND_BANDS = [
   [300, [156, 168, 110]], // far hazy green
   [312, [140, 158, 92]],
@@ -63,10 +73,15 @@ const GROUND_BANDS = [
 ]
 
 // Barn palette
+/** @type {Rgb} */
 const BARN_RED = [156, 56, 48]
+/** @type {Rgb} */
 const BARN_DARK = [104, 36, 32]
+/** @type {Rgb} */
 const BARN_TRIM = [232, 224, 200]
+/** @type {Rgb} */
 const BARN_ROOF = [56, 44, 40]
+/** @type {Rgb} */
 const BARN_DOOR = [36, 28, 28]
 
 // --- Pre-seed -----------------------------------------------------------
@@ -115,25 +130,39 @@ const PRESEED = [
 
 // --- Helpers -----------------------------------------------------------
 
+/** @param {number} x */
 function clamp01(x) {
   return x < 0 ? 0 : x > 1 ? 1 : x
 }
 
+/**
+ * @param {number} a
+ * @param {number} b
+ * @param {number} x
+ */
 function smoothstep(a, b, x) {
   const t = clamp01((x - a) / (b - a))
   return t * t * (3 - 2 * t)
 }
 
+/**
+ * @param {Rgb} a
+ * @param {Rgb} b
+ * @param {number} t
+ * @returns {Rgb}
+ */
 function lerp3(a, b, t) {
   return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]
 }
 
 // 3-stop ramp: shadow -> mid -> highlight
+/** @param {number} t */
 function sampleRamp3(t) {
   if (t <= 0.5) return lerp3(RAMP_SHADOW, RAMP_MID, t * 2)
   return lerp3(RAMP_MID, RAMP_HI, (t - 0.5) * 2)
 }
 
+/** @param {number} z_m */
 function skyAt(z_m) {
   const u = smoothstep(0, 1, clamp01(z_m / VIEW_Z1))
   return lerp3(SKY_HORIZON, SKY_ZENITH, u)
@@ -141,12 +170,20 @@ function skyAt(z_m) {
 
 // 2D value noise + 3-octave fBm. Used as a sub-grid alpha multiplier so
 // the smooth WASM qc field grows cauliflower texture.
+/**
+ * @param {number} ix
+ * @param {number} iy
+ */
 function hash2(ix, iy) {
   let h = (ix | 0) * 374761393 + (iy | 0) * 668265263
   h = Math.imul(h ^ (h >>> 13), 1274126177)
   return ((h ^ (h >>> 16)) >>> 0) / 4294967295
 }
 
+/**
+ * @param {number} x
+ * @param {number} y
+ */
 function valueNoise(x, y) {
   const ix = Math.floor(x),
     iy = Math.floor(y)
@@ -164,6 +201,17 @@ function valueNoise(x, y) {
 // Deposit a Gaussian blob of qc directly into the WASM grid. Skips the
 // thermal-bubble-rises-and-condenses path entirely: the cloud is here,
 // at altitude, now.
+/**
+ * @param {Float32Array} qc
+ * @param {number} NX
+ * @param {number} NZ
+ * @param {number} DX
+ * @param {number} DZ
+ * @param {number} cx_m
+ * @param {number} cz_m
+ * @param {number} sigma_m
+ * @param {number} peak
+ */
 function paintGaussian(qc, NX, NZ, DX, DZ, cx_m, cz_m, sigma_m, peak) {
   const inv2s2 = 1 / (2 * sigma_m * sigma_m)
   const ixMin = Math.max(0, Math.floor((cx_m - 3 * sigma_m) / DX))
@@ -182,6 +230,10 @@ function paintGaussian(qc, NX, NZ, DX, DZ, cx_m, cz_m, sigma_m, peak) {
   }
 }
 
+/**
+ * @param {number} x
+ * @param {number} y
+ */
 function fbm3(x, y) {
   let v = 0,
     amp = 0.5,
@@ -194,12 +246,17 @@ function fbm3(x, y) {
   return v * 1.5 // approx normalize to [0, 1]
 }
 
+/** @param {Float32Array} qc */
 function makeQcSampler(qc) {
   const NX = clouds.grid.NX,
     NZ = clouds.grid.NZ
   const DX = clouds.grid.DX,
     DZ = clouds.grid.DZ
   // Bilinear sample qc at world coords (x_m, z_m). Out-of-domain = 0.
+  /**
+   * @param {number} x_m
+   * @param {number} z_m
+   */
   return (x_m, z_m) => {
     if (z_m < 0 || z_m > (NZ - 1) * DZ) return 0
     let fx = x_m / DX - 0.5
@@ -220,6 +277,12 @@ function makeQcSampler(qc) {
   }
 }
 
+/**
+ * @param {Uint8ClampedArray} rgba
+ * @param {number} px
+ * @param {number} py
+ * @param {Rgb} rgb
+ */
 function setPx(rgba, px, py, rgb) {
   if (px < 0 || px >= CANVAS_W || py < 0 || py >= CANVAS_H) return
   const off = (py * CANVAS_W + px) * 4
@@ -229,10 +292,19 @@ function setPx(rgba, px, py, rgb) {
   rgba[off + 3] = 255
 }
 
+/**
+ * @param {Uint8ClampedArray} rgba
+ * @param {number} x
+ * @param {number} y
+ * @param {number} w
+ * @param {number} h
+ * @param {Rgb} rgb
+ */
 function fillRect(rgba, x, y, w, h, rgb) {
   for (let py = y; py < y + h; py++) for (let px = x; px < x + w; px++) setPx(rgba, px, py, rgb)
 }
 
+/** @param {Uint8ClampedArray} rgba */
 function drawGround(rgba) {
   for (let py = HORIZON_PY; py < CANVAS_H; py++) {
     let band = GROUND_BANDS[0][1]
@@ -245,6 +317,11 @@ function drawGround(rgba) {
 
 // Small gable-roof barn sitting on the horizon. Anchored at (bx, by) =
 // bottom-left corner of the wall block. Sized for an 800x400 canvas.
+/**
+ * @param {Uint8ClampedArray} rgba
+ * @param {number} bx
+ * @param {number} by
+ */
 function drawBarn(rgba, bx, by) {
   const wallW = 56,
     wallH = 32
@@ -289,12 +366,17 @@ function drawBarn(rgba, bx, by) {
   }
 }
 
+/** @param {Uint8ClampedArray} rgba */
 function drawForeground(rgba) {
   drawGround(rgba)
   // Barn nestled left-of-center, bottom on the horizon band
   drawBarn(rgba, 192, HORIZON_PY + 16)
 }
 
+/**
+ * @param {Uint8ClampedArray} rgba
+ * @param {Float32Array} qc
+ */
 function renderFrame(rgba, qc) {
   const sample = makeQcSampler(qc)
   const dxView = (VIEW_X1 - VIEW_X0) / (CANVAS_W - 1)
@@ -382,14 +464,18 @@ function renderFrame(rgba, qc) {
 
 // --- Hook --------------------------------------------------------------
 
+/** @type {import("../types").LiveHook<{}>} */
 export const CloudsCanvas = {
   async mounted() {
     try {
       await new Promise((r) => requestAnimationFrame(r))
       const canvas = this.el
+      if (!(canvas instanceof HTMLCanvasElement))
+        throw new Error("CloudsCanvas must mount on a <canvas>")
       canvas.width = CANVAS_W
       canvas.height = CANVAS_H
       const ctx = canvas.getContext("2d")
+      if (!ctx) throw new Error("no 2d context")
       ctx.imageSmoothingEnabled = false
 
       await clouds.init()

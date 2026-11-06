@@ -1,3 +1,4 @@
+// @ts-check
 import { setupDprCanvas, attachResizeRedraw, attachThemeRedraw } from "../lib/canvas_figure.js"
 
 // Classical vs quantum random walk overlay with a decoherence slider.
@@ -15,6 +16,10 @@ const TRAJECTORIES = 240
 // 2D accepts that string directly as fillStyle/strokeStyle, with no var()
 // needed since it's already resolved. Alpha is bolted on by inserting a
 // "/ N" before the closing paren, same trick CSS's own oklch() syntax uses.
+/**
+ * @param {string} oklch
+ * @param {number} alpha
+ */
 function withAlpha(oklch, alpha) {
   return oklch.replace(/\)\s*$/, ` / ${alpha})`)
 }
@@ -32,6 +37,7 @@ function resolveColors() {
   }
 }
 
+/** @param {number} steps */
 function classicalDistribution(steps) {
   const W = 2 * steps + 1
   const P = new Float64Array(W)
@@ -46,6 +52,10 @@ function classicalDistribution(steps) {
   return P
 }
 
+/**
+ * @param {number} steps
+ * @param {number} decoherence
+ */
 function quantumDistribution(steps, decoherence) {
   const W = 2 * steps + 1
   const P = new Float64Array(W)
@@ -119,9 +129,16 @@ function quantumDistribution(steps, decoherence) {
   return P
 }
 
+/**
+ * @param {HTMLCanvasElement} canvas
+ * @param {number} steps
+ * @param {Float64Array} classical
+ * @param {Float64Array} quantum
+ */
 function draw(canvas, steps, classical, quantum) {
   const { dpr, cssWidth, cssHeight } = setupDprCanvas(canvas)
   const ctx = canvas.getContext("2d")
+  if (!ctx) return
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
   ctx.clearRect(0, 0, cssWidth, cssHeight)
   const colors = resolveColors()
@@ -145,7 +162,9 @@ function draw(canvas, steps, classical, quantum) {
   const yMax = maxP * 1.1
 
   const W = classical.length
+  /** @param {number} x */
   const xToPx = (x) => padL + (x / (W - 1)) * plotW
+  /** @param {number} p */
   const yToPx = (p) => padT + plotH - (p / yMax) * plotH
 
   // Axes
@@ -174,7 +193,9 @@ function draw(canvas, steps, classical, quantum) {
 
   // Build a list of populated points (skip empty parity slots so the lines
   // are smooth instead of zigzagging through zeros).
+  /** @param {Float64Array} arr */
   const points = (arr) => {
+    /** @type {[number, number][]} */
     const out = []
     for (let i = 0; i < W; i++) {
       if (arr[i] > 0) out.push([xToPx(i), yToPx(arr[i])])
@@ -233,17 +254,45 @@ function draw(canvas, steps, classical, quantum) {
   ctx.fillText("quantum", legendX + 20, legendY + 12)
 }
 
+/**
+ * @typedef {object} State
+ * @property {HTMLCanvasElement} canvas
+ * @property {number} steps
+ * @property {number} decoherence
+ * @property {Float64Array} [classical]
+ * @property {Float64Array} [quantum]
+ * @property {{stop: () => void}} [_resize]
+ * @property {{stop: () => void}} [_theme]
+ */
+
+/**
+ * @typedef {object} Methods
+ * @property {() => void} recompute
+ * @property {() => void} render
+ */
+
+// Slider values arrive as strings from the form or numbers from the
+// defaults map, so both are parsed the same way.
+/** @typedef {{steps: string | number, decoherence: string | number}} WalkParams */
+
+/** @type {import("../types").LiveHook<State, Methods>} */
 export const QuantumWalk = {
   mounted() {
-    this.steps = parseInt(this.el.dataset.steps, 10)
-    this.decoherence = parseFloat(this.el.dataset.decoherence)
+    if (!(this.el instanceof HTMLCanvasElement))
+      throw new Error("QuantumWalk must mount on a <canvas>")
+    this.canvas = this.el
+    this.steps = parseInt(this.el.dataset.steps ?? "", 10)
+    this.decoherence = parseFloat(this.el.dataset.decoherence ?? "")
     this.recompute()
 
-    this.handleEvent("quantum_walk:set_params", ({ steps, decoherence }) => {
-      this.steps = parseInt(steps, 10)
-      this.decoherence = parseFloat(decoherence)
-      this.recompute()
-    })
+    this.handleEvent(
+      "quantum_walk:set_params",
+      (/** @type {WalkParams} */ { steps, decoherence }) => {
+        this.steps = parseInt(String(steps), 10)
+        this.decoherence = parseFloat(String(decoherence))
+        this.recompute()
+      }
+    )
 
     this._resize = attachResizeRedraw(this.el, () => this.render())
     this._theme = attachThemeRedraw(() => this.render())
@@ -262,6 +311,6 @@ export const QuantumWalk = {
 
   render() {
     if (!this.classical || !this.quantum) return
-    draw(this.el, this.steps, this.classical, this.quantum)
+    draw(this.canvas, this.steps, this.classical, this.quantum)
   },
 }

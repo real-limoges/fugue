@@ -19,8 +19,10 @@ defmodule Fugue.Amigos do
   records the sources behind each row.
   """
 
+  alias Fugue.Amigos.{Connection, Layer}
+
   @layers [
-    %{
+    %Layer{
       id: :gobs_friend,
       name: "Gob's friend",
       summary:
@@ -30,14 +32,14 @@ defmodule Fugue.Amigos do
       beats: [1, 2],
       counted: true,
       connections: [
-        %{
+        %Connection{
           direction: :callback,
           target: ~s(S1E19 "Best Man for the Gob"),
           note: "Hot Cops posing as friends"
         }
       ]
     },
-    %{
+    %Layer{
       id: :ice_off_duty,
       name: "Ice off duty",
       summary:
@@ -48,20 +50,20 @@ defmodule Fugue.Amigos do
       beats: [2],
       counted: true,
       connections: [
-        %{
+        %Connection{
           direction: :callback,
           target: ~s(S1E13 "Beef Consommé"),
           note: ~s(a dictionary page lists "hielo")
         },
-        %{direction: :internal, target: nil, note: "the two phone-book ads"},
-        %{
+        %Connection{direction: :internal, target: nil, note: "the two phone-book ads"},
+        %Connection{
           direction: :foreshadowing,
           target: "Season 3",
           note: "a Legoland line (episode not confirmed)"
         }
       ]
     },
-    %{
+    %Layer{
       id: :surveillance,
       name: "Surveillance by proxy",
       summary:
@@ -72,10 +74,14 @@ defmodule Fugue.Amigos do
       beats: [3],
       counted: true,
       connections: [
-        %{direction: :internal, target: nil, note: "each pursuer is pursued by the next"}
+        %Connection{
+          direction: :internal,
+          target: nil,
+          note: "each pursuer is pursued by the next"
+        }
       ]
     },
-    %{
+    %Layer{
       id: :radio,
       name: "Radio signals",
       summary:
@@ -83,9 +89,11 @@ defmodule Fugue.Amigos do
           "room at Buster's Army going-away party.",
       beats: [3],
       counted: true,
-      connections: [%{direction: :internal, target: nil, note: "the surveillance chain"}]
+      connections: [
+        %Connection{direction: :internal, target: nil, note: "the surveillance chain"}
+      ]
     },
-    %{
+    %Layer{
       id: :silent_film,
       name: "Silent film",
       summary:
@@ -95,15 +103,15 @@ defmodule Fugue.Amigos do
       beats: [4, 9, 14],
       counted: true,
       connections: [
-        %{
+        %Connection{
           direction: :callback,
           target: ~s(S1E15 "Staff Infection"),
           note: "the first chicken dance since"
         },
-        %{direction: :internal, target: nil, note: "the hidden cast cameo"}
+        %Connection{direction: :internal, target: nil, note: "the hidden cast cameo"}
       ]
     },
-    %{
+    %Layer{
       id: :tobias_blue,
       name: "Tobias blue",
       summary:
@@ -113,19 +121,19 @@ defmodule Fugue.Amigos do
       beats: [5, 10],
       counted: true,
       connections: [
-        %{
+        %Connection{
           direction: :callback,
           target: ~s(S2E1 "The One Where Michael Leaves"),
           note: ~s("blue myself" first used)
         },
-        %{
+        %Connection{
           direction: :callback,
           target: ~s(S2E2 "The One Where They Build a House"),
           note: "he is blue there too"
         }
       ]
     },
-    %{
+    %Layer{
       id: :real_world_refs,
       name: "Real-world references",
       summary:
@@ -135,16 +143,24 @@ defmodule Fugue.Amigos do
       beats: [6],
       counted: true,
       connections: [
-        %{
+        %Connection{
           direction: :callback,
           target: ~s(S2E2 "The One Where They Build a House"),
           note: "Charlie Browns first used"
         },
-        %{direction: :foreshadowing, target: ~s(S2E4 "Good Grief"), note: "the Peanuts gags"},
-        %{direction: :foreshadowing, target: ~s(S2E11 "Out on a Limb"), note: ~s("Linus")}
+        %Connection{
+          direction: :foreshadowing,
+          target: ~s(S2E4 "Good Grief"),
+          note: "the Peanuts gags"
+        },
+        %Connection{
+          direction: :foreshadowing,
+          target: ~s(S2E11 "Out on a Limb"),
+          note: ~s("Linus")
+        }
       ]
     },
-    %{
+    %Layer{
       id: :borrowed_misunderstandings,
       name: "Borrowed misunderstandings",
       summary:
@@ -153,19 +169,19 @@ defmodule Fugue.Amigos do
       beats: [7],
       counted: true,
       connections: [
-        %{
+        %Connection{
           direction: :callback,
           target: ~s(S1E6 "Charity Drive"),
           note: "the murder misunderstanding"
         },
-        %{
+        %Connection{
           direction: :callback,
           target: ~s(S1E5 "Visiting Ours"),
           note: "the stair car over the prison fence"
         }
       ]
     },
-    %{
+    %Layer{
       id: :crossed_conversations,
       name: "Crossed conversations",
       summary:
@@ -175,9 +191,11 @@ defmodule Fugue.Amigos do
           "The Narrator notes they were never talking about the same person.",
       beats: [8],
       counted: true,
-      connections: [%{direction: :internal, target: nil, note: ~s(a "Who's on first?" structure)}]
+      connections: [
+        %Connection{direction: :internal, target: nil, note: ~s(a "Who's on first?" structure)}
+      ]
     },
-    %{
+    %Layer{
       id: :hog,
       name: "Who's on that hog",
       summary:
@@ -187,10 +205,14 @@ defmodule Fugue.Amigos do
       beats: [8],
       counted: true,
       connections: [
-        %{direction: :internal, target: nil, note: "the Ann-hog nickname, planted earlier"}
+        %Connection{
+          direction: :internal,
+          target: nil,
+          note: "the Ann-hog nickname, planted earlier"
+        }
       ]
     },
-    %{
+    %Layer{
       id: :offices_props,
       name: "Offices and props",
       summary:
@@ -200,10 +222,14 @@ defmodule Fugue.Amigos do
       beats: [9],
       counted: true,
       connections: [
-        %{direction: :internal, target: nil, note: "the banana stand and Cornballer running gags"}
+        %Connection{
+          direction: :internal,
+          target: nil,
+          note: "the banana stand and Cornballer running gags"
+        }
       ]
     },
-    %{
+    %Layer{
       id: :blueprint,
       name: "Blueprint chain",
       summary:
@@ -212,9 +238,11 @@ defmodule Fugue.Amigos do
           "the picture to Ice, who tracks down Tobias in blue makeup and tackles him.",
       beats: [10],
       counted: true,
-      connections: [%{direction: :internal, target: nil, note: "office supplies, then the blue"}]
+      connections: [
+        %Connection{direction: :internal, target: nil, note: "office supplies, then the blue"}
+      ]
     },
-    %{
+    %Layer{
       id: :buster_mexico,
       name: "Buster's fake Mexico",
       summary:
@@ -227,14 +255,14 @@ defmodule Fugue.Amigos do
       beats: [11],
       counted: true,
       connections: [
-        %{
+        %Connection{
           direction: :foreshadowing,
           target: ~s(S2E11 "Out on a Limb"),
           note: "the hand loss, set up by the hand chair and the Arm Off bench"
         }
       ]
     },
-    %{
+    %Layer{
       id: :planted_foreshadowing,
       name: "Planted foreshadowing",
       summary:
@@ -243,24 +271,24 @@ defmodule Fugue.Amigos do
       beats: [12],
       counted: true,
       connections: [
-        %{
+        %Connection{
           direction: :foreshadowing,
           target: ~s("Scandalmakers"),
           note: "the show in which Tobias plays his father-in-law (episode not confirmed)"
         },
-        %{
+        %Connection{
           direction: :foreshadowing,
           target: ~s(S2E18 "Righteous Brothers"),
           note: "the blue picture; George Sr. joins the Blue Man Group"
         },
-        %{
+        %Connection{
           direction: :foreshadowing,
           target: "Later",
           note: "Annyong revealed as a mole (episode not confirmed)"
         }
       ]
     },
-    %{
+    %Layer{
       id: :oscar,
       name: "Oscar",
       summary:
@@ -269,14 +297,14 @@ defmodule Fugue.Amigos do
       beats: [13],
       counted: true,
       connections: [
-        %{
+        %Connection{
           direction: :foreshadowing,
           target: "Later",
           note: "Oscar revealed as Buster's father (episode not confirmed)"
         }
       ]
     },
-    %{
+    %Layer{
       id: :spanish,
       name: "Spanish mistranslations",
       summary:
@@ -285,9 +313,11 @@ defmodule Fugue.Amigos do
           "in broken Spanish; a Cornballer commercial is falsely redubbed in Spanish.",
       beats: [14],
       counted: true,
-      connections: [%{direction: :internal, target: nil, note: "the episode's Mexico setting"}]
+      connections: [
+        %Connection{direction: :internal, target: nil, note: "the episode's Mexico setting"}
+      ]
     },
-    %{
+    %Layer{
       id: :friends_titles,
       name: "Friends titles",
       summary:
@@ -297,38 +327,42 @@ defmodule Fugue.Amigos do
       beats: [15],
       counted: true,
       connections: [
-        %{direction: :callback, target: "S2E1 and S2E2", note: "the first two season 2 titles"}
+        %Connection{
+          direction: :callback,
+          target: "S2E1 and S2E2",
+          note: "the first two season 2 titles"
+        }
       ]
     },
-    %{
+    %Layer{
       id: :tracy,
       name: "Tracy",
       summary: "Tobias sarcastically tells Michael he forgot that Michael's wife is dead.",
       beats: [18],
       counted: true,
       connections: [
-        %{
+        %Connection{
           direction: :callback,
           target: "Earlier",
           note: "the Bluths' insensitivity to Tracy's death (episode not confirmed)"
         }
       ]
     },
-    %{
+    %Layer{
       id: :circumvent,
       name: ~s("Circumvent"),
       summary: ~s(Gob's first mispronunciation of the word, ending in "the ol' reach-around."),
       beats: [17],
       counted: true,
       connections: [
-        %{
+        %Connection{
           direction: :foreshadowing,
           target: "Later",
           note: "a running gag that spreads to other words (episode not confirmed)"
         }
       ]
     },
-    %{
+    %Layer{
       id: :posters_banners,
       name: "Posters and banners",
       summary:
@@ -340,15 +374,19 @@ defmodule Fugue.Amigos do
       beats: [19],
       counted: true,
       connections: [
-        %{
+        %Connection{
           direction: :callback,
           target: ~s(S2E1 "The One Where Michael Leaves"),
           note: "his denial of making mistakes"
         },
-        %{direction: :foreshadowing, target: ~s(S2E12 "Hand to God"), note: "the banner returns"}
+        %Connection{
+          direction: :foreshadowing,
+          target: ~s(S2E12 "Hand to God"),
+          note: "the banner returns"
+        }
       ]
     },
-    %{
+    %Layer{
       id: :george_sr,
       name: "George Sr.",
       summary:
@@ -357,14 +395,14 @@ defmodule Fugue.Amigos do
       beats: [16],
       counted: true,
       connections: [
-        %{
+        %Connection{
           direction: :foreshadowing,
           target: ~s(S2E4 "Good Grief"),
           note: "reveals the funeral is for a death he faked"
         }
       ]
     },
-    %{
+    %Layer{
       id: :gene,
       name: "Gene Parmesan",
       summary:
@@ -375,15 +413,15 @@ defmodule Fugue.Amigos do
       beats: [20],
       counted: true,
       connections: [
-        %{
+        %Connection{
           direction: :foreshadowing,
           target: ~s(S2E6 "Afternoon Delight"),
           note: ~s(his "Come on!", said after counting his money, recurs)
         },
-        %{direction: :internal, target: nil, note: "his first appearance"}
+        %Connection{direction: :internal, target: nil, note: "his first appearance"}
       ]
     },
-    %{
+    %Layer{
       id: :ann,
       name: "Ann",
       summary:
@@ -394,7 +432,7 @@ defmodule Fugue.Amigos do
       beats: [8],
       counted: false,
       connections: [
-        %{
+        %Connection{
           direction: :internal,
           target: nil,
           note:
@@ -406,29 +444,36 @@ defmodule Fugue.Amigos do
   ]
 
   @doc "Every layer, in the order the episode's research table lists them."
+  @spec layers() :: [Layer.t(), ...]
   def layers, do: @layers
 
   @doc "The layer with the given id. Raises if there is none."
+  @spec layer!(atom()) :: Layer.t()
   def layer!(id),
     do: Enum.find(@layers, &(&1.id == id)) || raise(ArgumentError, "no layer #{inspect(id)}")
 
   @doc "The last beat that adds a layer. The ending comes one beat after it."
+  @spec last_beat() :: pos_integer()
   def last_beat, do: @layers |> Enum.flat_map(& &1.beats) |> Enum.max()
 
   @doc """
   The beat a margin starts drawing arrows on: callbacks with the first layer
   that has one, foreshadowing with the first of the forward-pointing notes.
   """
+  @spec arrows_from(:callback | :foreshadowing) :: pos_integer()
   def arrows_from(:callback), do: first_beat(layer!(:silent_film))
   def arrows_from(:foreshadowing), do: first_beat(layer!(:buster_mexico))
 
   @doc "The first beat a layer appears on."
+  @spec first_beat(Layer.t()) :: pos_integer()
   def first_beat(layer), do: Enum.min(layer.beats)
 
   @doc "Every layer that is on the page by the given beat."
+  @spec revealed_by(integer()) :: [Layer.t()]
   def revealed_by(beat), do: Enum.filter(@layers, &(first_beat(&1) <= beat))
 
   @doc "A layer's connections in one direction: `:callback`, `:foreshadowing` or `:internal`."
+  @spec connections(Layer.t(), Connection.direction()) :: [Connection.t()]
   def connections(layer, direction),
     do: Enum.filter(layer.connections, &(&1.direction == direction))
 
@@ -436,5 +481,6 @@ defmodule Fugue.Amigos do
   How many layers the ending's counter admits to: every layer except the
   uncounted one. This is the only source of the counter's number.
   """
+  @spec counted_count() :: non_neg_integer()
   def counted_count, do: Enum.count(@layers, & &1.counted)
 end

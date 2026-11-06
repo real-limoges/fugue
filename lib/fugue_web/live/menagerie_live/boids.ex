@@ -83,10 +83,12 @@ defmodule FugueWeb.MenagerieLive.Boids do
     }
   }
 
+  @impl true
   def mount(_params, _session, socket) do
     {:ok, assign(socket, params: @defaults, sliders: @sliders)}
   end
 
+  @impl true
   def handle_event("update_params", form, socket) do
     AnimatedCard.handle_update_params(form, socket, @sliders, "boids:set_params")
   end
@@ -104,6 +106,7 @@ defmodule FugueWeb.MenagerieLive.Boids do
     AnimatedCard.handle_reset(socket, @defaults, "boids:reset")
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="boids-menagerie p-4 max-w-6xl mx-auto">

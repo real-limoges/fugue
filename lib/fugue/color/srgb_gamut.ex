@@ -29,10 +29,14 @@ defmodule Fugue.Color.SrgbGamut do
 
   @step 0.005
 
+  @typedoc "One tile: chromaticity `{x, y}` and the sRGB hex it is painted with."
+  @type cell :: {float(), float(), String.t()}
+
   @doc """
   Returns `[{cx, cy, hex}, ...]` covering the sRGB chromaticity triangle.
   Cached in `:persistent_term` after first call.
   """
+  @spec cells() :: [cell()]
   def cells do
     case :persistent_term.get({__MODULE__, :cells}, nil) do
       nil ->
@@ -46,6 +50,7 @@ defmodule Fugue.Color.SrgbGamut do
   end
 
   @doc "Cell step in chromaticity units."
+  @spec step() :: float()
   def step, do: @step
 
   defp compute do

@@ -24,10 +24,12 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
     )
   ]
 
+  @impl true
   def mount(_params, _session, socket) do
     {:ok, assign(socket, params: @defaults, sliders: @sliders)}
   end
 
+  @impl true
   def handle_event("set_mode", %{"mode" => mode}, socket) when mode in ["center", "random"] do
     new_params = Map.put(socket.assigns.params, "mode", mode)
 
@@ -45,6 +47,7 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
     AnimatedCard.handle_reset(socket, @defaults, "sandpile:reset")
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="sandpile-menagerie p-4 max-w-6xl mx-auto">

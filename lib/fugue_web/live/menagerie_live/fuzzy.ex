@@ -17,14 +17,11 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
   @bands_lo 0.0
   @bands_hi 48.0
 
+  @impl true
   def mount(_params, _session, socket) do
     mfs = Fuzzy.build_mfs(@default_center_offset, @default_spread)
 
-    {first_date, last_date} =
-      case MelbourneWeather.date_range() do
-        nil -> {"", ""}
-        {f, l} -> {f, l}
-      end
+    {first_date, last_date} = MelbourneWeather.date_range()
 
     socket =
       socket
@@ -44,6 +41,7 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
     {:ok, socket}
   end
 
+  @impl true
   def handle_event(
         "update_fuzzy_params",
         %{"center_offset" => co_str, "spread" => s_str},
@@ -85,6 +83,7 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
     )
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="fuzzy-menagerie p-4 max-w-6xl mx-auto">

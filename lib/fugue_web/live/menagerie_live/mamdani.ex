@@ -11,6 +11,7 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
   alias Fugue.Menagerie.Mamdani, as: MamdaniLogic
   import FugueWeb.MenagerieLive.Parse
 
+  @impl true
   def mount(_params, _session, socket) do
     socket =
       assign(socket,
@@ -23,6 +24,7 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
     {:ok, socket}
   end
 
+  @impl true
   def handle_event("menagerie:mamdani_ready", _params, socket) do
     {:noreply, refresh_mamdani(socket)}
   end
@@ -76,6 +78,7 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
     })
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="mamdani-menagerie p-4 max-w-6xl mx-auto">

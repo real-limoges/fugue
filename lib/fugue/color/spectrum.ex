@@ -26,6 +26,7 @@ defmodule Fugue.Color.Spectrum do
       iex> String.match?(hex, ~r/^#[0-9A-F]{6}$/)
       true
   """
+  @spec hex(number()) :: String.t()
   def hex(lambda) when is_number(lambda) do
     {r, g, b} = rgb(lambda)
     "#" <> byte_hex(r) <> byte_hex(g) <> byte_hex(b)

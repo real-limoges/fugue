@@ -36,6 +36,7 @@ defmodule FugueWeb.LabLive.Bayes do
   @posterior_color "#ff8a28"
   @prior_color "#888888"
 
+  @impl true
   def mount(_params, _session, socket) do
     {:ok,
      socket
@@ -55,6 +56,7 @@ defmodule FugueWeb.LabLive.Bayes do
      |> assign(:threshold_step, @threshold_step)}
   end
 
+  @impl true
   def handle_event("search_cell", %{"index" => i}, socket) do
     i = String.to_integer(i)
 
@@ -130,6 +132,7 @@ defmodule FugueWeb.LabLive.Bayes do
 
   defp random_cell, do: :rand.uniform(@cells) - 1
 
+  @impl true
   def render(assigns) do
     {pa, pb} = posterior(assigns)
 

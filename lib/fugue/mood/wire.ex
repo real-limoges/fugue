@@ -15,16 +15,31 @@ defmodule Fugue.Mood.Wire do
 
   alias Fugue.Mood.{Cluster, Data, DataFrame, Fuzzify, Gaps}
 
+  @typedoc """
+  A JSON-shaped map with string keys, as Ish's HTTP API returned it.
+  Typespecs cannot name string keys one by one; each function's doc gives
+  the shape.
+  """
+  @type json_map :: %{String.t() => term()}
+
   # Not a module attribute: FuzzySet membership functions are closures,
   # which can't be embedded as compile-time attribute literals.
   defp fis, do: Fuzzify.build_mood_fis(Fuzzify.default_membership_func_defs())
 
-  @doc "Matches `Ish.data/2` / `Ish.entries/2` (the two were always identical)."
+  @doc """
+  Matches `Ish.data/2` / `Ish.entries/2` (the two were always identical).
+  Each entry is `%{"date" => iso8601, "dimensions" => %{"sleep" => float, ...}}`.
+  """
+  @spec data(Date.t() | nil, Date.t() | nil) :: {:ok, [json_map()]}
   def data(from, to) do
     {:ok, Enum.map(Data.between(from, to), &encode_entry/1)}
   end
 
-  @doc "Matches `Ish.cluster/4`'s response shape."
+  @doc """
+  Matches `Ish.cluster/4`'s response shape: `"clusters"` (name, centroid,
+  size, labels), `"centers"`, `"membership"`, `"iterations"`.
+  """
+  @spec cluster(pos_integer(), float(), Date.t() | nil, Date.t() | nil) :: {:ok, json_map()}
   def cluster(k, m, from, to) do
     result = Cluster.run(fis(), %{k: k, m: m}, spine(from, to))
 
@@ -37,7 +52,11 @@ defmodule Fugue.Mood.Wire do
      }}
   end
 
-  @doc "Matches `Ish.gaps/2`'s response shape, including its independent internal clustering."
+  @doc """
+  Matches `Ish.gaps/2`'s response shape, including its independent internal
+  clustering: `"transitions"`, `"lengthDistribution"`, `"imputedMemberships"`.
+  """
+  @spec gaps(Date.t() | nil, Date.t() | nil) :: {:ok, json_map()}
   def gaps(from, to) do
     spine = spine(from, to)
     cluster_result = Cluster.run(fis(), Cluster.default_config(), spine)

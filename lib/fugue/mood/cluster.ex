@@ -16,9 +16,41 @@ defmodule Fugue.Mood.Cluster do
   """
 
   alias Fugue.Fuzzy.{FCM, Inference}
-  alias Fugue.Mood.DataFrame
+  alias Fugue.Fuzzy.Inference.Types
+  alias Fugue.Mood.{DataFrame, Entry}
+
+  @typedoc "Cluster count and fuzziness."
+  @type config :: %{k: pos_integer(), m: float()}
+
+  @typedoc "One of the FIS's output readings for a center, e.g. `\"wellbeing high\"`."
+  @type label :: %{name: String.t(), membership: float()}
+
+  @typedoc """
+  A center described for people: its labels joined into a name, its
+  coordinates by dimension, and how many points it is the strongest
+  cluster for.
+  """
+  @type cluster :: %{
+          name: String.t(),
+          centroid: %{Entry.dimension() => float()},
+          size: non_neg_integer(),
+          labels: [label()]
+        }
+
+  @typedoc """
+  `dates` is positionally aligned with `membership`'s rows, so a row can be
+  related back to its calendar day.
+  """
+  @type result :: %{
+          clusters: [cluster()],
+          centers: [FCM.point()],
+          membership: FCM.membership(),
+          iterations: pos_integer(),
+          dates: [Date.t()]
+        }
 
   @doc "Default cluster config: `%{k: 3, m: 2.0}`."
+  @spec default_config() :: config()
   def default_config, do: %{k: 3, m: 2.0}
 
   @doc """
@@ -29,6 +61,7 @@ defmodule Fugue.Mood.Cluster do
   rows, for callers (gap analysis) that need to relate a membership row
   back to a calendar date.
   """
+  @spec run(Types.fis(), config(), DataFrame.spine()) :: result()
   def run(fis, config, spine) do
     present = DataFrame.extract_present_rows(spine)
     points = Enum.map(present, & &1.point)
@@ -47,7 +80,7 @@ defmodule Fugue.Mood.Cluster do
   end
 
   defp label_centers(fis, centers, membership) do
-    dims = Fugue.Mood.Entry.dimension_order()
+    dims = Entry.dimension_order()
     dim_names = Enum.map(dims, &Atom.to_string/1)
 
     centers

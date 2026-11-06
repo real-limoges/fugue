@@ -47,4 +47,52 @@ defmodule FugueWeb.MoodLive.SnapshotTest do
     assert snapshot.radar_dimensions == DataTransforms.dimensions()
     assert snapshot.flower_dimensions == DataTransforms.dimensions()
   end
+
+  # Dialyzer cannot see field types inside a list of maps (an Enum.map result
+  # overlaps any list type through the empty list), so the @type shapes in
+  # DataTransforms and Snapshot are checked here instead: every element of
+  # every collection must carry exactly the keys its type names. Keep these
+  # lists in step with the @type definitions.
+  @collection_keys %{
+    smoothed_daily: [:cluster, :date],
+    mood_transitions: [:date, :from, :to],
+    timeline_segments: [:cluster, :end_date, :start],
+    trajectory_points: [:cluster, :date, :x, :y],
+    radar_centroids: [:id, :name, :values],
+    stream_series: [:date, :memberships],
+    mood_flowers_list: [:cluster, :count, :month, :raw, :values],
+    distribution_points: [:cluster, :dimensions],
+    distribution_clusters: [:color, :id, :name],
+    season_months: [:counts, :month, :total],
+    ambiguity_bins: [:count, :x0, :x1],
+    drift_dimensions: [:dimension, :series]
+  }
+
+  for {field, keys} <- @collection_keys do
+    test "every #{field} element has exactly the keys #{inspect(keys)}", %{snapshot: snapshot} do
+      collection = Map.fetch!(snapshot, unquote(field))
+      assert collection != [], "#{unquote(field)} is empty, so its shape went unchecked"
+
+      for element <- collection do
+        assert element |> Map.keys() |> Enum.sort() == unquote(keys)
+      end
+    end
+  end
+
+  test "stats carries exactly the keys DataTransforms.stats/0 names", %{snapshot: snapshot} do
+    assert snapshot.stats |> Map.keys() |> Enum.sort() ==
+             Enum.sort([
+               :entry_count,
+               :date_range,
+               :cluster_count,
+               :transition_count,
+               :most_common,
+               :gap_count,
+               :longest_run,
+               :first_state,
+               :last_state,
+               :biggest_flow,
+               :ambiguity
+             ])
+  end
 end

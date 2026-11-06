@@ -24,6 +24,7 @@ defmodule Fugue.Color.Daltonize do
   Returns the protanope-simulated sRGB hex for an sRGB hex input
   (e.g. `"#cc3333"` -> `"#7c7c33"`).
   """
+  @spec protan_hex(String.t()) :: String.t()
   def protan_hex("#" <> hex) when byte_size(hex) == 6 do
     hex
     |> parse_hex()

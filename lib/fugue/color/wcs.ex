@@ -13,13 +13,22 @@ defmodule Fugue.Color.WCS do
   Regenerate with `mix fugue.color.gen` after Timbre changes.
   """
 
+  @type language :: :tarahumara | :kalam | :nafaanra | :walpiri
+
+  @typedoc "A WCS term code such as `\"M\"`; decode with `term_label/2`."
+  @type term_code :: String.t()
+
   @hue_count 40
   @lightness_count 8
 
+  @spec hue_count() :: pos_integer()
   def hue_count, do: @hue_count
+
+  @spec lightness_count() :: pos_integer()
   def lightness_count, do: @lightness_count
 
   @languages [:tarahumara, :kalam, :nafaanra, :walpiri]
+  @spec languages() :: [language(), ...]
   def languages, do: @languages
 
   @labels %{
@@ -28,6 +37,7 @@ defmodule Fugue.Color.WCS do
     :nafaanra => "Nafaanra",
     :walpiri => "Walpiri"
   }
+  @spec language_label(language()) :: String.t()
   def language_label(lang), do: Map.fetch!(@labels, lang)
 
   @terms %{
@@ -37,6 +47,7 @@ defmodule Fugue.Color.WCS do
     :walpiri => ["M", "Y", "K", "D", "A", "W", "U", "WJ"]
   }
   @doc "Modal-winning term codes used in `lang`'s grid, by descending frequency."
+  @spec terms(language()) :: [term_code(), ...]
   def terms(lang), do: Map.fetch!(@terms, lang)
 
   @term_colors %{
@@ -73,6 +84,7 @@ defmodule Fugue.Color.WCS do
     }
   }
   @doc "Representative sRGB hex for term `code` in `lang`."
+  @spec term_color(language(), term_code()) :: String.t()
   def term_color(lang, code), do: @term_colors |> Map.fetch!(lang) |> Map.fetch!(code)
 
   @transcriptions %{
@@ -109,6 +121,7 @@ defmodule Fugue.Color.WCS do
     }
   }
   @doc "Native-language transcription for term `code` in `lang`."
+  @spec term_label(language(), term_code()) :: String.t()
   def term_label(lang, code), do: @transcriptions |> Map.fetch!(lang) |> Map.fetch!(code)
 
   @chips %{
@@ -1402,9 +1415,11 @@ defmodule Fugue.Color.WCS do
     }
   }
   @doc "Modal term code + consensus (0..1] for `lang` at chip (h, l)."
+  @spec modal(language(), non_neg_integer(), non_neg_integer()) :: {term_code(), float()}
   def modal(lang, h, l), do: @chips |> Map.fetch!(lang) |> Map.fetch!({h, l})
 
   @doc "Approximate base sRGB backdrop for a chip at hue index h and lightness row l."
+  @spec chip_color(non_neg_integer(), non_neg_integer()) :: String.t()
   def chip_color(h, l) do
     lambda = 380 + h / @hue_count * 320.0
     base = Fugue.Color.Spectrum.hex(lambda)

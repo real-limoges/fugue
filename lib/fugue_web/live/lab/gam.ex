@@ -12,6 +12,7 @@ defmodule FugueWeb.LabLive.Gam do
   @layer_ids ~w(linear gam gamlss)
   @initial_dataset "house_price"
 
+  @impl true
   def mount(_params, _session, socket) do
     layer_state =
       for ds <- GamDatasets.all(), into: %{} do
@@ -25,6 +26,7 @@ defmodule FugueWeb.LabLive.Gam do
      |> assign(:layer_state, layer_state)}
   end
 
+  @impl true
   def handle_event("lab_gam:ready", _, socket) do
     id = socket.assigns.dataset_id
 
@@ -64,6 +66,7 @@ defmodule FugueWeb.LabLive.Gam do
      |> push_event("lab_gam:set_layers", %{layers: updated})}
   end
 
+  @impl true
   def render(assigns) do
     {:ok, current} = GamDatasets.fetch(assigns.dataset_id)
     layers = assigns.layer_state[assigns.dataset_id]

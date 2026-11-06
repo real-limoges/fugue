@@ -28,6 +28,7 @@ defmodule FugueWeb.AmigosLive do
   # pinned stage.
   @beat_svh 100
 
+  @impl true
   def mount(_params, _session, socket) do
     {:ok,
      socket
@@ -41,6 +42,7 @@ defmodule FugueWeb.AmigosLive do
      |> assign(:mode, :scroll)}
   end
 
+  @impl true
   def handle_event("beat", %{"beat" => beat}, socket) when is_integer(beat) do
     reached = beat |> max(1) |> min(@last_beat)
     {:noreply, assign(socket, :beat, reached)}
@@ -54,6 +56,7 @@ defmodule FugueWeb.AmigosLive do
     {:noreply, assign(socket, beat: 1, mode: :scroll)}
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <article

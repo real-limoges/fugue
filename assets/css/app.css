@@ -117,23 +117,6 @@
   --chart-text: oklch(92% 0.02 300);
 }
 
-/* Reusable SVG chart styles */
-.svg-chart-container {
-  @apply w-full max-w-3xl mx-auto;
-}
-
-.svg-chart-path {
-  @apply transition-all duration-200 ease-out;
-}
-
-.svg-chart-highlight {
-  @apply fill-opacity-0.85 stroke-opacity-0.6;
-}
-
-.svg-chart-dim {
-  @apply fill-opacity-0.08 stroke-opacity-0.05;
-}
-
 /* Reusable tooltip styles */
 .tooltip-card {
   @apply absolute pointer-events-none bg-neutral text-neutral-content p-3.5 rounded-lg border border-neutral-content/12 shadow-lg text-sm leading-relaxed whitespace-nowrap z-10 opacity-0 transition-opacity;

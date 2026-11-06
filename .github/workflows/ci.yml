@@ -50,6 +50,16 @@ jobs:
           key: ${{ runner.os }}-build-${{ env.ELIXIR_VERSION }}-${{ env.OTP_VERSION }}-${{ hashFiles('**/mix.lock') }}
           restore-keys: ${{ runner.os }}-build-${{ env.ELIXIR_VERSION }}-${{ env.OTP_VERSION }}-
 
+      # Dialyzer's table of library types. A restored PLT from an older
+      # mix.lock is fine: dialyxir adds and removes the changed modules
+      # rather than rebuilding from scratch.
+      - name: Cache Dialyzer PLT
+        uses: actions/cache@v6
+        with:
+          path: priv/plts
+          key: ${{ runner.os }}-plt-${{ env.ELIXIR_VERSION }}-${{ env.OTP_VERSION }}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: ${{ runner.os }}-plt-${{ env.ELIXIR_VERSION }}-${{ env.OTP_VERSION }}-
+
       - name: Install dependencies
         run: mix deps.get
 
@@ -61,10 +71,10 @@ jobs:
           cache: npm
           cache-dependency-path: assets/package-lock.json
 
-      - name: Install asset deps (Prettier, vitest)
+      - name: Install asset deps (Prettier, vitest, TypeScript)
         run: npm --prefix assets ci
 
-      - name: Precommit checks (compile, format, credo, JS tests, tests with coverage)
+      - name: Precommit checks (compile, format, credo, dialyzer, JS format, JS types, JS tests, tests with coverage)
         run: mix precommit
 
   # Advisories fail this job on the weekly run and on PRs. It stays out of the

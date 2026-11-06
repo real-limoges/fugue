@@ -31,10 +31,12 @@ defmodule FugueWeb.MenagerieLive.QuantumWalk do
     )
   ]
 
+  @impl true
   def mount(_params, _session, socket) do
     {:ok, assign(socket, params: @defaults, sliders: @sliders)}
   end
 
+  @impl true
   def handle_event("update_params", form, socket) do
     AnimatedCard.handle_update_params(form, socket, @sliders, "quantum_walk:set_params")
   end
@@ -44,8 +46,10 @@ defmodule FugueWeb.MenagerieLive.QuantumWalk do
   end
 
   @doc false
+  @spec format_decoherence(float()) :: String.t()
   def format_decoherence(d), do: :erlang.float_to_binary(d, decimals: 2)
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="quantum-walk-menagerie p-4 max-w-6xl mx-auto">

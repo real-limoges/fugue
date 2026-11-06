@@ -1,7 +1,108 @@
 defmodule FugueWeb.MoodLive.DataTransforms do
-  @moduledoc "Pure data transformations for mood analysis: clustering, distributions, calendar days."
+  @moduledoc """
+  Pure data transformations for mood analysis: clustering, distributions,
+  calendar days.
+
+  Inputs are the string-keyed wire maps `Fugue.Mood.Wire` produces (dates
+  as ISO-8601 strings), a leftover of the HTTP service Ish used to be.
+  Typespecs cannot name string keys, so `wire_entry/0` is typed only as a
+  JSON map; the outputs below are atom-keyed and typed field by field.
+  """
 
   alias FugueWeb.MoodLive.Structs.{AnalysisResult, CalendarDay, GapData}
+
+  @typedoc ~s|`%{"date" => iso_date(), "dimensions" => %{dimension() => float() \| nil}}`.|
+  @type wire_entry :: Fugue.Mood.Wire.json_map()
+
+  @typedoc ~s|A cluster from the wire, plus the `"id"` and generated `"name"` `parse_analysis/2` adds.|
+  @type wire_cluster :: Fugue.Mood.Wire.json_map()
+
+  @typedoc "A day as `YYYY-MM-DD`. Compares and sorts correctly as a string."
+  @type iso_date :: String.t()
+
+  @typedoc ~s|`"sleep"`, `"anxiety"`, `"sensitivity"`, `"outlook"` or `"speed"`.|
+  @type dimension :: String.t()
+
+  @typedoc ~s|`"cluster_0"`, `"cluster_1"`, ...|
+  @type cluster_id :: String.t()
+
+  @typedoc "Membership degree by cluster id."
+  @type memberships :: %{cluster_id() => number()}
+
+  @typedoc "A day's dominant cluster, after smoothing when it comes from `smooth_runs/2`."
+  @type daily :: %{date: iso_date(), cluster: cluster_id()}
+
+  @type centroid :: %{id: cluster_id(), name: String.t(), values: %{dimension() => float()}}
+
+  @type trajectory_point :: %{
+          x: float(),
+          y: float(),
+          date: iso_date(),
+          cluster: cluster_id() | nil
+        }
+
+  @typedoc "`raw` is the month's mean per dimension; `values` rescales it to 0.2-1.0 across months."
+  @type mood_flower :: %{
+          month: String.t(),
+          raw: %{dimension() => float()},
+          values: %{dimension() => float()},
+          count: pos_integer(),
+          cluster: cluster_id() | nil
+        }
+
+  @type season_month :: %{
+          month: 1..12,
+          counts: %{cluster_id() => pos_integer()},
+          total: non_neg_integer()
+        }
+
+  @type ambiguity_bin :: %{x0: float(), x1: float(), count: non_neg_integer()}
+
+  @type drift :: %{dimension: dimension(), series: [%{date: iso_date(), value: float()}]}
+
+  @type segment :: %{start: iso_date(), end_date: iso_date(), cluster: cluster_id()}
+
+  @typedoc "A cluster named in prose; `days` is present where the stat counts days."
+  @type cluster_ref :: %{
+          required(:id) => cluster_id(),
+          required(:name) => String.t(),
+          optional(:days) => pos_integer()
+        }
+
+  @type neighbor :: %{
+          date: iso_date(),
+          dimensions: %{dimension() => float() | nil},
+          dominant_id: cluster_id() | nil,
+          dominant_name: String.t() | nil
+        }
+
+  @type day_detail :: %{
+          date: iso_date(),
+          dimensions: %{dimension() => float() | nil},
+          memberships: [%{id: cluster_id(), name: String.t(), weight: number()}],
+          dominant: %{id: cluster_id(), name: String.t(), weight: number()} | nil,
+          prev: neighbor() | nil,
+          next: neighbor() | nil,
+          cluster_colors: %{cluster_id() => String.t()}
+        }
+
+  @type stats :: %{
+          entry_count: non_neg_integer(),
+          date_range: {iso_date(), iso_date()} | nil,
+          cluster_count: non_neg_integer(),
+          transition_count: non_neg_integer(),
+          most_common: cluster_ref() | nil,
+          gap_count: non_neg_integer(),
+          longest_run: cluster_ref() | nil,
+          first_state: cluster_ref() | nil,
+          last_state: cluster_ref() | nil,
+          biggest_flow:
+            %{from: cluster_ref() | nil, to: cluster_ref() | nil, count: pos_integer()} | nil,
+          ambiguity: %{count: non_neg_integer(), pct: non_neg_integer(), threshold: float()}
+        }
+
+  @typedoc "A smoothed dominant-cluster change, dated to the first day of the new state."
+  @type mood_transition :: %{date: iso_date(), from: cluster_id(), to: cluster_id()}
 
   @dimensions ~w(sleep anxiety sensitivity outlook speed)
   @cluster_colors ~w(#e44dbc #42c8e6 #6ee64d #e6a542 #a86ee6 #e6e042 #e6425a #42e6b8)
@@ -20,9 +121,11 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   }
 
   @doc "Returns the canonical list of mood dimensions."
+  @spec dimensions() :: [dimension(), ...]
   def dimensions, do: @dimensions
 
   @doc "Parses raw API response into an AnalysisResult with generated cluster names."
+  @spec parse_analysis(Fugue.Mood.Wire.json_map(), [wire_entry()]) :: AnalysisResult.t()
   def parse_analysis(raw, entries) do
     raw_membership = raw["membership"] || []
 
@@ -50,12 +153,12 @@ defmodule FugueWeb.MoodLive.DataTransforms do
       cluster_names: Enum.into(clusters, %{}, fn c -> {c["id"], c["name"]} end),
       cluster_ids: Enum.map(clusters, & &1["id"]),
       raw_centroids: raw_centroids,
-      fpc: raw["fpc"],
       iterations: raw["iterations"]
     }
   end
 
   @doc "Builds normalized radar centroids for each cluster from cached raw centroids."
+  @spec build_centroids(AnalysisResult.t()) :: [centroid()]
   def build_centroids(%AnalysisResult{} = analysis) do
     analysis.raw_centroids
     |> Enum.map(fn {cluster, values} ->
@@ -65,6 +168,8 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   end
 
   @doc "Builds calendar day structs spanning the full date range, including gap days."
+  @spec build_calendar_days([wire_entry()], AnalysisResult.t(), GapData.t() | nil) ::
+          [CalendarDay.t()]
   def build_calendar_days(entries, %AnalysisResult{} = analysis, gaps) do
     imputed = if gaps, do: gaps.imputed_memberships, else: %{}
 
@@ -111,7 +216,12 @@ defmodule FugueWeb.MoodLive.DataTransforms do
     end
   end
 
-  @doc "Builds membership map from a raw membership row (tuple or list) and cluster list."
+  @doc """
+  Builds membership map from a raw membership row (tuple or list) and
+  cluster list. A cluster past the end of the row gets 0; anything else
+  gives `%{}`.
+  """
+  @spec build_memberships(term(), [wire_cluster()]) :: memberships()
   def build_memberships(row, clusters) when is_tuple(row) do
     size = tuple_size(row)
 
@@ -129,6 +239,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   def build_memberships(_, _), do: %{}
 
   @doc "Remaps gap data keys from API names to internal cluster IDs."
+  @spec remap_gap_keys(GapData.t() | nil, %{String.t() => cluster_id()}) :: GapData.t() | nil
   def remap_gap_keys(nil, _mapping), do: nil
 
   def remap_gap_keys(%GapData{} = gaps, mapping) do
@@ -148,6 +259,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   end
 
   @doc "Assigns colors from the synthwave palette to each cluster."
+  @spec build_cluster_colors([wire_cluster()]) :: %{cluster_id() => String.t()}
   def build_cluster_colors(clusters) do
     clusters
     |> Enum.with_index()
@@ -157,6 +269,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   end
 
   @doc "Returns chronological list of %{date, cluster} for each entry's dominant cluster."
+  @spec daily_dominants([wire_entry()], AnalysisResult.t()) :: [daily()]
   def daily_dominants(entries, %AnalysisResult{} = analysis) do
     entries
     |> Enum.with_index()
@@ -178,6 +291,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   Smooths a daily dominant-cluster sequence by holding the current state until
   a new cluster persists for at least `min_length` consecutive days.
   """
+  @spec smooth_runs([daily()], pos_integer()) :: [daily()]
   def smooth_runs(daily, min_length \\ @min_run_length)
   def smooth_runs([], _min_length), do: []
   def smooth_runs(daily, min_length) when min_length <= 1, do: daily
@@ -208,6 +322,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   end
 
   @doc "The minimum run length used by `smooth_runs/1`."
+  @spec min_run_length() :: pos_integer()
   def min_run_length, do: @min_run_length
 
   @doc """
@@ -217,6 +332,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   in order: four years of mood as a single scribble in a 2D space the data
   discovered for itself.
   """
+  @spec build_trajectory([wire_entry()], [daily()]) :: [trajectory_point()]
   def build_trajectory(entries, smoothed_daily) do
     matrix =
       Enum.map(entries, fn e ->
@@ -331,6 +447,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   per-dimension range across all months so each flower's spoke length reflects
   that month's value relative to the user's full history.
   """
+  @spec build_mood_flowers([wire_entry()], [daily()]) :: [mood_flower()]
   def build_mood_flowers(entries, smoothed_daily) do
     cluster_mode_by_month =
       smoothed_daily
@@ -394,6 +511,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   end
 
   @doc "Aggregates cluster dominance by month-of-year across all years for seasonality analysis."
+  @spec build_seasonality([daily()]) :: [season_month(), ...]
   def build_seasonality(smoothed_daily) do
     by_month =
       smoothed_daily
@@ -410,6 +528,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   end
 
   @doc "Builds a histogram of max-membership values for the ambiguity visualization."
+  @spec build_ambiguity_histogram([wire_entry()], AnalysisResult.t()) :: [ambiguity_bin(), ...]
   def build_ambiguity_histogram(entries, %AnalysisResult{} = analysis) do
     max_memberships =
       entries
@@ -440,6 +559,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   end
 
   @doc "Computes per-dimension rolling averages for long-term drift analysis."
+  @spec build_drift([wire_entry()], pos_integer()) :: [drift(), ...]
   def build_drift(entries, window \\ 90) do
     sorted = Enum.sort_by(entries, & &1["date"])
     n = length(sorted)
@@ -468,6 +588,7 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   end
 
   @doc "Builds contiguous time segments where the dominant cluster stays the same."
+  @spec build_segments([daily()]) :: [segment()]
   def build_segments([]), do: []
 
   def build_segments([first | rest]) do
@@ -487,7 +608,12 @@ defmodule FugueWeb.MoodLive.DataTransforms do
     Enum.reverse([current | segments])
   end
 
-  @doc "Builds a detail map for a single day, including neighbors."
+  @doc "Builds a detail map for a single day, including neighbors. `nil` when no entry has that date."
+  @spec build_day_detail(iso_date(), %{
+          required(:entries) => [wire_entry()],
+          required(:analysis) => AnalysisResult.t(),
+          optional(atom()) => term()
+        }) :: day_detail() | nil
   def build_day_detail(date, assigns) do
     %{entries: entries, analysis: analysis} = assigns
 
@@ -533,6 +659,13 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   end
 
   @doc "Computes summary statistics for the narrative header."
+  @spec narrative_stats(
+          [wire_entry()],
+          AnalysisResult.t(),
+          [daily()],
+          [mood_transition()],
+          GapData.t() | nil
+        ) :: stats()
   def narrative_stats(entries, analysis, smoothed_daily, mood_transitions, gaps) do
     transitions = mood_transitions
 

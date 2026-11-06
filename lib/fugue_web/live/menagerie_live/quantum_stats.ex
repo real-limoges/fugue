@@ -32,10 +32,12 @@ defmodule FugueWeb.MenagerieLive.QuantumStats do
     )
   ]
 
+  @impl true
   def mount(_params, _session, socket) do
     {:ok, assign(socket, params: @defaults, sliders: @sliders)}
   end
 
+  @impl true
   def handle_event("update_params", form, socket) do
     AnimatedCard.handle_update_params(form, socket, @sliders, "quantum_stats:set_params")
   end
@@ -45,10 +47,12 @@ defmodule FugueWeb.MenagerieLive.QuantumStats do
   end
 
   @doc false
+  @spec format_log_temperature(number()) :: String.t()
   def format_log_temperature(log_t) do
     "kT = " <> :erlang.float_to_binary(:math.pow(10, log_t), decimals: 2)
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="quantum-stats-menagerie p-4 max-w-6xl mx-auto">

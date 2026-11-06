@@ -13,8 +13,10 @@ defmodule Fugue.Fuzzy.Inference.Mamdani do
   """
 
   alias Fugue.Fuzzy.Defuzzify
+  alias Fugue.Fuzzy.Inference.Types
 
   @doc "Fuzzify -> infer -> defuzzify (centroid). Returns `%{output_var => crisp_value}`."
+  @spec run(Types.fis(), Types.crisp_inputs()) :: %{String.t() => float()}
   def run(fis, inputs) do
     fis.rules
     |> Enum.map(&eval_rule(fis, inputs, &1))
@@ -28,6 +30,7 @@ defmodule Fugue.Fuzzy.Inference.Mamdani do
   inputs, per-rule firing strengths, per-output-var aggregated curves, and
   crisp outputs) that UI callers use for visualization.
   """
+  @spec trace(Types.fis(), Types.crisp_inputs()) :: Types.inference_trace()
   def trace(fis, inputs) do
     grouped =
       fis.rules

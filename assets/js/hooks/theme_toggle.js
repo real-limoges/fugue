@@ -1,3 +1,4 @@
+// @ts-check
 // Flips the site's light/dark theme. Purely client-side: no LiveView
 // round-trip needed. Persists the explicit choice to localStorage so it
 // survives reloads and overrides the system preference from then on;
@@ -8,14 +9,23 @@
 
 const STORAGE_KEY = "fugue-theme"
 
+/** @param {"light" | "dark"} theme */
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme)
   window.dispatchEvent(new CustomEvent("fugue:theme-changed", { detail: { theme } }))
 }
 
+/**
+ * @typedef {object} State
+ * @property {MediaQueryList} _media
+ * @property {(e: MediaQueryListEvent) => void} _onMediaChange
+ */
+
+/** @type {import("../types").LiveHook<State>} */
 export const ThemeToggle = {
   mounted() {
     this._media = matchMedia("(prefers-color-scheme: dark)")
+    /** @param {MediaQueryListEvent} e */
     this._onMediaChange = (e) => {
       if (localStorage.getItem(STORAGE_KEY) === null) {
         applyTheme(e.matches ? "dark" : "light")

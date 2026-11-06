@@ -1,12 +1,18 @@
+// @ts-check
 // Theme-color helpers for the petri-style intensity splashes (boids,
 // sandpile, langton, oscillators). DaisyUI exposes its theme as oklch CSS
 // custom properties; canvas 2D won't accept oklch as a color, so we paint
 // it onto a 1x1 probe and read the rendered RGBA back. The color table is
 // a precomputed gradient lookup the per-pixel render loop indexes into.
 
+/** @typedef {[number, number, number]} Rgb */
+
+/** @type {Rgb} */
 const FALLBACK_BASE = [28, 19, 37]
+/** @type {Rgb} */
 const FALLBACK_PRIMARY = [200, 50, 180]
 
+/** @returns {{base: Rgb, primary: Rgb}} */
 export function resolveThemeColors() {
   const style = getComputedStyle(document.documentElement)
   const baseProp = style.getPropertyValue("--color-base-100").trim()
@@ -23,6 +29,11 @@ export function resolveThemeColors() {
   }
 }
 
+/**
+ * @param {Rgb} base
+ * @param {Rgb} primary
+ * @returns {Uint8Array} 256 RGBA entries, base at 0 easing to primary at 255
+ */
 export function buildColorTable(base, primary) {
   const table = new Uint8Array(256 * 4)
   for (let i = 0; i < 256; i++) {
@@ -37,8 +48,16 @@ export function buildColorTable(base, primary) {
   return table
 }
 
+// `pctx` is null when the browser refuses a 2D context (too many live
+// canvases, or a lost GPU process); the splash then draws in the fallback.
+/**
+ * @param {CanvasRenderingContext2D | null} pctx
+ * @param {string} oklchStr
+ * @param {Rgb} fallback
+ * @returns {Rgb}
+ */
 function paintAndRead(pctx, oklchStr, fallback) {
-  if (!oklchStr) return fallback
+  if (!pctx || !oklchStr) return fallback
   pctx.clearRect(0, 0, 1, 1)
   pctx.fillStyle = oklchStr
   pctx.fillRect(0, 0, 1, 1)

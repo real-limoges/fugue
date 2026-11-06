@@ -1,4 +1,36 @@
+// @ts-check
 import * as THREE from "three"
+
+/**
+ * One brick in a shape, in integer stud-grid coordinates.
+ * @typedef {object} BrickSpec
+ * @property {number} x
+ * @property {number} y
+ * @property {number} z
+ * @property {number} wx footprint along X
+ * @property {number} wz footprint along Z
+ */
+
+/** @typedef {{x: number, y: number, z: number}} Rotation */
+
+/**
+ * A brick drifting in from off-screen toward its slot.
+ * @typedef {object} Spawning
+ * @property {THREE.Group} mesh
+ * @property {BrickSpec} brickSpec
+ * @property {THREE.Vector3} startPos
+ * @property {THREE.Vector3} targetPos
+ * @property {Rotation} startRot
+ * @property {number} t0
+ */
+
+/**
+ * A placed brick, with `exit` set once dismantling sends it away.
+ * @typedef {object} PlacedBrick
+ * @property {THREE.Group} mesh
+ * @property {BrickSpec} brickSpec
+ * @property {{startPos: THREE.Vector3, targetPos: THREE.Vector3, startRot: Rotation, targetRot: Rotation, t0: number}} [exit]
+ */
 
 const STUD_UNIT = 1
 const BRICK_HEIGHT = 1.2
@@ -10,7 +42,15 @@ const HOLD_AFTER_BUILD_MS = 1800
 const DISMANTLE_INTERVAL_MS = 220
 const LEAVE_DURATION_MS = 900
 
-const COLOR_PROPS = ["--color-primary", "--color-secondary", "--color-accent", "--color-info"]
+const COLOR_PROPS = /** @type {const} */ ([
+  "--color-primary",
+  "--color-secondary",
+  "--color-accent",
+  "--color-info",
+])
+/** @typedef {typeof COLOR_PROPS[number]} ColorProp */
+
+/** @type {Record<ColorProp, number[]>} */
 const FALLBACKS = {
   "--color-primary": [200, 50, 180],
   "--color-secondary": [50, 180, 200],
@@ -21,6 +61,7 @@ const FALLBACKS = {
 // Each shape is an ordered list of bricks. Build order is bottom-up so the
 // structure looks like it's actually being assembled. {x, y, z, wx, wz} are
 // integer stud-grid coordinates; wx is footprint along X, wz along Z.
+/** @type {BrickSpec[][]} */
 const SHAPES = [
   // Stepped pyramid (4x4 base, 2x2 mid, 2x2 cap), 6 bricks
   [
@@ -72,24 +113,37 @@ const SHAPES = [
 const GRID_W = 4
 const GRID_D = 4
 
+/**
+ * @param {ColorProp} prop
+ * @returns {THREE.Color}
+ */
 function readColor(prop) {
+  const fallback = FALLBACKS[prop]
   const value = getComputedStyle(document.documentElement).getPropertyValue(prop).trim()
   const probe = document.createElement("canvas")
   probe.width = 1
   probe.height = 1
   const pctx = probe.getContext("2d", { willReadFrequently: true })
+  if (!pctx) return new THREE.Color(fallback[0] / 255, fallback[1] / 255, fallback[2] / 255)
   pctx.fillStyle = "rgb(0,0,0)"
   pctx.fillRect(0, 0, 1, 1)
-  pctx.fillStyle = value || `rgb(${FALLBACKS[prop].join(",")})`
+  pctx.fillStyle = value || `rgb(${fallback.join(",")})`
   pctx.fillRect(0, 0, 1, 1)
   const [r, g, b] = pctx.getImageData(0, 0, 1, 1).data
   return new THREE.Color(r / 255, g / 255, b / 255)
 }
 
+/** @param {number} t */
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
 }
 
+/**
+ * @param {number} wx
+ * @param {number} wz
+ * @param {THREE.Color} color
+ * @returns {THREE.Group}
+ */
 function makeBrickMesh(wx, wz, color) {
   const group = new THREE.Group()
   const bodyGeom = new THREE.BoxGeometry(wx * STUD_UNIT, BRICK_HEIGHT, wz * STUD_UNIT)
@@ -120,6 +174,32 @@ function makeBrickMesh(wx, wz, color) {
   return group
 }
 
+/**
+ * Frees the GPU buffers behind a brick from makeBrickMesh. Removing a mesh
+ * from the scene does not: three.js keeps geometries and materials alive
+ * until they are disposed. The studs share one geometry and one material,
+ * so each is disposed once.
+ * @param {THREE.Group} group
+ */
+function disposeBrickMesh(group) {
+  /** @type {Set<THREE.BufferGeometry>} */
+  const geometries = new Set()
+  /** @type {Set<THREE.Material>} */
+  const materials = new Set()
+  group.traverse((obj) => {
+    if (obj instanceof THREE.Mesh) {
+      geometries.add(obj.geometry)
+      materials.add(obj.material)
+    }
+  })
+  for (const geom of geometries) geom.dispose()
+  for (const mat of materials) mat.dispose()
+}
+
+/**
+ * @param {BrickSpec} brick
+ * @param {number} yOffset
+ */
 function brickWorldCenter(brick, yOffset) {
   return new THREE.Vector3(
     (brick.x + (brick.wx - 1) / 2 - GRID_W / 2 + 0.5) * STUD_UNIT,
@@ -128,6 +208,7 @@ function brickWorldCenter(brick, yOffset) {
   )
 }
 
+/** @param {BrickSpec[]} shape */
 function shapeYOffset(shape) {
   let maxY = 0
   for (const brick of shape) {
@@ -136,9 +217,13 @@ function shapeYOffset(shape) {
   return -(maxY * BRICK_HEIGHT) / 2
 }
 
+/**
+ * @param {string} canvasId
+ * @returns {(() => void) | null} stops the animation and frees the renderer
+ */
 export function initLego3D(canvasId) {
   const canvas = document.getElementById(canvasId)
-  if (!canvas) return null
+  if (!(canvas instanceof HTMLCanvasElement)) return null
 
   const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
   renderer.setPixelRatio(window.devicePixelRatio || 1)
@@ -159,14 +244,19 @@ export function initLego3D(canvasId) {
 
   const colors = COLOR_PROPS.map(readColor)
 
+  /** @type {PlacedBrick[]} */
   let bricks = []
+  /** @type {Spawning | null} */
   let spawning = null
   let lastSpawn = performance.now()
+  /** @type {"building" | "holding" | "dismantling"} */
   let phase = "building"
   let phaseStart = performance.now()
+  /** @type {PlacedBrick[]} */
   let dismantleQueue = []
   let lastDismantle = 0
 
+  /** @type {BrickSpec[] | null} */
   let currentShape = null
   let currentYOffset = 0
   let shapeIndex = 0
@@ -183,6 +273,7 @@ export function initLego3D(canvasId) {
     shapeIndex = 0
   }
 
+  /** @param {number} now */
   function spawnNextShapeBrick(now) {
     if (!currentShape || shapeIndex >= currentShape.length) return false
     const brickSpec = currentShape[shapeIndex++]
@@ -217,6 +308,7 @@ export function initLego3D(canvasId) {
     return true
   }
 
+  /** @param {number} now */
   function step(now) {
     if (phase === "building") {
       if (!currentShape) pickShape()
@@ -238,7 +330,7 @@ export function initLego3D(canvasId) {
           bricks.push({ mesh: spawning.mesh, brickSpec: spawning.brickSpec })
           spawning = null
           lastSpawn = now
-          if (shapeIndex >= currentShape.length) {
+          if (!currentShape || shapeIndex >= currentShape.length) {
             phase = "holding"
             phaseStart = now
           }
@@ -252,8 +344,9 @@ export function initLego3D(canvasId) {
         lastDismantle = now - DISMANTLE_INTERVAL_MS
       }
     } else if (phase === "dismantling") {
-      if (dismantleQueue.length > 0 && now - lastDismantle >= DISMANTLE_INTERVAL_MS) {
-        const brick = dismantleQueue.shift()
+      const brick =
+        now - lastDismantle >= DISMANTLE_INTERVAL_MS ? dismantleQueue.shift() : undefined
+      if (brick) {
         const angle = Math.random() * Math.PI * 2
         const radius = 13 + Math.random() * 4
         brick.exit = {
@@ -292,6 +385,7 @@ export function initLego3D(canvasId) {
           brick.exit.startRot.z + (brick.exit.targetRot.z - brick.exit.startRot.z) * e
         if (t >= 1) {
           scene.remove(brick.mesh)
+          disposeBrickMesh(brick.mesh)
           bricks.splice(i, 1)
         }
       }
@@ -313,7 +407,9 @@ export function initLego3D(canvasId) {
     renderer.render(scene, camera)
   }
 
-  function fitCanvas() {
+  // An arrow, not a function declaration: a hoisted declaration loses the
+  // HTMLCanvasElement narrowing on `canvas` above.
+  const fitCanvas = () => {
     const w = canvas.clientWidth
     const h = canvas.clientHeight
     if (w > 0 && h > 0) {
@@ -326,7 +422,8 @@ export function initLego3D(canvasId) {
   const ro = new ResizeObserver(fitCanvas)
   ro.observe(canvas)
 
-  let rafId
+  let rafId = 0
+  /** @param {number} now */
   function loop(now) {
     step(now)
     rafId = requestAnimationFrame(loop)
@@ -336,6 +433,7 @@ export function initLego3D(canvasId) {
   return () => {
     cancelAnimationFrame(rafId)
     ro.disconnect()
+    for (const brick of bricks) disposeBrickMesh(brick.mesh)
     renderer.dispose()
   }
 }
