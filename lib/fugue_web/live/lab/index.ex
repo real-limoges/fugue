@@ -23,8 +23,9 @@ defmodule FugueWeb.LabLive.Index do
           Statistical experiments
         </h1>
         <p class="text-sm text-base-content/50 leading-relaxed max-w-2xl">
-          Small pieces, each one going after a single thing about a model.
-          Rougher than a topic page, deliberately. Two so far.
+          Stats ideas I wanted to see drawn out. Each one goes after a single
+          thing about a model and stops there, so they're rougher than the rest
+          of the site (on purpose, mostly), and there are two so far.
         </p>
       </header>
 
@@ -35,10 +36,10 @@ defmodule FugueWeb.LabLive.Index do
           title="Same scatter, three fits"
           accent="primary"
         >
-          Four datasets, same move on each: stack a line, a GAM, and a GAMLSS
-          over the same points and see where each one runs out. A line only has
-          a slope to work with. A GAM can bend toward the mean. A GAMLSS can
-          also let the spread change as you move along.
+          Four scatter plots with three fits stacked on each, and you get to
+          watch each fit run out of road. A line only gets a slope. A GAM can
+          bend to follow the average. A GAMLSS can also let the spread grow and
+          shrink as you move along, which real data does basically all the time.
         </.card>
 
         <.card
@@ -47,9 +48,9 @@ defmodule FugueWeb.LabLive.Index do
           title="Three problems, three posteriors"
           accent="accent"
         >
-          A search, a rate, a decision. Each one ends up with a distribution
-          over the thing you didn't know, and once you have that, the questions
-          you actually care about are just integrals over it.
+          Lost keys, Bay Area earthquakes, and a yes-or-no call. Each one ends
+          with a distribution over the thing you didn't know, and once you have
+          that, every question you actually care about is an integral over it.
         </.card>
       </div>
 

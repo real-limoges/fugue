@@ -65,20 +65,22 @@ defmodule FugueWeb.MenagerieLive.QuantumStats do
       <div class="mb-4">
         <h1 class="text-2xl font-bold text-base-content">Three ways to count</h1>
         <p class="text-sm text-base-content/60 mt-1 max-w-3xl leading-relaxed">
-          Drag the temperature slider. On the hot end, the three curves lie right
-          on top of each other. You'd think there was only one. Drag to the cold
-          end and they peel apart into three completely different shapes. One is
-          a fat spike at the lowest level and nothing anywhere else. Another holds
-          flat across many levels and then falls off a cliff. The third is a
-          smooth decay from the left edge downward.
+          Drag the temperature to the hot end and the three curves sit right on
+          top of each other, close enough that you'd think there was only one.
+          Drag it cold and they come apart into shapes that look like they belong
+          to different problems: a huge spike on the lowest level with nothing
+          anywhere else, a flat shelf that drops off a cliff, and a smooth slide
+          down from the left.
         </p>
         <p class="text-sm text-base-content/60 mt-3 max-w-3xl leading-relaxed">
-          These are three different rules about whether two particles can share a
-          state: Bose-Einstein (the pile), Fermi-Dirac (the cliff), and
-          Maxwell-Boltzmann (the smooth decay). Bosons can pile onto the same
-          state without limit. Fermions can't share a state at all. Classical
-          particles are indifferent, and once it's hot enough, the rule stops
-          mattering.
+          The only thing that differs is a rule about sharing. Bosons
+          (Bose-Einstein, the spike) are happy to pile into the same state, as
+          many as you like. Fermions (Fermi-Dirac, the cliff) can't share at
+          all, so they fill the levels one at a time from the bottom, like seats
+          in a theater. Classical particles (Maxwell-Boltzmann, the smooth slide)
+          don't care either way. When it's hot there's so much room that nobody
+          is competing for a state and the rule stops mattering; the cold end is
+          where it shows.
         </p>
       </div>
 

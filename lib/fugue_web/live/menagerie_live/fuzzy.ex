@@ -96,10 +96,11 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
       <div class="mb-4">
         <h1 class="text-2xl font-bold text-base-content">Fuzzy temperature bands</h1>
         <p class="text-sm text-base-content/60 mt-1 max-w-3xl leading-relaxed">
-          Hard categories lose the gradient. A 22°C day isn't exactly <em>mild</em>
-          and exactly nothing else. It leans mild, a little cool, a little warm.
-          Five overlapping triangular membership functions let every day hold partial
-          membership in every fuzzy set at once.
+          Is 22°C <em>mild</em>? Kind of. It's also a little warm and a little
+          cool, and making it pick one box throws that away. Fuzzy sets don't
+          make it pick: there are five overlapping triangles along the
+          temperature axis, and a day belongs to each one exactly as much as
+          that triangle is tall at its temperature.
         </p>
         <p class="text-xs text-base-content/45 mt-3 max-w-3xl">
           Data: {@row_count} days of daily max temperatures from Melbourne Airport

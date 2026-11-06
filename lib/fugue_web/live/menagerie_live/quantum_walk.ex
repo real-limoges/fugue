@@ -62,18 +62,18 @@ defmodule FugueWeb.MenagerieLive.QuantumWalk do
       <div class="mb-4">
         <h1 class="text-2xl font-bold text-base-content">Classical vs quantum walk</h1>
         <p class="text-sm text-base-content/60 mt-1 max-w-3xl leading-relaxed">
-          Both walkers start at the center and take {@params["steps"]} steps. The gray
-          one takes a classical random walk (coin flip, step, coin flip, step)
-          and settles into the familiar bell curve. The cyan one takes a quantum
-          walk, and does something strange: it refuses to settle in the middle and
-          spreads to the edges instead, piling up in two sharp horns at the outer
-          limits of where it could possibly be.
+          Both walkers start in the middle and take {@params["steps"]} steps. The
+          gray one does an ordinary random walk (flip a coin, step, flip, step)
+          and spreads into the bell curve you'd expect. The cyan one does a
+          quantum walk, and it does not do what you'd expect: it avoids the
+          middle and piles up in two sharp horns out at the edges, about as far
+          as it could possibly have gotten.
         </p>
         <p class="text-sm text-base-content/60 mt-3 max-w-3xl leading-relaxed">
-          Drag decoherence. At zero, the quantum walker stays weird. Turn it up
-          and the weirdness drains out step by step until you're back to the
-          bell curve the classical walker was in the whole time. The slider is
-          the dial that turns quantum into classical.
+          Now drag decoherence. At zero the quantum walker stays weird; turn it
+          up and the weirdness leaks out a step at a time until it's sitting in
+          the same bell curve as the gray one (which is, very roughly, why big
+          warm things like you and me act classical).
         </p>
       </div>
 
