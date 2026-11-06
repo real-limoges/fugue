@@ -14,9 +14,6 @@ defmodule Fugue.Amigos do
   every other layer, but `counted: false`, so `counted_count/0` is one less
   than the number of layers. The counter must come from that function and
   never from a literal.
-
-  Transcribed from `docs/reference/amigos-denser-page-design.md`, which
-  records the sources behind each row.
   """
 
   alias Fugue.Amigos.{Connection, Layer}

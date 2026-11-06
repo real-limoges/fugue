@@ -6,8 +6,8 @@ defmodule FugueWeb.MoodLive.Dataset do
   The inputs never change at runtime: the dataset is compiled into
   `Fugue.Mood.Data`, the date range is pinned, and `k`/`m` are constants. So
   the analysis is the same for every visitor, and running it per connect cost
-  about 225 ms of CPU and left about 2.7 MB on each socket's heap
-  (performance baseline P4, 2026-11-05). A term read from `:persistent_term`
+  about 225 ms of CPU and left about 2.7 MB on each socket's heap.
+  A term read from `:persistent_term`
   is not copied onto the reading process's heap, so sockets that assign it
   share one copy.
 

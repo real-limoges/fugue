@@ -12,7 +12,7 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
   cluster names and colors once (`data-clusters`), and the `CalendarTooltip`
   hook builds the hover card from those. Rendering the card's HTML into all
   ~1,460 cells made the first /mood diff about 5.8 MB, 3.2 MB of it tooltip
-  markup (performance baseline P1, 2026-11-05).
+  markup.
   """
 
   use Phoenix.Component

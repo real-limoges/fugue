@@ -112,9 +112,8 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
 
         # Every day is drawn, as straight segments with coordinates to a
         # tenth of a unit. Smoothed curves at full float precision made the
-        # paths ~660 KB, resent on every slider tick (performance baseline
-        # P2, 2026-11-05); with ~2.4 days per pixel the smoothing wasn't
-        # visible anyway.
+        # paths ~660 KB, resent on every slider tick; with ~2.4 days per
+        # pixel the smoothing wasn't visible anyway.
         layers =
           Enum.map(mf_names, fn name ->
             upper = Enum.map(stacked, fn p -> {p.x, band_y.(slice_edge(p, name, 2))} end)
