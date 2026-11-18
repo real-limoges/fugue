@@ -148,6 +148,16 @@ defmodule Fugue.MixProject do
         "tailwind fugue",
         "assets.test",
         "test --warnings-as-errors --cover"
+      ],
+      # Known advisories and retired releases in the locked Hex packages and the
+      # shipped npm packages. Kept out of precommit on purpose: deploy.yml runs
+      # precommit on push, and a new advisory in an unrelated package should not
+      # block shipping a fix. CI's audit job runs this on PRs and weekly; the
+      # pre-push hook runs it locally. Fix with `mix deps.update <pkg>` or
+      # `npm --prefix assets update <pkg>`.
+      audit: [
+        "hex.audit",
+        "cmd npm --prefix assets audit --omit=dev --audit-level=moderate"
       ]
     ]
   end
