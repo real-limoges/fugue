@@ -45,7 +45,7 @@ defmodule FugueWeb.MoodLive.TransitionTimeline do
           Enum.map(assigns.segments, fn seg ->
             x0 = x_fn.(seg.start)
             x1 = x_fn.(seg.end_date)
-            color = Map.get(assigns.cluster_colors, seg.cluster, "#666")
+            color = Map.get(assigns.cluster_colors, seg.cluster, "var(--mood-ink-4)")
 
             %{
               cluster: seg.cluster,
@@ -126,14 +126,14 @@ defmodule FugueWeb.MoodLive.TransitionTimeline do
           <% end %>
 
           <g transform={@axis_transform}>
-            <line x1="0" y1="0" x2={@inner_w} y2="0" stroke="#444" />
+            <line x1="0" y1="0" x2={@inner_w} y2="0" stroke="var(--mood-ink-6)" />
             <%= for t <- @year_ticks do %>
-              <line x1={fmt(t.x)} y1="0" x2={fmt(t.x)} y2="3" stroke="#444" />
+              <line x1={fmt(t.x)} y1="0" x2={fmt(t.x)} y2="3" stroke="var(--mood-ink-6)" />
               <text
                 x={fmt(t.x)}
                 y="14"
                 text-anchor="middle"
-                fill="#666"
+                fill="var(--mood-ink-4)"
                 font-size="9px"
               >
                 {t.label}

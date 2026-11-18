@@ -1,0 +1,130 @@
+/* /mood palettes. See README.md in this directory. */
+
+/* Cluster palette. The server renders each cluster's color as
+   var(--mood-cluster-N) (see DataTransforms). Only the first three are in
+   use (the clustering has k = 3). */
+:root,
+[data-theme=dark] {
+  --mood-cluster-0: #e44dbc;
+  --mood-cluster-1: #42c8e6;
+  --mood-cluster-2: #6ee64d;
+  --mood-cluster-3: #e6a542;
+  --mood-cluster-4: #a86ee6;
+  --mood-cluster-5: #e6e042;
+  --mood-cluster-6: #e6425a;
+  --mood-cluster-7: #42e6b8;
+}
+
+[data-theme=light] {
+  --mood-cluster-0: #a7037b;
+  --mood-cluster-1: #045b80;
+  --mood-cluster-2: #036831;
+  --mood-cluster-3: #b33204;
+  --mood-cluster-4: #8620d9;
+  --mood-cluster-5: #6b5a00;
+  --mood-cluster-6: #a1122c;
+  --mood-cluster-7: #036657;
+}
+
+/* Dimension palette, one color per mood dimension. The server reads it
+   through DataTransforms.dimension_color/1. Light values reuse the cluster
+   hues with the same dark color, so every one clears 4.5:1 on the paper. */
+:root,
+[data-theme=dark] {
+  --mood-dim-sleep: #42c8e6;
+  --mood-dim-anxiety: #e44dbc;
+  --mood-dim-sensitivity: #a86ee6;
+  --mood-dim-outlook: #6ee64d;
+  --mood-dim-speed: #e6a542;
+}
+
+[data-theme=light] {
+  --mood-dim-sleep: #045b80;
+  --mood-dim-anxiety: #a7037b;
+  --mood-dim-sensitivity: #8620d9;
+  --mood-dim-outlook: #036831;
+  --mood-dim-speed: #b33204;
+}
+
+/* Figure inks: the gray ramp the /mood charts draw labels, axes and rules
+   with. ink-0 is the strongest and ink-7 the faintest. Dark values are the
+   grays the charts shipped with; light values run from the page ink toward
+   the paper, ink-0 through ink-5 clearing 4.5:1 and ink-6 and ink-7 clearing
+   3:1. --mood-ink-tick is the cooler gray of the distribution axes.
+   --mood-line is the base for translucent gridlines and washes, used
+   with an opacity attribute or DataTransforms.tint/2. --mood-ambiguous marks
+   the in-between days of the ambiguity histogram. --mood-scrim is the
+   backdrop behind the trajectory's hover readout. */
+:root,
+[data-theme=dark] {
+  --mood-ink-0: #fff;
+  --mood-ink-1: #ddd;
+  --mood-ink-2: #aaa;
+  --mood-ink-3: #888;
+  --mood-ink-4: #666;
+  --mood-ink-5: #555;
+  --mood-ink-6: #444;
+  --mood-ink-7: #333;
+  --mood-ink-tick: #6b7280;
+  --mood-line: #fff;
+  --mood-ambiguous: #e6a542;
+  --mood-scrim: rgb(10 10 26 / 0.65);
+}
+
+[data-theme=light] {
+  --mood-ink-0: #1f1610;
+  --mood-ink-1: #2e241c;
+  --mood-ink-2: #3f352c;
+  --mood-ink-3: #4f453b;
+  --mood-ink-4: #5f554b;
+  --mood-ink-5: #6b6157;
+  --mood-ink-6: #7a7066;
+  --mood-ink-7: #857b70;
+  --mood-ink-tick: #6b6157;
+  --mood-line: #1f1610;
+  --mood-ambiguous: #b33204;
+  --mood-scrim: rgb(250 245 234 / 0.8);
+}
+
+/* The guided tour card and its sandbox (MoodTour, MoodTourSandbox). */
+:root,
+[data-theme=dark] {
+  --mood-tour-bg: #0d0d0d;
+  --mood-tour-border: #2a2a2a;
+  --mood-tour-text: #e5e7eb;
+  --mood-tour-muted: #9ca3af;
+  --mood-tour-faint: #6b7280;
+  --mood-tour-hover: #f3f4f6;
+  --mood-tour-bright: #fff;
+  --mood-tour-backdrop: rgb(0 0 0 / 0.78);
+  --mood-tour-shadow: rgb(0 0 0 / 0.6);
+  --mood-tour-track: #2f2f2f;
+  --mood-tour-point: #f5f5f5;
+  --mood-tour-point-edge: #111;
+  /* Okabe-Ito, one per sandbox cluster. */
+  --mood-sandbox-0: #e69f00;
+  --mood-sandbox-1: #56b4e9;
+  --mood-sandbox-2: #009e73;
+  --mood-sandbox-3: #cc79a7;
+  --mood-sandbox-4: #f0e442;
+}
+
+[data-theme=light] {
+  --mood-tour-bg: #faf5ea;
+  --mood-tour-border: #d8cdb9;
+  --mood-tour-text: #2e241c;
+  --mood-tour-muted: #5f554b;
+  --mood-tour-faint: #6b6157;
+  --mood-tour-hover: #1f1610;
+  --mood-tour-bright: #1f1610;
+  --mood-tour-backdrop: rgb(31 22 16 / 0.55);
+  --mood-tour-shadow: rgb(31 22 16 / 0.25);
+  --mood-tour-track: #8f8579;
+  --mood-tour-point: #1f1610;
+  --mood-tour-point-edge: #faf5ea;
+  --mood-sandbox-0: #a35a00;
+  --mood-sandbox-1: #045b80;
+  --mood-sandbox-2: #00704f;
+  --mood-sandbox-3: #a7037b;
+  --mood-sandbox-4: #6b5a00;
+}

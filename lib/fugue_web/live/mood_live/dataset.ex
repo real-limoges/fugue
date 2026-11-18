@@ -11,7 +11,7 @@ defmodule FugueWeb.MoodLive.Dataset do
   is not copied onto the reading process's heap, so sockets that assign it
   share one copy.
 
-  Same shape as `Fugue.Color.SrgbGamut.cells/0`: computed on first use.
+  Same shape as `Fugue.Color.SrgbGamut.png/0`: computed on first use.
   `mix fugue.perf` times the individual steps of `compute/0`.
   """
 

@@ -5,13 +5,17 @@
 // until the user picks one, a matchMedia listener keeps following the OS
 // setting. Dispatches "fugue:theme-changed" so themed canvas hooks
 // (theme_colors.js consumers) can repaint immediately instead of waiting
-// for their next poll.
+// for their next poll. Also points the theme-color meta (the mobile
+// browser bar) at the new theme's color, which the root layout keeps in
+// that meta's data attributes.
 
 const STORAGE_KEY = "fugue-theme"
 
 /** @param {"light" | "dark"} theme */
 function applyTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme)
+  const bar = document.querySelector('meta[name="theme-color"]')
+  if (bar instanceof HTMLMetaElement) bar.content = bar.dataset[theme] ?? bar.content
   window.dispatchEvent(new CustomEvent("fugue:theme-changed", { detail: { theme } }))
 }
 

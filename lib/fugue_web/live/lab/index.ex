@@ -118,8 +118,17 @@ defmodule FugueWeb.LabLive.Index do
   defp accent_label("secondary"), do: "text-secondary/70"
   defp accent_label("warning"), do: "text-warning/70"
 
-  defp accent_cta("primary"), do: "text-primary/50 group-hover:text-primary/90"
-  defp accent_cta("accent"), do: "text-accent/50 group-hover:text-accent/90"
-  defp accent_cta("secondary"), do: "text-secondary/50 group-hover:text-secondary/90"
-  defp accent_cta("warning"), do: "text-warning/50 group-hover:text-warning/90"
+  # Full strength on light paper, where /50 falls near 2:1; dark keeps the
+  # dim label that brightens on hover.
+  defp accent_cta("primary"),
+    do: "text-primary dark:text-primary/50 dark:group-hover:text-primary/90"
+
+  defp accent_cta("accent"),
+    do: "text-accent dark:text-accent/50 dark:group-hover:text-accent/90"
+
+  defp accent_cta("secondary"),
+    do: "text-secondary dark:text-secondary/50 dark:group-hover:text-secondary/90"
+
+  defp accent_cta("warning"),
+    do: "text-warning dark:text-warning/50 dark:group-hover:text-warning/90"
 end

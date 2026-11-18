@@ -1,10 +1,20 @@
 // @ts-check
 import { resolveThemeColors, buildColorTable } from "./lib/theme_colors.js"
+import { startRafLoop, mapPixels } from "./lib/canvas_loop.js"
+
+// Under reduced motion the splash shows one still frame instead of a loop.
+// The sim first runs this many frames' worth of steps so the still is the
+// settled pattern (a flock, an ant highway) rather than the random seed.
+const SETTLE_FRAMES = 240
+
+// Sim steps per second, whatever the screen's refresh rate. Uncapped, a
+// 120 Hz screen ran twice the steps of a 60 Hz one: twice the CPU, and a
+// flock moving twice as fast.
+const STEPS_PER_SECOND = 60
 
 /**
- * The part of a petri wrapper the splash loop drives once it is started.
- * The wrappers are vendored, untyped JS imported by relative path, so their
- * types are inferred from the source; this names the shape the loop needs.
+ * The part of a petri wrapper the splash loop drives once it is started;
+ * every wrapper in `sims` has this shape.
  * @typedef {object} PetriSim
  * @property {(n: number) => void} step
  * @property {() => Uint8Array} getPixels
@@ -22,7 +32,7 @@ import { resolveThemeColors, buildColorTable } from "./lib/theme_colors.js"
 const sims = {
   boids: {
     start: async (w, h) => {
-      const m = await import("../vendor/petri/js/boids.js")
+      const m = await import("petri/boids.js")
       await m.init()
       m.start(1500, w, h)
       return m
@@ -31,7 +41,7 @@ const sims = {
   },
   langton: {
     start: async (w, h) => {
-      const m = await import("../vendor/petri/js/langton.js")
+      const m = await import("petri/langton.js")
       await m.init()
       m.start(8, w, h)
       return m
@@ -40,7 +50,7 @@ const sims = {
   },
   oscillators: {
     start: async (w, h) => {
-      const m = await import("../vendor/petri/js/oscillators.js")
+      const m = await import("petri/oscillators.js")
       await m.init()
       m.start(w, h)
       return m
@@ -49,7 +59,7 @@ const sims = {
   },
   sandpile: {
     start: async (w, h) => {
-      const m = await import("../vendor/petri/js/sandpile.js")
+      const m = await import("petri/sandpile.js")
       await m.init()
       m.start(w, h)
       return m
@@ -104,8 +114,10 @@ export async function initSplash(canvasId, simName, readingId) {
   const canvas = document.getElementById(canvasId)
   if (!(canvas instanceof HTMLCanvasElement)) return null
 
-  const canvasW = window.innerWidth
-  const canvasH = window.innerHeight
+  // Sized to the box the canvas sits in, not the window: the box is shorter
+  // than the window, so a window-sized sim spent its time on rows nobody saw.
+  const canvasW = Math.max(1, canvas.clientWidth || window.innerWidth)
+  const canvasH = Math.max(1, canvas.clientHeight || window.innerHeight)
   canvas.width = canvasW
   canvas.height = canvasH
 
@@ -117,7 +129,7 @@ export async function initSplash(canvasId, simName, readingId) {
 
   let lut = refreshColors()
   const pixelCount = canvasW * canvasH
-  const rgbaBuffer = new Uint8ClampedArray(pixelCount * 4)
+  const image = ctx.createImageData(canvasW, canvasH)
 
   const reading = readingId ? document.getElementById(readingId) : null
   const startTime = performance.now()
@@ -147,36 +159,33 @@ export async function initSplash(canvasId, simName, readingId) {
     reading.textContent = `${simName} · ${activityEMA.toFixed(2)} · t+${mm}:${ss}`
   }
 
-  let rafId = 0
   let frameCount = 0
 
-  // An arrow, not a function declaration, so the non-null `ctx` narrowing
-  // above carries into it.
-  const loop = () => {
-    mod.step(sim.steps)
-
-    if (++frameCount % 120 === 0) lut = refreshColors()
-
+  // Arrows, not function declarations, so the non-null `ctx` narrowing
+  // above carries into them.
+  const draw = () => {
     const intensity = mod.getPixels()
-
-    for (let i = 0; i < pixelCount; i++) {
-      const lutOffset = intensity[i] * 4
-      const rgbaOffset = i * 4
-      rgbaBuffer[rgbaOffset] = lut[lutOffset]
-      rgbaBuffer[rgbaOffset + 1] = lut[lutOffset + 1]
-      rgbaBuffer[rgbaOffset + 2] = lut[lutOffset + 2]
-      rgbaBuffer[rgbaOffset + 3] = 255
-    }
-
-    const imageData = new ImageData(rgbaBuffer, canvasW, canvasH)
-    ctx.putImageData(imageData, 0, 0)
-
+    mapPixels(intensity, lut, image.data)
+    ctx.putImageData(image, 0, 0)
     updateReading(performance.now(), intensity)
-
-    rafId = requestAnimationFrame(loop)
   }
-  rafId = requestAnimationFrame(loop)
 
-  cleanup = () => cancelAnimationFrame(rafId)
+  const loop = startRafLoop(
+    () => {
+      mod.step(sim.steps)
+      if (++frameCount % 120 === 0) lut = refreshColors()
+      draw()
+    },
+    {
+      target: canvas,
+      fps: STEPS_PER_SECOND,
+      still: () => {
+        mod.step(sim.steps * SETTLE_FRAMES)
+        draw()
+      },
+    }
+  )
+
+  cleanup = loop.stop
   return cleanup
 }

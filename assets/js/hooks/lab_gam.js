@@ -66,9 +66,11 @@ import {
 } from "../lib/lab_chart"
 
 const GRID_N = 150
-const COLOR_LINE = "#ffffff"
-const COLOR_SHAPE = "#aaaaaa"
-const COLOR_SHAPE_SPREAD = "#ff8a28"
+// Per-theme series colors from assets/css/palettes/menagerie.css; the chart is
+// SVG, so the browser resolves them on a theme switch.
+const COLOR_LINE = "var(--lab-gam-linear)"
+const COLOR_SHAPE = "var(--lab-gam-shape)"
+const COLOR_SHAPE_SPREAD = "var(--lab-highlight)"
 
 // ---- PRNG + sampling helpers (deterministic synthetic data) ---------------
 
@@ -501,7 +503,8 @@ export const LabGam = {
     container.innerHTML = ""
     const loading = document.createElement("div")
     loading.textContent = "Loading..."
-    loading.style.cssText = "color:#888;font-size:13px;padding:12px;font-family:monospace"
+    loading.style.cssText =
+      "color:var(--lab-tick);font-size:13px;padding:12px;font-family:monospace"
     container.appendChild(loading)
     this._loading = loading
 
@@ -584,7 +587,7 @@ export const LabGam = {
     if (this._loading) {
       const message = err instanceof Error ? err.message : String(err)
       this._loading.textContent = `Error: ${message}`
-      this._loading.style.color = "#f88"
+      this._loading.style.color = "var(--lab-error)"
     }
     console.error("[LabGam]", err)
   },

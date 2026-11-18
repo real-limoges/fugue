@@ -105,7 +105,10 @@ defmodule FugueWeb.MoodLive.DataTransforms do
   @type mood_transition :: %{date: iso_date(), from: cluster_id(), to: cluster_id()}
 
   @dimensions ~w(sleep anxiety sensitivity outlook speed)
-  @cluster_colors ~w(#e44dbc #42c8e6 #6ee64d #e6a542 #a86ee6 #e6e042 #e6425a #42e6b8)
+  # Each cluster's color is a CSS custom property, not a hex: app.css gives
+  # it one value per theme. Anything that needs a translucent version uses
+  # `tint/2` (or an SVG opacity attribute), never a hex alpha suffix.
+  @cluster_colors Enum.map(0..7, &"var(--mood-cluster-#{&1})")
 
   # Minimum consecutive days a new dominant cluster must persist to count as a
   # real state transition. Shorter runs are absorbed into the surrounding state
@@ -258,7 +261,30 @@ defmodule FugueWeb.MoodLive.DataTransforms do
     }
   end
 
-  @doc "Assigns colors from the synthwave palette to each cluster."
+  @doc """
+  A cluster color at `percent` strength over whatever sits behind it. Works
+  on any CSS color, including the `var(--mood-cluster-N)` values from
+  `build_cluster_colors/1`.
+
+      iex> FugueWeb.MoodLive.DataTransforms.tint("var(--mood-cluster-0)", 20)
+      "color-mix(in srgb, var(--mood-cluster-0) 20%, transparent)"
+  """
+  @spec tint(String.t(), number()) :: String.t()
+  def tint(color, percent), do: "color-mix(in srgb, #{color} #{percent}%, transparent)"
+
+  @doc """
+  The color of a mood dimension, as a CSS variable from the per-theme
+  dimension palette in `assets/css/palettes/mood.css`. Only the five mood
+  dimensions have one; any other name raises.
+
+      iex> FugueWeb.MoodLive.DataTransforms.dimension_color("sleep")
+      "var(--mood-dim-sleep)"
+  """
+  @spec dimension_color(String.t()) :: String.t()
+  def dimension_color(dim) when dim in ~w(sleep anxiety sensitivity outlook speed),
+    do: "var(--mood-dim-#{dim})"
+
+  @doc "Assigns each cluster a color from the per-theme palette in app.css."
   @spec build_cluster_colors([wire_cluster()]) :: %{cluster_id() => String.t()}
   def build_cluster_colors(clusters) do
     clusters

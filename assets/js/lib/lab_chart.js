@@ -146,7 +146,7 @@ export function buildFrame({
         y1: MARGIN.top,
         x2: scaleX(t),
         y2: MARGIN.top + innerH,
-        stroke: "#fff",
+        stroke: "var(--lab-grid)",
         "stroke-width": "1",
       })
     )
@@ -158,7 +158,7 @@ export function buildFrame({
         y1: scaleY(t),
         x2: MARGIN.left + innerW,
         y2: scaleY(t),
-        stroke: "#fff",
+        stroke: "var(--lab-grid)",
         "stroke-width": "1",
       })
     )
@@ -171,7 +171,7 @@ export function buildFrame({
       y1: MARGIN.top + innerH,
       x2: MARGIN.left + innerW,
       y2: MARGIN.top + innerH,
-      stroke: "#555",
+      stroke: "var(--lab-axis)",
       "stroke-width": "1",
     })
   )
@@ -181,7 +181,7 @@ export function buildFrame({
       y1: MARGIN.top,
       x2: MARGIN.left,
       y2: MARGIN.top + innerH,
-      stroke: "#555",
+      stroke: "var(--lab-axis)",
       "stroke-width": "1",
     })
   )
@@ -191,7 +191,7 @@ export function buildFrame({
       x: scaleX(t),
       y: MARGIN.top + innerH + 18,
       "text-anchor": "middle",
-      fill: "#888",
+      fill: "var(--lab-tick)",
       "font-size": "11",
       "font-family": "monospace",
     })
@@ -202,7 +202,7 @@ export function buildFrame({
     x: MARGIN.left + innerW / 2,
     y: H - 4,
     "text-anchor": "middle",
-    fill: "#666",
+    fill: "var(--lab-axis-label)",
     "font-size": "12",
     "font-family": "monospace",
   })
@@ -214,7 +214,7 @@ export function buildFrame({
       x: MARGIN.left - 8,
       y: scaleY(t) + 4,
       "text-anchor": "end",
-      fill: "#888",
+      fill: "var(--lab-tick)",
       "font-size": "11",
       "font-family": "monospace",
     })
@@ -225,7 +225,7 @@ export function buildFrame({
     x: 12,
     y: MARGIN.top + innerH / 2,
     "text-anchor": "middle",
-    fill: "#666",
+    fill: "var(--lab-axis-label)",
     "font-size": "12",
     "font-family": "monospace",
     transform: `rotate(-90, 12, ${MARGIN.top + innerH / 2})`,
@@ -250,7 +250,7 @@ export function buildScatter(data, scaleX, scaleY) {
         cx: scaleX(x),
         cy: scaleY(y),
         r: "3",
-        fill: "#888",
+        fill: "var(--lab-point)",
         opacity: "0.65",
       })
     )

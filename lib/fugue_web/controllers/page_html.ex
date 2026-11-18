@@ -104,11 +104,11 @@ defmodule FugueWeb.PageHTML do
       <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <a
           href={@url}
-          class="font-mono text-sm text-amber-300 hover:text-amber-200 underline decoration-dotted underline-offset-4"
+          class="font-mono text-sm text-warning hover:text-primary dark:text-amber-300 dark:hover:text-amber-200 underline decoration-dotted underline-offset-4"
         >
           {@repo.name}
         </a>
-        <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-base-content/40">
+        <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-base-content/60 dark:text-base-content/40">
           {@repo.lang}
         </span>
       </div>
@@ -119,7 +119,7 @@ defmodule FugueWeb.PageHTML do
 
       <p
         :if={@repo.pages != []}
-        class="mt-2 font-mono text-[11px] text-base-content/35"
+        class="mt-2 font-mono text-[11px] text-base-content/60 dark:text-base-content/35"
         phx-no-format
       ><span :for={{{label, path}, i} <- Enum.with_index(@repo.pages)}><span :if={i > 0}>, </span><a href={path} class="hover:text-primary transition-colors">{label}</a></span></p>
     </li>

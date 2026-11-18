@@ -111,16 +111,31 @@ defmodule FugueWeb.ColorLive.Splashes do
             fill-opacity="0.55"
             text-anchor="middle"
           >
-            <line x1="0" y1="160" x2="1000" y2="160" stroke-opacity="0.18" />
+            <line
+              x1="0"
+              y1="160"
+              x2="1000"
+              y2="160"
+              stroke-opacity="0.18"
+              class="[[data-theme=light]_&]:[stroke-opacity:0.4]"
+            />
             <g :for={l <- [400, 450, 500, 550, 600, 650, 700]}>
               <line x1={(l - 380) / 320 * 1000} y1="160" x2={(l - 380) / 320 * 1000} y2="170" />
               <text x={(l - 380) / 320 * 1000} y="184">{l}</text>
             </g>
-            <text x="500" y="206" fill-opacity="0.45" font-size="10">wavelength (nm)</text>
+            <text
+              x="500"
+              y="206"
+              fill-opacity="0.45"
+              font-size="10"
+              class="[[data-theme=light]_&]:[fill-opacity:0.65]"
+            >
+              wavelength (nm)
+            </text>
           </g>
         </svg>
       </div>
-      <figcaption class="font-mono text-xs uppercase tracking-widest text-base-content/50">
+      <figcaption class="font-mono text-xs uppercase tracking-widest text-base-content/50 [[data-theme=light]_&]:text-base-content/65">
         Light.
       </figcaption>
       <.figure_source
@@ -207,7 +222,7 @@ defmodule FugueWeb.ColorLive.Splashes do
     ~H"""
     <figure class="space-y-3">
       <div class="space-y-1.5">
-        <p class="font-mono text-xs uppercase tracking-widest text-base-content/40">
+        <p class="font-mono text-xs uppercase tracking-widest text-base-content/40 [[data-theme=light]_&]:text-base-content/65">
           the chips
         </p>
         <div class="w-full rounded border border-base-content/10 bg-base-200/30 p-3">
@@ -275,7 +290,7 @@ defmodule FugueWeb.ColorLive.Splashes do
         </li>
       </ul>
 
-      <figcaption class="font-mono text-xs text-base-content/45 leading-relaxed not-italic">
+      <figcaption class="font-mono text-xs text-base-content/45 [[data-theme=light]_&]:text-base-content/65 leading-relaxed not-italic">
         Each chip painted with the name most speakers gave it. Faded means
         they didn't agree.
       </figcaption>
@@ -379,7 +394,7 @@ defmodule FugueWeb.ColorLive.Splashes do
             <span class="font-mono text-xs uppercase tracking-widest text-base-content/70">
               {group.title}
             </span>
-            <span class="font-mono text-xs text-base-content/40 tabular-nums">
+            <span class="font-mono text-xs text-base-content/40 [[data-theme=light]_&]:text-base-content/65 tabular-nums">
               {group.anchor_hue_start}-{group.anchor_hue_end} nm
             </span>
           </div>
@@ -396,7 +411,7 @@ defmodule FugueWeb.ColorLive.Splashes do
           </div>
         </div>
       </div>
-      <figcaption class="font-mono text-xs text-base-content/45 leading-relaxed not-italic">
+      <figcaption class="font-mono text-xs text-base-content/45 [[data-theme=light]_&]:text-base-content/65 leading-relaxed not-italic">
         Each group is one spectrum, cut different ways. English rows are
         baselines. Placements are approximate; the splits themselves are real.
       </figcaption>
@@ -461,7 +476,10 @@ defmodule FugueWeb.ColorLive.Splashes do
     <div class="grid grid-cols-[5rem_1fr] items-center gap-3">
       <span class={[
         "font-mono text-xs text-right",
-        if(@baseline, do: "text-base-content/45 italic", else: "text-base-content/70")
+        if(@baseline,
+          do: "text-base-content/45 [[data-theme=light]_&]:text-base-content/65 italic",
+          else: "text-base-content/70"
+        )
       ]}>
         {@language}
       </span>
@@ -473,7 +491,10 @@ defmodule FugueWeb.ColorLive.Splashes do
           :for={tick <- @ticks}
           class={[
             "absolute top-0 bottom-0 w-px",
-            if(@baseline, do: "bg-base-content/30", else: "bg-base-content/65")
+            if(@baseline,
+              do: "bg-base-content/30 [[data-theme=light]_&]:bg-base-content/45",
+              else: "bg-base-content/65"
+            )
           ]}
           style={"left: #{tick * 100}%;"}
         >
@@ -510,8 +531,12 @@ defmodule FugueWeb.ColorLive.Splashes do
   def cone_splash(assigns) do
     cones =
       if assigns.protanope,
-        do: [{:s, "#a78bfa"}, {:m, "#86efac"}],
-        else: [{:s, "#a78bfa"}, {:m, "#86efac"}, {:l, "#fbbf24"}]
+        do: [{:s, "var(--chapter-color-cone-s)"}, {:m, "var(--chapter-color-cone-m)"}],
+        else: [
+          {:s, "var(--chapter-color-cone-s)"},
+          {:m, "var(--chapter-color-cone-m)"},
+          {:l, "var(--chapter-color-cone-l)"}
+        ]
 
     cursor_x = ConeMath.cone_x_of(assigns.lambda)
 
@@ -540,7 +565,12 @@ defmodule FugueWeb.ColorLive.Splashes do
               else: "Three cone curves: L, M, and S, with L shifted toward M."
           }
         >
-          <g stroke="currentColor" stroke-opacity="0.18" stroke-width="1">
+          <g
+            stroke="currentColor"
+            stroke-opacity="0.18"
+            stroke-width="1"
+            class="[[data-theme=light]_&]:[stroke-opacity:0.4]"
+          >
             <line x1="60" y1="270" x2="770" y2="270" />
             <line x1="60" y1="30" x2="60" y2="270" />
           </g>
@@ -551,6 +581,7 @@ defmodule FugueWeb.ColorLive.Splashes do
             fill="currentColor"
             fill-opacity="0.45"
             text-anchor="middle"
+            class="[[data-theme=light]_&]:[fill-opacity:0.65]"
           >
             <text x={ConeMath.cone_x_of(400)} y="288">400</text>
             <text x={ConeMath.cone_x_of(500)} y="288">500</text>
@@ -621,7 +652,7 @@ defmodule FugueWeb.ColorLive.Splashes do
           class="w-full accent-base-content/60"
           aria-label="wavelength in nanometers"
         />
-        <div class="font-mono text-xs text-base-content/50 flex justify-between">
+        <div class="font-mono text-xs text-base-content/50 [[data-theme=light]_&]:text-base-content/65 flex justify-between">
           <span>380</span>
           <span>λ = {trunc(@lambda)} nm</span>
           <span>700</span>
@@ -644,7 +675,7 @@ defmodule FugueWeb.ColorLive.Splashes do
       </ul>
 
       <div class="flex items-center justify-between gap-4">
-        <figcaption class="font-mono text-xs uppercase tracking-widest text-base-content/50">
+        <figcaption class="font-mono text-xs uppercase tracking-widest text-base-content/50 [[data-theme=light]_&]:text-base-content/65">
           {if @protanope, do: "Two cones", else: "Three cones, L shifted"}
         </figcaption>
         <button
@@ -667,7 +698,9 @@ defmodule FugueWeb.ColorLive.Splashes do
   # ----- Section 4: gamut diagram -----
 
   def gamut_splash(assigns) do
-    cell_size = Fugue.Color.SrgbGamut.step() * 100 * 2.5
+    # Chromaticity to viewBox units, the same mapping ConeMath uses for the
+    # triangles: x * 100 across, 85 - y * 100 down.
+    bounds = Fugue.Color.SrgbGamut.bounds()
 
     assigns =
       assigns
@@ -675,8 +708,14 @@ defmodule FugueWeb.ColorLive.Splashes do
       |> assign(:srgb_points, ConeMath.srgb_points())
       |> assign(:p3_points, ConeMath.p3_points())
       |> assign(:rec2020_points, ConeMath.rec2020_points())
-      |> assign(:gamut_cells, Fugue.Color.SrgbGamut.cells())
-      |> assign(:gamut_cell_size, cell_size)
+      |> assign(
+        :gamut_png,
+        "data:image/png;base64," <> Base.encode64(Fugue.Color.SrgbGamut.png())
+      )
+      |> assign(:gamut_x, Float.round(bounds.x_min * 100, 3))
+      |> assign(:gamut_y, Float.round(85 - bounds.y_max * 100, 3))
+      |> assign(:gamut_width, Float.round((bounds.x_max - bounds.x_min) * 100, 3))
+      |> assign(:gamut_height, Float.round((bounds.y_max - bounds.y_min) * 100, 3))
 
     ~H"""
     <figure class="space-y-3">
@@ -687,7 +726,13 @@ defmodule FugueWeb.ColorLive.Splashes do
           role="img"
           aria-label="CIE 1931 chromaticity diagram with sRGB, DCI-P3, and Rec. 2020 gamut triangles overlaid on the spectral locus."
         >
-          <g stroke="currentColor" stroke-opacity="0.18" stroke-width="0.2" fill="none">
+          <g
+            stroke="currentColor"
+            stroke-opacity="0.18"
+            stroke-width="0.2"
+            fill="none"
+            class="[[data-theme=light]_&]:[stroke-opacity:0.4]"
+          >
             <line x1="3" y1="85" x2="83" y2="85" />
             <line x1="3" y1="5" x2="3" y2="85" />
           </g>
@@ -705,28 +750,27 @@ defmodule FugueWeb.ColorLive.Splashes do
             stroke="none"
           />
 
-          <g clip-path="url(#srgb-clip)">
-            <rect
-              :for={{cx, cy, hex} <- @gamut_cells}
-              x={Float.round((cx - Fugue.Color.SrgbGamut.step() / 2) * 100, 3)}
-              y={Float.round(85 - (cy + Fugue.Color.SrgbGamut.step() / 2) * 100, 3)}
-              width={@gamut_cell_size}
-              height={@gamut_cell_size}
-              fill={hex}
-            />
-          </g>
+          <image
+            href={@gamut_png}
+            x={@gamut_x}
+            y={@gamut_y}
+            width={@gamut_width}
+            height={@gamut_height}
+            preserveAspectRatio="none"
+            clip-path="url(#srgb-clip)"
+          />
 
           <polygon
             points={@rec2020_points}
             fill="none"
-            stroke="#fbbf24"
+            stroke="var(--chapter-color-gamut-rec2020)"
             stroke-width="0.5"
             stroke-linejoin="round"
           />
           <polygon
             points={@p3_points}
             fill="none"
-            stroke="#86efac"
+            stroke="var(--chapter-color-gamut-p3)"
             stroke-width="0.5"
             stroke-linejoin="round"
             stroke-dasharray="1.2 0.8"
@@ -734,10 +778,11 @@ defmodule FugueWeb.ColorLive.Splashes do
           <polygon
             points={@srgb_points}
             fill="none"
-            stroke="#a78bfa"
+            stroke="var(--chapter-color-gamut-srgb)"
             stroke-opacity="0.7"
             stroke-width="0.3"
             stroke-linejoin="round"
+            class="[[data-theme=light]_&]:[stroke-opacity:1]"
           />
 
           <polygon
@@ -755,10 +800,11 @@ defmodule FugueWeb.ColorLive.Splashes do
             fill="currentColor"
             fill-opacity="0.7"
             text-anchor="end"
+            class="[[data-theme=light]_&]:[fill-opacity:1]"
           >
-            <text x="83" y="9" fill="#fbbf24">Rec.2020</text>
-            <text x="83" y="14" fill="#86efac">DCI-P3</text>
-            <text x="83" y="19" fill="#a78bfa">sRGB</text>
+            <text x="83" y="9" fill="var(--chapter-color-gamut-rec2020)">Rec.2020</text>
+            <text x="83" y="14" fill="var(--chapter-color-gamut-p3)">DCI-P3</text>
+            <text x="83" y="19" fill="var(--chapter-color-gamut-srgb)">sRGB</text>
           </g>
 
           <g
@@ -771,7 +817,7 @@ defmodule FugueWeb.ColorLive.Splashes do
             <text
               x="74.2"
               y="59.2"
-              fill="#ef4444"
+              fill="var(--chapter-color-callout)"
               style="fill: color(rec2020 1 0 0);"
             >
               X
@@ -905,7 +951,7 @@ defmodule FugueWeb.ColorLive.Splashes do
         </div>
       </div>
       <div class="flex items-center justify-between gap-4">
-        <figcaption class="font-mono text-xs uppercase tracking-widest text-base-content/50">
+        <figcaption class="font-mono text-xs uppercase tracking-widest text-base-content/50 [[data-theme=light]_&]:text-base-content/65">
           {if @protanope, do: "One color. To me, always.", else: "Two colors."}
         </figcaption>
         <div class="flex items-center gap-2">
@@ -918,7 +964,7 @@ defmodule FugueWeb.ColorLive.Splashes do
           >
             &lsaquo;
           </button>
-          <span class="font-mono text-xs uppercase tracking-widest text-base-content/50 tabular-nums px-2 min-w-[3rem] text-center">
+          <span class="font-mono text-xs uppercase tracking-widest text-base-content/50 [[data-theme=light]_&]:text-base-content/65 tabular-nums px-2 min-w-[3rem] text-center">
             {@pair_label}
           </span>
           <button

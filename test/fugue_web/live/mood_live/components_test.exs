@@ -398,7 +398,7 @@ defmodule FugueWeb.MoodLive.ComponentsTest do
       assert html =~ "in-between"
       assert html =~ "decisive"
       # Threshold line stroke color appears multiple times (background, bar, line).
-      assert html =~ "#e6a542"
+      assert html =~ "var(--mood-ambiguous)"
       # Should have visible tick labels like "0%", "100%".
       assert html =~ "0%"
       assert html =~ "100%"
@@ -530,6 +530,21 @@ defmodule FugueWeb.MoodLive.ComponentsTest do
       assert html =~ ~s(aria-label="Transition from Red to Green: 1 transitions")
       assert html =~ ~s(aria-label="Select Red cluster")
       refute html =~ ~r/aria-label="[^"]*\{/
+    end
+
+    test "nodes are keyboard buttons and links are not tab stops" do
+      html =
+        render_component(&TransitionSankey.sankey/1,
+          transitions: [%{date: "2026-01-08", from: "c0", to: "c1"}],
+          cluster_ids: ["c0", "c1"],
+          cluster_colors: @colors,
+          cluster_names: @names
+        )
+
+      # SvgButtons turns Enter and Space on a role="button" into its click.
+      assert html =~ ~s(phx-hook="SvgButtons")
+      assert html =~ ~r/<rect[^>]*role="button"[^>]*tabindex="0"/s
+      refute html =~ ~r/<path[^>]*tabindex=/s
     end
   end
 
@@ -857,9 +872,9 @@ defmodule FugueWeb.MoodLive.ComponentsTest do
           selected_day: %{date: "2026-01-02"}
         )
 
-      # Focused dot gets r=5 + stroke=white; others get r=2.2 + stroke=none.
+      # Focused dot gets r=5 + the strongest ink stroke; others get r=2.2 + stroke=none.
       assert html =~ ~s(r="5")
-      assert html =~ ~s(stroke="#fff")
+      assert html =~ ~s|stroke="var(--mood-ink-0)"|
     end
 
     test "annotations render with label text + leader line + marker ring" do

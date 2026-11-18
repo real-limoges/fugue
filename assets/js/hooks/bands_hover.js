@@ -54,10 +54,10 @@ export const BandsHover = {
     this.tip = document.createElement("div")
     this.tip.style.cssText = `
       position: absolute; pointer-events: none;
-      background: #0f172a; border: 1px solid #1f2937;
+      background: var(--menagerie-tip-bg); border: 1px solid var(--menagerie-panel-border);
       border-radius: 6px; padding: 8px 10px;
       font-family: ui-monospace, monospace; font-size: 11px;
-      color: #e5e7eb; box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+      color: var(--menagerie-ink); box-shadow: 0 4px 12px var(--menagerie-tip-shadow);
       opacity: 0; z-index: 20;
     `
     this.el.appendChild(this.tip)
@@ -121,13 +121,13 @@ export const BandsHover = {
       .map(
         (mf, i) => `<div style="display:flex;justify-content:space-between;gap:14px;">
         <span style="color:${mf.color};">■ ${mf.name}</span>
-        <span style="color:#e5e7eb;">${pcts[i] ?? 0}%</span>
+        <span style="color:var(--menagerie-ink);">${pcts[i] ?? 0}%</span>
       </div>`
       )
       .join("")
 
     const hostRect = this.el.getBoundingClientRect()
-    this.tip.innerHTML = `<div style="margin-bottom:4px;color:#9ca3af;">${this.dates[lo]}</div>${rows}`
+    this.tip.innerHTML = `<div style="margin-bottom:4px;color:var(--menagerie-ink-muted);">${this.dates[lo]}</div>${rows}`
     this.tip.style.left = event.clientX - hostRect.left + 14 + "px"
     this.tip.style.top = event.clientY - hostRect.top + 14 + "px"
     this.tip.style.opacity = "1"

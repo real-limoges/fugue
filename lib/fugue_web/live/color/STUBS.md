@@ -42,7 +42,7 @@ Mock prose; iterate as desired.
 - Splash 5b (multi-group language partition splash) is shipped with five groups: blue splits, red splits, green-blue meet, where the lines don't match (Berinmo nol/wor), and the warm side (Himba dumbu/serandu).
   English baselines per group.
   Native scripts where applicable.
-- Open: drop one personal beat if both crowd.
+- Both personal beats (lines A and B) stay; closed 2026-11-17.
 
 ## Section 6: What I can't show you
 

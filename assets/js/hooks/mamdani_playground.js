@@ -74,15 +74,33 @@ import * as d3 from "d3"
 
 const WIDTH = 820
 
+// Every color here is a var() from assets/css/palettes/menagerie.css. The
+// figure is all SVG and HTML, so the browser resolves them and a theme switch
+// needs no redraw.
+
 /** @type {Record<string, string>} */
 const FAN_COLORS = {
-  off: "#9ca3af",
-  low: "#60a5fa",
-  medium: "#f59e0b",
-  high: "#ec4899",
+  off: "var(--menagerie-fan-off)",
+  low: "var(--menagerie-fan-low)",
+  medium: "var(--menagerie-fan-medium)",
+  high: "var(--menagerie-fan-high)",
 }
 
-const INPUT_TERM_COLORS = ["#60a5fa", "#f59e0b", "#ec4899"]
+const INPUT_TERM_COLORS = [
+  "var(--menagerie-fan-low)",
+  "var(--menagerie-fan-medium)",
+  "var(--menagerie-fan-high)",
+]
+
+const PANEL_BG = "var(--menagerie-panel-bg)"
+const PANEL_BORDER = "1px solid var(--menagerie-panel-border)"
+const AXIS = "var(--menagerie-axis)"
+const TICK_TEXT = "var(--menagerie-ink-muted)"
+const INK = "var(--menagerie-ink)"
+const INK_STRONG = "var(--menagerie-ink-strong)"
+const INK_FAINT = "var(--menagerie-ink-faint)"
+const CENTROID = "var(--menagerie-centroid)"
+const HEADING = "var(--menagerie-heading)"
 
 // Each input panel's scales, set when its statics are built and read on
 // every redraw of the parts that move.
@@ -218,7 +236,7 @@ export const MamdaniPlayground = {
       .attr("x2", x(crispValue))
       .attr("y1", 0)
       .attr("y2", innerH)
-      .attr("stroke", "#f8fafc")
+      .attr("stroke", INK_STRONG)
       .attr("stroke-width", 1.5)
       .attr("stroke-dasharray", "3,3")
 
@@ -235,7 +253,7 @@ export const MamdaniPlayground = {
         .attr("cy", y(degree))
         .attr("r", 5)
         .attr("fill", color)
-        .attr("stroke", "#f8fafc")
+        .attr("stroke", INK_STRONG)
         .attr("stroke-width", 1.5)
 
       degreeData.push({ color, degree, text: d3.format(".2f")(degree), y: y(degree) + 3 })
@@ -263,7 +281,7 @@ export const MamdaniPlayground = {
         .append("text")
         .attr("x", x(crispValue) + (leftSide ? -8 : 8))
         .attr("y", d.y)
-        .attr("fill", "#e5e7eb")
+        .attr("fill", INK)
         .attr("font-size", 10)
         .attr("font-family", "ui-monospace, monospace")
         .attr("text-anchor", leftSide ? "end" : "start")
@@ -273,7 +291,7 @@ export const MamdaniPlayground = {
 
   render() {
     if (!this.data) {
-      this.el.innerHTML = `<div class="py-12 text-center text-xs italic text-gray-500">awaiting inference...</div>`
+      this.el.innerHTML = `<div class="py-12 text-center text-xs italic" style="color: ${HEADING}">awaiting inference...</div>`
       return
     }
 
@@ -348,8 +366,8 @@ export const MamdaniPlayground = {
     const panel = parent
       .append("div")
       .attr("data-var", varDef.name)
-      .style("background", "#0b1220")
-      .style("border", "1px solid #1f2937")
+      .style("background", PANEL_BG)
+      .style("border", PANEL_BORDER)
       .style("border-radius", "8px")
       .style("padding", "12px 14px")
 
@@ -357,15 +375,14 @@ export const MamdaniPlayground = {
 
     header
       .append("span")
-      .attr("class", "text-[10px] uppercase tracking-[0.2em] text-gray-500")
+      .attr("class", "text-[10px] uppercase tracking-[0.2em]")
+      .style("color", HEADING)
       .text(`${varDef.name.replace(/_/g, " ")} fuzzification`)
 
     header
       .append("span")
-      .attr(
-        "class",
-        "input-crisp-readout font-mono text-lg font-semibold tabular-nums text-gray-100"
-      )
+      .attr("class", "input-crisp-readout font-mono text-lg font-semibold tabular-nums")
+      .style("color", "var(--menagerie-readout)")
       .text("-")
 
     const panelW = 400
@@ -395,7 +412,7 @@ export const MamdaniPlayground = {
       .attr("x2", innerW)
       .attr("y1", innerH)
       .attr("y2", innerH)
-      .attr("stroke", "#374151")
+      .attr("stroke", AXIS)
 
     const line = d3
       .line()
@@ -454,22 +471,22 @@ export const MamdaniPlayground = {
     g.append("g")
       .attr("transform", `translate(0,${innerH})`)
       .call(d3.axisBottom(x).ticks(5))
-      .call((sel) => sel.selectAll("text").attr("fill", "#9ca3af").attr("font-size", 9))
-      .call((sel) => sel.selectAll("line").attr("stroke", "#374151"))
-      .call((sel) => sel.select(".domain").attr("stroke", "#374151"))
+      .call((sel) => sel.selectAll("text").attr("fill", TICK_TEXT).attr("font-size", 9))
+      .call((sel) => sel.selectAll("line").attr("stroke", AXIS))
+      .call((sel) => sel.select(".domain").attr("stroke", AXIS))
 
     g.append("g")
       .call(d3.axisLeft(y).ticks(3).tickFormat(d3.format(".0%")))
-      .call((sel) => sel.selectAll("text").attr("fill", "#9ca3af").attr("font-size", 9))
-      .call((sel) => sel.selectAll("line").attr("stroke", "#374151"))
-      .call((sel) => sel.select(".domain").attr("stroke", "#374151"))
+      .call((sel) => sel.selectAll("text").attr("fill", TICK_TEXT).attr("font-size", 9))
+      .call((sel) => sel.selectAll("line").attr("stroke", AXIS))
+      .call((sel) => sel.select(".domain").attr("stroke", AXIS))
   },
 
   renderRulesPanel(container, rules) {
     const panel = container
       .append("div")
-      .style("background", "#0b1220")
-      .style("border", "1px solid #1f2937")
+      .style("background", PANEL_BG)
+      .style("border", PANEL_BORDER)
       .style("border-radius", "8px")
       .style("padding", "12px 14px")
 
@@ -477,7 +494,8 @@ export const MamdaniPlayground = {
 
     header
       .append("span")
-      .attr("class", "text-[10px] uppercase tracking-[0.2em] text-gray-500")
+      .attr("class", "text-[10px] uppercase tracking-[0.2em]")
+      .style("color", HEADING)
       .text("rule firing · bar color = consequent fan term")
 
     const legend = header.append("div").style("display", "flex").style("gap", "10px")
@@ -485,7 +503,8 @@ export const MamdaniPlayground = {
     Object.entries(FAN_COLORS).forEach(([name, color]) => {
       const item = legend
         .append("span")
-        .attr("class", "inline-flex items-center gap-1 text-[10px] text-gray-400")
+        .attr("class", "inline-flex items-center gap-1 text-[10px]")
+        .style("color", "var(--menagerie-legend)")
       item
         .append("span")
         .style("width", "8px")
@@ -526,7 +545,7 @@ export const MamdaniPlayground = {
     const xs = d3.scaleLinear().domain([0, 1]).range([0, barAreaW])
 
     rules.forEach((r, i) => {
-      const color = FAN_COLORS[r.output_term] || "#6b7280"
+      const color = FAN_COLORS[r.output_term] || INK_FAINT
       const strength = r.strength || 0
       const active = strength > 0.01
       const yy = y(i)
@@ -538,11 +557,11 @@ export const MamdaniPlayground = {
         .attr("y", yy)
         .attr("width", barAreaW)
         .attr("height", bw)
-        .attr("fill", "#111827")
-        .attr("stroke", "#1f2937")
+        .attr("fill", "var(--menagerie-track)")
+        .attr("stroke", "var(--menagerie-panel-border)")
 
       const [ifPart, thenPart] = r.text.split(/ THEN /)
-      const textColor = active ? "#e5e7eb" : "#6b7280"
+      const textColor = active ? INK : INK_FAINT
       const textY = yy + bw / 2 + 3
 
       g.append("text")
@@ -586,7 +605,7 @@ export const MamdaniPlayground = {
       g.append("text")
         .attr("x", labelW + barAreaW + 8)
         .attr("y", yy + bw / 2 + 3)
-        .attr("fill", active ? color : "#6b7280")
+        .attr("fill", active ? color : INK_FAINT)
         .attr("font-size", 10)
         .attr("font-family", "ui-monospace, monospace")
         .attr("font-weight", active ? "600" : "400")
@@ -597,14 +616,15 @@ export const MamdaniPlayground = {
   renderOutputPanel(container, varDef, aggCurve, crispValue, rules) {
     const panel = container
       .append("div")
-      .style("background", "#0b1220")
-      .style("border", "1px solid #1f2937")
+      .style("background", PANEL_BG)
+      .style("border", PANEL_BORDER)
       .style("border-radius", "8px")
       .style("padding", "12px 14px")
 
     panel
       .append("div")
-      .attr("class", "text-[10px] uppercase tracking-[0.2em] text-gray-500 mb-1")
+      .attr("class", "text-[10px] uppercase tracking-[0.2em] mb-1")
+      .style("color", HEADING)
       .text(`${varDef.name.replace(/_/g, " ")} · aggregated output`)
 
     const panelH = 240
@@ -626,7 +646,7 @@ export const MamdaniPlayground = {
 
     const charW = 6
     const outputLabels = varDef.terms.map((term) => {
-      const color = FAN_COLORS[term.name] || "#6b7280"
+      const color = FAN_COLORS[term.name] || INK_FAINT
       const samples = sampleMf(term, varDef.bounds)
 
       g.append("path")
@@ -682,14 +702,14 @@ export const MamdaniPlayground = {
       .filter((r) => (r.strength || 0) > 0.005 && termByName[r.output_term])
       .forEach((r) => {
         const term = termByName[r.output_term]
-        const color = FAN_COLORS[r.output_term] || "#6b7280"
+        const color = FAN_COLORS[r.output_term] || INK_FAINT
         const clipped = clipTriangle(term, varDef.bounds, r.strength || 0)
 
         g.append("path").attr("d", area(clipped)).attr("fill", color).attr("fill-opacity", 0.22)
       })
 
     if (aggCurve && aggCurve.length > 0) {
-      g.append("path").attr("d", area(aggCurve)).attr("fill", "#f8fafc").attr("fill-opacity", 0.08)
+      g.append("path").attr("d", area(aggCurve)).attr("fill", INK_STRONG).attr("fill-opacity", 0.08)
 
       g.append("path")
         .attr(
@@ -700,7 +720,7 @@ export const MamdaniPlayground = {
             .y((d) => y(d[1]))(aggCurve)
         )
         .attr("fill", "none")
-        .attr("stroke", "#f8fafc")
+        .attr("stroke", INK_STRONG)
         .attr("stroke-width", 2.25)
     }
 
@@ -710,15 +730,15 @@ export const MamdaniPlayground = {
         .attr("x2", x(crispValue))
         .attr("y1", 0)
         .attr("y2", innerH)
-        .attr("stroke", "#fbbf24")
+        .attr("stroke", CENTROID)
         .attr("stroke-width", 2)
 
       g.append("circle")
         .attr("cx", x(crispValue))
         .attr("cy", innerH)
         .attr("r", 7)
-        .attr("fill", "#fbbf24")
-        .attr("stroke", "#0b1220")
+        .attr("fill", CENTROID)
+        .attr("stroke", PANEL_BG)
         .attr("stroke-width", 2)
 
       const centroidText = `centroid ${d3.format(".1f")(crispValue)}`
@@ -729,7 +749,7 @@ export const MamdaniPlayground = {
       g.append("text")
         .attr("x", cNearLeft ? 0 : cNearRight ? innerW : cx)
         .attr("y", innerH + 36)
-        .attr("fill", "#fbbf24")
+        .attr("fill", CENTROID)
         .attr("font-size", 11)
         .attr("font-family", "ui-monospace, monospace")
         .attr("font-weight", "600")
@@ -740,14 +760,14 @@ export const MamdaniPlayground = {
     g.append("g")
       .attr("transform", `translate(0,${innerH})`)
       .call(d3.axisBottom(x).ticks(6))
-      .call((sel) => sel.selectAll("text").attr("fill", "#9ca3af").attr("font-size", 10))
-      .call((sel) => sel.selectAll("line").attr("stroke", "#374151"))
-      .call((sel) => sel.select(".domain").attr("stroke", "#374151"))
+      .call((sel) => sel.selectAll("text").attr("fill", TICK_TEXT).attr("font-size", 10))
+      .call((sel) => sel.selectAll("line").attr("stroke", AXIS))
+      .call((sel) => sel.select(".domain").attr("stroke", AXIS))
 
     g.append("g")
       .call(d3.axisLeft(y).ticks(3).tickFormat(d3.format(".0%")))
-      .call((sel) => sel.selectAll("text").attr("fill", "#9ca3af").attr("font-size", 10))
-      .call((sel) => sel.selectAll("line").attr("stroke", "#374151"))
-      .call((sel) => sel.select(".domain").attr("stroke", "#374151"))
+      .call((sel) => sel.selectAll("text").attr("fill", TICK_TEXT).attr("font-size", 10))
+      .call((sel) => sel.selectAll("line").attr("stroke", AXIS))
+      .call((sel) => sel.select(".domain").attr("stroke", AXIS))
   },
 }

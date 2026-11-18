@@ -9,7 +9,7 @@ defmodule FugueWeb.MoodLive.DimensionDistributions do
 
   use Phoenix.Component
 
-  alias FugueWeb.MoodLive.SvgMath
+  alias FugueWeb.MoodLive.{DataTransforms, SvgMath}
 
   @row_h 92
   @label_w 90
@@ -20,14 +20,6 @@ defmodule FugueWeb.MoodLive.DimensionDistributions do
   @chart_w 640
   @sample_points 80
   @bandwidth_frac 0.07
-
-  @dim_colors %{
-    "sleep" => "#42c8e6",
-    "anxiety" => "#e44dbc",
-    "sensitivity" => "#a86ee6",
-    "outlook" => "#6ee64d",
-    "speed" => "#e6a542"
-  }
 
   @dim_domains %{
     "sleep" => {0, 15},
@@ -99,14 +91,16 @@ defmodule FugueWeb.MoodLive.DimensionDistributions do
                 x2={@chart_w}
                 y1={SvgMath.fmt(row.plot_bottom)}
                 y2={SvgMath.fmt(row.plot_bottom)}
-                stroke="rgba(255,255,255,0.1)"
+                stroke="var(--mood-line)"
+                stroke-opacity="0.1"
                 stroke-width="1"
               />
 
               <path
                 d={row.overall_d}
                 fill="none"
-                stroke="rgba(255,255,255,0.28)"
+                stroke="var(--mood-line)"
+                stroke-opacity="0.28"
                 stroke-width="1"
                 stroke-dasharray="2 3"
               />
@@ -130,14 +124,15 @@ defmodule FugueWeb.MoodLive.DimensionDistributions do
                   x2={SvgMath.fmt(t.x)}
                   y1="0"
                   y2="4"
-                  stroke="rgba(255,255,255,0.25)"
+                  stroke="var(--mood-line)"
+                  stroke-opacity="0.25"
                   stroke-width="1"
                 />
                 <text
                   x={SvgMath.fmt(t.x)}
                   y="15"
                   text-anchor={t.anchor}
-                  fill="#6b7280"
+                  fill="var(--mood-ink-tick)"
                   font-size="10px"
                 >
                   {t.label}
@@ -224,7 +219,7 @@ defmodule FugueWeb.MoodLive.DimensionDistributions do
       %{
         dim: dim,
         empty?: false,
-        label_color: Map.get(@dim_colors, dim, "#aaa"),
+        label_color: DataTransforms.dimension_color(dim),
         label_y: (plot_top + plot_bottom) / 2,
         plot_bottom: plot_bottom,
         axis_y: plot_bottom + 2,

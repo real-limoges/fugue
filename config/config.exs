@@ -13,6 +13,8 @@ config :fugue, FugueWeb.Endpoint,
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
     formats: [html: FugueWeb.ErrorHTML, json: FugueWeb.ErrorJSON],
+    # Error pages get the site chrome, so a 404 still has the nav and footer.
+    root_layout: {FugueWeb.Layouts, :root},
     layout: false
   ],
   pubsub_server: Fugue.PubSub,
@@ -23,7 +25,7 @@ config :esbuild,
   version: "0.25.4",
   fugue: [
     args:
-      ~w(js/app.js --bundle --splitting --format=esm --target=es2022 --outdir=../priv/static/assets/js --external:/fonts/* --external:/images/* --external:/vendor/* --alias:@=.),
+      ~w(js/app.js --bundle --splitting --format=esm --target=es2022 --outdir=../priv/static/assets/js --external:/fonts/* --external:/images/* --external:/vendor/* --alias:@=. --alias:petri=./vendor/petri/js),
     cd: Path.expand("../assets", __DIR__),
     env: %{"NODE_PATH" => [Path.expand("../deps", __DIR__), Mix.Project.build_path()]}
   ]

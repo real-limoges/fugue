@@ -1,0 +1,114 @@
+/* /menagerie and /lab palettes. See README.md in this directory.
+
+   Chrome (panels, tooltips, axes, gray labels) keeps its shipped hex in dark
+   and follows the daisyUI tokens in light. Data series get solved light hues.
+   None of these are painted on a canvas, so color-mix() values are safe. */
+
+:root,
+[data-theme=dark] {
+  /* Shared figure chrome: the Mamdani panels and the fuzzy-bands tooltip. */
+  --menagerie-panel-bg: #0b1220;
+  --menagerie-panel-border: #1f2937;
+  --menagerie-track: #111827;
+  --menagerie-tip-bg: #0f172a;
+  --menagerie-tip-shadow: rgba(0, 0, 0, 0.4);
+  --menagerie-axis: #374151;
+  --menagerie-ink-strong: #f8fafc;
+  --menagerie-ink: #e5e7eb;
+  --menagerie-ink-muted: #9ca3af;
+  --menagerie-ink-faint: #6b7280;
+
+  /* Tailwind grays the Mamdani hook used as classes, kept exact in dark. */
+  --menagerie-heading: var(--color-gray-500);
+  --menagerie-legend: var(--color-gray-400);
+  --menagerie-readout: var(--color-gray-100);
+
+  /* Mamdani fan terms (also the input term order low, medium, high) and
+     the defuzzified centroid. */
+  --menagerie-fan-off: #9ca3af;
+  --menagerie-fan-low: #60a5fa;
+  --menagerie-fan-medium: #f59e0b;
+  --menagerie-fan-high: #ec4899;
+  --menagerie-centroid: #fbbf24;
+  --menagerie-centroid-readout: var(--color-amber-300);
+
+  /* Fuzzy temperature sets, cold to hot (Fugue.Menagerie.Fuzzy). */
+  --menagerie-temp-cold: #a78bfa;
+  --menagerie-temp-cool: #38bdf8;
+  --menagerie-temp-mild: #facc15;
+  --menagerie-temp-warm: #fb923c;
+  --menagerie-temp-hot: #ec4899;
+
+  /* /lab chart chrome (lab_chart.js buildFrame and buildScatter). */
+  --lab-grid: #ffffff;
+  --lab-axis: #555555;
+  --lab-tick: #888888;
+  --lab-axis-label: #666666;
+  --lab-point: #888888;
+  --lab-error: #ff8888;
+
+  /* /lab series: the orange posterior / GAMLSS fit, the gray prior,
+     and the GAM layers. */
+  --lab-highlight: #ff8a28;
+  --lab-prior: #888888;
+  --lab-gam-linear: #ffffff;
+  --lab-gam-shape: #aaaaaa;
+
+  /* /lab/bayes search grid. Cells mix --lab-highlight into --lab-heat-empty
+     by probability. */
+  --lab-heat-empty: #1e1e24;
+  --lab-heat-gap: #000000;
+  --lab-heat-searched-edge: #444444;
+  --lab-heat-label: #aaaaaa;
+  --lab-heat-label-hot: #1e1e24;
+  --lab-heat-label-searched: #666666;
+}
+
+[data-theme=light] {
+  --menagerie-panel-bg: var(--color-base-100);
+  --menagerie-panel-border: var(--color-base-300);
+  --menagerie-track: var(--color-base-200);
+  --menagerie-tip-bg: var(--color-base-100);
+  --menagerie-tip-shadow: color-mix(in srgb, var(--color-base-content) 15%, transparent);
+  --menagerie-axis: color-mix(in srgb, var(--color-base-content) 45%, transparent);
+  --menagerie-ink-strong: var(--color-base-content);
+  --menagerie-ink: var(--color-base-content);
+  --menagerie-ink-muted: color-mix(in srgb, var(--color-base-content) 70%, transparent);
+  --menagerie-ink-faint: color-mix(in srgb, var(--color-base-content) 60%, transparent);
+
+  --menagerie-heading: color-mix(in srgb, var(--color-base-content) 65%, transparent);
+  --menagerie-legend: color-mix(in srgb, var(--color-base-content) 70%, transparent);
+  --menagerie-readout: var(--color-base-content);
+
+  --menagerie-fan-off: #6b6459;
+  --menagerie-fan-low: #045b80;
+  --menagerie-fan-medium: #6b5a00;
+  --menagerie-fan-high: #a7037b;
+  --menagerie-centroid: #b33204;
+  --menagerie-centroid-readout: #b33204;
+
+  --menagerie-temp-cold: #8620d9;
+  --menagerie-temp-cool: #045b80;
+  --menagerie-temp-mild: #6b5a00;
+  --menagerie-temp-warm: #b33204;
+  --menagerie-temp-hot: #a7037b;
+
+  --lab-grid: var(--color-base-content);
+  --lab-axis: color-mix(in srgb, var(--color-base-content) 45%, transparent);
+  --lab-tick: color-mix(in srgb, var(--color-base-content) 65%, transparent);
+  --lab-axis-label: color-mix(in srgb, var(--color-base-content) 65%, transparent);
+  --lab-point: #5c564d;
+  --lab-error: #780404;
+
+  --lab-highlight: #b33204;
+  --lab-prior: #6b6459;
+  --lab-gam-linear: var(--color-base-content);
+  --lab-gam-shape: #7a7266;
+
+  --lab-heat-empty: var(--color-base-300);
+  --lab-heat-gap: var(--color-base-100);
+  --lab-heat-searched-edge: color-mix(in srgb, var(--color-base-content) 30%, transparent);
+  --lab-heat-label: var(--color-base-content);
+  --lab-heat-label-hot: var(--color-base-100);
+  --lab-heat-label-searched: color-mix(in srgb, var(--color-base-content) 65%, transparent);
+}

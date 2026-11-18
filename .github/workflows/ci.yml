@@ -79,7 +79,8 @@ jobs:
 
   # Advisories fail this job on the weekly run and on PRs. It stays out of the
   # deploy path: deploy.yml calls this workflow on push, and a new advisory in
-  # an unrelated package should not block shipping a fix.
+  # an unrelated package should not block shipping a fix. Both checks live in
+  # the `mix audit` alias, so a local run is the same command as this job.
   audit:
     name: Dependency audit
     if: github.event_name == 'schedule' || github.event_name == 'pull_request'
@@ -95,16 +96,16 @@ jobs:
           elixir-version: ${{ env.ELIXIR_VERSION }}
           otp-version: ${{ env.OTP_VERSION }}
 
-      - name: Retired Hex packages
-        run: mix deps.get && mix hex.audit
-
       - name: Set up Node
         uses: actions/setup-node@v7
         with:
           node-version: "24"
 
-      - name: npm advisories in shipped packages
-        run: npm --prefix assets audit --omit=dev --audit-level=moderate
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Hex and npm advisories (mix audit)
+        run: mix audit
 
   docker:
     name: Docker Build

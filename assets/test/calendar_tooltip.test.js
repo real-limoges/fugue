@@ -15,9 +15,9 @@ describe("cardHtml", () => {
     expect(html).toContain("<strong>7.5</strong>")
     expect(html).toContain("62%")
     expect(html).toContain("width: 31px")
-    // Unknown cluster ids fall back to the id and a gray, as the server did.
+    // Unknown cluster ids fall back to the id and the mid gray ink, as the server does.
     expect(html).toContain(">c9</span>")
-    expect(html).toContain("background: #888")
+    expect(html).toContain("background: var(--mood-ink-3)")
   })
 
   test("escapes cluster names", () => {

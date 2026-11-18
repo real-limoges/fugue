@@ -28,6 +28,11 @@ defmodule FugueWeb.AmigosLive do
   # pinned stage.
   @beat_svh 100
 
+  # The only page with web fonts; the root layout links this stylesheet when
+  # the assign is set. Archivo for body text, Paytone One for the logo look,
+  # Permanent Marker and Special Elite for the clutter (see `app.css`).
+  @font_stylesheet "https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Paytone+One&family=Permanent+Marker&family=Special+Elite&display=swap"
+
   @impl true
   def mount(_params, _session, socket) do
     {:ok,
@@ -37,6 +42,7 @@ defmodule FugueWeb.AmigosLive do
        :meta_description,
        "A recap of one Arrested Development episode that keeps adding layers until it can't be read."
      )
+     |> assign(:font_stylesheet, @font_stylesheet)
      |> assign(:last_beat, @last_beat)
      |> assign(:beat, 1)
      |> assign(:mode, :scroll)}

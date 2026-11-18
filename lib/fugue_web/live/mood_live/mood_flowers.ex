@@ -84,8 +84,20 @@ defmodule FugueWeb.MoodLive.MoodFlowers do
                   style="width: 100%; height: 100%; display: block; cursor: pointer;"
                 >
                   <g transform="translate(50,50)">
-                    <circle r="40" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5" />
-                    <circle r="20" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.5" />
+                    <circle
+                      r="40"
+                      fill="none"
+                      stroke="var(--mood-line)"
+                      stroke-opacity="0.06"
+                      stroke-width="0.5"
+                    />
+                    <circle
+                      r="20"
+                      fill="none"
+                      stroke="var(--mood-line)"
+                      stroke-opacity="0.04"
+                      stroke-width="0.5"
+                    />
                     <path
                       d={cell.petal_d}
                       fill={cell.color}
@@ -113,11 +125,11 @@ defmodule FugueWeb.MoodLive.MoodFlowers do
           margin-top: 4px;
         }
         .mood-flower-month-label {
-          text-align: center; color: #666; font-size: 10px;
+          text-align: center; color: var(--mood-ink-4); font-size: 10px;
           font-weight: 600; letter-spacing: 0.5px;
         }
         .mood-flower-year-label {
-          color: #888; font-size: 13px; font-weight: 700;
+          color: var(--mood-ink-3); font-size: 13px; font-weight: 700;
           padding-right: 8px; text-align: right;
         }
         .flower-cell {
@@ -127,12 +139,12 @@ defmodule FugueWeb.MoodLive.MoodFlowers do
         }
         .flower-cell.focused {
           transform: scale(1.35);
-          filter: drop-shadow(0 0 6px rgba(255,255,255,0.6));
+          filter: drop-shadow(0 0 6px color-mix(in srgb, var(--mood-line) 60%, transparent));
           z-index: 5;
         }
         .mood-flower-empty {
           width: 100%; height: 100%; border-radius: 50%;
-          border: 1px dashed rgba(255,255,255,0.05);
+          border: 1px dashed color-mix(in srgb, var(--mood-line) 5%, transparent);
           box-sizing: border-box;
         }
       </style>
@@ -146,14 +158,16 @@ defmodule FugueWeb.MoodLive.MoodFlowers do
       present?: false,
       class: flower_class(month_key, focus_month),
       petal_d: "",
-      color: "#888",
+      color: "var(--mood-ink-3)",
       tooltip: ""
     }
   end
 
   defp build_cell(flower, month_key, _mi, assigns, angle_slice, focus_month) do
     color =
-      if flower.cluster, do: Map.get(assigns.cluster_colors, flower.cluster, "#888"), else: "#888"
+      if flower.cluster,
+        do: Map.get(assigns.cluster_colors, flower.cluster, "var(--mood-ink-3)"),
+        else: "var(--mood-ink-3)"
 
     points =
       Enum.with_index(assigns.dimensions)
@@ -217,7 +231,7 @@ defmodule FugueWeb.MoodLive.MoodFlowers do
 
     dims_rows =
       Enum.map_join(flower.raw || %{}, "", fn {k, v} ->
-        ~s|<span style="color:#888">#{k}</span><strong>#{:erlang.float_to_binary(v * 1.0, decimals: 1)}</strong>|
+        ~s|<span style="color:var(--mood-ink-3)">#{k}</span><strong>#{:erlang.float_to_binary(v * 1.0, decimals: 1)}</strong>|
       end)
 
     entries_word = if flower.count == 1, do: "entry", else: "entries"
@@ -225,7 +239,7 @@ defmodule FugueWeb.MoodLive.MoodFlowers do
     ~s|<strong style="font-size:13px">#{month_label(flower.month, month_names)}</strong>| <>
       ~s|<div style="color:#{color};font-size:11px;margin-top:2px;font-weight:600">#{cluster_name}</div>| <>
       ~s|<div style="margin-top:6px;display:grid;grid-template-columns:auto auto;gap:1px 14px">#{dims_rows}</div>| <>
-      ~s|<div style="margin-top:4px;color:#666;font-size:10px">#{flower.count} #{entries_word}</div>|
+      ~s|<div style="margin-top:4px;color:var(--mood-ink-4);font-size:10px">#{flower.count} #{entries_word}</div>|
   end
 
   defp month_label(month_str, month_names) do

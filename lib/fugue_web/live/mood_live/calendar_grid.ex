@@ -200,6 +200,7 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
                 x={cell.x}
                 y={cell.y}
                 fill={cell.fill}
+                fill-opacity={cell.fill_opacity}
                 stroke-width={cell.stroke_width}
                 stroke-dasharray={cell.stroke_dasharray}
                 style={"cursor: #{if cell.is_gap, do: "default", else: "pointer"}; stroke: #{cell.stroke};"}
@@ -258,7 +259,8 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
       x: x,
       y: y,
       class: class,
-      fill: cell_fill(day, top_cluster, top_weight, cluster_colors),
+      fill: cell_fill(day, top_cluster, cluster_colors),
+      fill_opacity: cell_fill_opacity(day, top_cluster, top_weight),
       stroke: cell_stroke(day, top_cluster, top_weight, cluster_colors, transition_set),
       stroke_width: cell_stroke_width(day, top_weight, transition_set),
       stroke_dasharray: if(day.is_gap, do: "2,1", else: "none"),
@@ -287,23 +289,23 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
     end
   end
 
-  defp cell_fill(%{is_gap: true}, top_cluster, top_weight, colors)
-       when not is_nil(top_cluster) do
-    dominant_color(top_cluster, top_weight, colors, 0.3)
-  end
+  # A cell's fill is its dominant cluster's color, and its fill-opacity says
+  # how dominant: a near-tie day reads faint, a clear one solid. Imputed gap
+  # days get the same treatment at 30%; a gap with nothing imputed is hatched.
+  # The color is a CSS variable (one value per theme), so opacity travels in
+  # its own attribute rather than baked into an rgba().
+  defp cell_fill(%{is_gap: true}, nil, _colors), do: "url(#gap-hatch)"
+  defp cell_fill(_day, nil, _colors), do: "var(--color-base-300)"
 
-  defp cell_fill(%{is_gap: true}, _, _, _), do: "url(#gap-hatch)"
+  defp cell_fill(_day, top_cluster, colors),
+    do: Map.get(colors, top_cluster) || "var(--mood-ink-4)"
 
-  defp cell_fill(_day, nil, _weight, _colors), do: "#2a2a2a"
+  defp cell_fill_opacity(_day, nil, _weight), do: "1"
+  defp cell_fill_opacity(%{is_gap: true}, _cluster, weight), do: dominance_opacity(weight, 0.3)
+  defp cell_fill_opacity(_day, _cluster, weight), do: dominance_opacity(weight, 1.0)
 
-  defp cell_fill(_day, top_cluster, top_weight, colors),
-    do: dominant_color(top_cluster, top_weight, colors, 1.0)
-
-  defp dominant_color(cluster, weight, colors, base_opacity) do
-    {r, g, b} = hex_to_rgb(Map.get(colors, cluster) || "#666")
-    alpha = base_opacity * (0.12 + 0.88 * :math.pow(weight, 1.5))
-    "rgba(#{r}, #{g}, #{b}, #{Float.round(alpha, 3)})"
-  end
+  defp dominance_opacity(weight, base_opacity),
+    do: to_string(Float.round(base_opacity * (0.12 + 0.88 * :math.pow(weight, 1.5)), 3))
 
   defp cell_stroke(day, top_cluster, top_weight, colors, transition_set) do
     cond do
@@ -335,12 +337,6 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
   end
 
   defp strong_cluster_ids(_), do: []
-
-  defp hex_to_rgb("#" <> <<r::binary-size(2), g::binary-size(2), b::binary-size(2)>>) do
-    {String.to_integer(r, 16), String.to_integer(g, 16), String.to_integer(b, 16)}
-  end
-
-  defp hex_to_rgb(_), do: {102, 102, 102}
 
   # --- Gap date range ---
 
@@ -388,7 +384,11 @@ defmodule FugueWeb.MoodLive.CalendarGrid do
     |> Enum.concat(Map.keys(cluster_names))
     |> Enum.uniq()
     |> Map.new(fn id ->
-      {id, %{name: Map.get(cluster_names, id, id), color: Map.get(cluster_colors, id, "#888")}}
+      {id,
+       %{
+         name: Map.get(cluster_names, id, id),
+         color: Map.get(cluster_colors, id, "var(--mood-ink-3)")
+       }}
     end)
     |> Jason.encode!()
   end

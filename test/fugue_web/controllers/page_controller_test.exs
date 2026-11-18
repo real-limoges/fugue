@@ -42,6 +42,19 @@ defmodule FugueWeb.PageControllerTest do
     refute html =~ "Haskell services"
   end
 
+  # /code tells readers every page ends with a source line; these three are
+  # the controller pages, which the LiveView routes do not cover.
+  test "the controller pages end with a source line", %{conn: conn} do
+    for {path, target} <- [
+          {~p"/", "fugue/tree/HEAD/assets/js/petri_splash.js"},
+          {~p"/about", "fugue/tree/HEAD/lib/fugue_web/controllers/page_html"},
+          {~p"/code", "fugue/tree/HEAD/lib/fugue_web/controllers/page_html.ex"}
+        ] do
+      html = conn |> get(path) |> html_response(200)
+      assert html =~ target
+    end
+  end
+
   # /clouds stays routable for anyone holding the URL, but nothing on the
   # site should point at it. If a link comes back, it comes back on purpose.
   test "no page links to /clouds", %{conn: conn} do

@@ -163,7 +163,7 @@ defmodule FugueWeb.MoodLive.MoodTrajectory do
                 fill={d.color}
                 fill-opacity="0.85"
                 filter="url(#traj-glow)"
-                stroke={if d.focused?, do: "#fff", else: "none"}
+                stroke={if d.focused?, do: "var(--mood-ink-0)", else: "none"}
                 stroke-width={if d.focused?, do: "1.25", else: "0"}
                 stroke-opacity={if d.focused?, do: "0.9", else: "0"}
               />
@@ -193,7 +193,8 @@ defmodule FugueWeb.MoodLive.MoodTrajectory do
                 y1={SvgMath.fmt(a.py)}
                 x2={SvgMath.fmt(a.label_x)}
                 y2={SvgMath.fmt(a.label_y)}
-                stroke="rgba(255,255,255,0.45)"
+                stroke="var(--mood-line)"
+                stroke-opacity="0.45"
                 stroke-width="0.75"
                 pointer-events="none"
               />
@@ -206,10 +207,11 @@ defmodule FugueWeb.MoodLive.MoodTrajectory do
                 font-family="ui-serif, Georgia, serif"
                 font-style="italic"
                 paint-order="stroke"
-                stroke="rgba(10,10,26,0.65)"
+                stroke="var(--mood-scrim)"
                 stroke-width="3"
                 stroke-linejoin="round"
-                fill="rgba(255,255,255,0.92)"
+                fill="var(--mood-ink-0)"
+                fill-opacity="0.92"
                 pointer-events="none"
               >
                 {a.label}
@@ -219,7 +221,7 @@ defmodule FugueWeb.MoodLive.MoodTrajectory do
                 cy={SvgMath.fmt(a.py)}
                 r="4"
                 fill="none"
-                stroke="#fff"
+                stroke="var(--mood-ink-0)"
                 stroke-width="1.25"
                 stroke-opacity="0.9"
                 pointer-events="none"
@@ -277,8 +279,8 @@ defmodule FugueWeb.MoodLive.MoodTrajectory do
     {x_fn, y_fn}
   end
 
-  defp color_for(nil, _), do: "#888"
-  defp color_for(cluster, colors), do: Map.get(colors, cluster, "#888")
+  defp color_for(nil, _), do: "var(--mood-ink-3)"
+  defp color_for(cluster, colors), do: Map.get(colors, cluster, "var(--mood-ink-3)")
 
   defp val(p, key) when is_map(p) do
     Map.get(p, key) || Map.get(p, to_string(key))
@@ -305,7 +307,7 @@ defmodule FugueWeb.MoodLive.MoodTrajectory do
     note_html =
       case a.note do
         note when is_binary(note) and note != "" ->
-          ~s|<div style="margin-top:4px;color:#ddd;white-space:normal;max-width:240px">#{note}</div>|
+          ~s|<div style="margin-top:4px;color:var(--mood-ink-1);white-space:normal;max-width:240px">#{note}</div>|
 
         _ ->
           ""
@@ -319,7 +321,7 @@ defmodule FugueWeb.MoodLive.MoodTrajectory do
       end
 
     ~s|<div style="font-style:italic;font-family:ui-serif,Georgia,serif;font-size:12px">#{a.label}</div>| <>
-      ~s|<div style="color:#888;font-size:10px;margin-top:1px">#{a.date}</div>| <>
+      ~s|<div style="color:var(--mood-ink-3);font-size:10px;margin-top:1px">#{a.date}</div>| <>
       note_html <> cluster_html
   end
 end

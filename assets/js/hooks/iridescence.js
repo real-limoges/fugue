@@ -4,6 +4,8 @@
 // a flamboyant-cuttlefish palette; moving the cursor nudges the palette's
 // phase. WebGL2 fragment shader; no WASM, no shader build step.
 
+import { startRafLoop } from "../lib/canvas_loop.js"
+
 const VERT_SRC = `#version 300 es
 in vec2 a_pos;
 void main() {
@@ -252,19 +254,17 @@ export const IridescenceCanvas = {
       canvas.addEventListener("touchmove", onTouchMove, { passive: true })
 
       const start = performance.now()
-      /** @type {number | null} */
-      let rafId = null
-      const loop = () => {
-        const t = (performance.now() - start) / 1000
-        gl.uniform1f(uTime, t)
+      /** @param {number} now */
+      const draw = (now) => {
+        gl.uniform1f(uTime, (now - start) / 1000)
         gl.uniform2f(uCursor, cx, cy)
         gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
-        rafId = requestAnimationFrame(loop)
       }
-      rafId = requestAnimationFrame(loop)
+      // Under reduced motion the film holds one frame.
+      const loop = startRafLoop(draw, { target: canvas, still: () => draw(start) })
 
       this._stopLoop = () => {
-        if (rafId !== null) cancelAnimationFrame(rafId)
+        loop.stop()
         canvas.removeEventListener("mousemove", onMouseMove)
         canvas.removeEventListener("touchmove", onTouchMove)
         gl.deleteProgram(prog)

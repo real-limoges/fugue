@@ -1,5 +1,5 @@
 // @ts-check
-import * as clouds from "../../vendor/petri/js/clouds.js"
+import * as clouds from "petri/clouds.js"
 
 // Channels may be fractional mid-computation; Uint8ClampedArray rounds on store.
 /** @typedef {[number, number, number]} Rgb */

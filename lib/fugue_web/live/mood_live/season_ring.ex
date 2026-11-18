@@ -88,16 +88,29 @@ defmodule FugueWeb.MoodLive.SeasonRing do
       >
         <g transform={"translate(#{@center},#{@center})"}>
           <%= for r <- @ref_radii do %>
-            <circle r={fmt(r)} fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.5" />
+            <circle
+              r={fmt(r)}
+              fill="none"
+              stroke="var(--mood-line)"
+              stroke-opacity="0.04"
+              stroke-width="0.5"
+            />
           <% end %>
-          <circle r={@inner_r} fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="0.5" />
+          <circle
+            r={@inner_r}
+            fill="none"
+            stroke="var(--mood-line)"
+            stroke-opacity="0.08"
+            stroke-width="0.5"
+          />
 
           <%= for m <- @month_groups do %>
             <%= if m.total == 0 do %>
               <path
                 d={m.empty_path}
                 fill="none"
-                stroke="rgba(255,255,255,0.05)"
+                stroke="var(--mood-line)"
+                stroke-opacity="0.05"
                 stroke-width="0.5"
                 stroke-dasharray="2,2"
                 aria-hidden="true"
@@ -132,7 +145,7 @@ defmodule FugueWeb.MoodLive.SeasonRing do
               y={fmt(elem(m.label_xy, 1))}
               text-anchor="middle"
               dominant-baseline="central"
-              fill="#666"
+              fill="var(--mood-ink-4)"
               font-size="10px"
               font-weight="600"
               aria-hidden="true"
@@ -168,7 +181,7 @@ defmodule FugueWeb.MoodLive.SeasonRing do
 
           arc = %{
             cluster: cid,
-            color: Map.get(cluster_colors, cid, "#666"),
+            color: Map.get(cluster_colors, cid, "var(--mood-ink-4)"),
             d: annular_path(r_inner, r_outer, start_angle, end_angle),
             class: arc_class(cid, selected)
           }
@@ -221,7 +234,7 @@ defmodule FugueWeb.MoodLive.SeasonRing do
           id: cid,
           count: count,
           name: Map.get(cluster_names, cid, cid),
-          color: Map.get(cluster_colors, cid, "#888")
+          color: Map.get(cluster_colors, cid, "var(--mood-ink-3)")
         }
       end)
       |> Enum.filter(&(&1.count > 0))
@@ -234,12 +247,12 @@ defmodule FugueWeb.MoodLive.SeasonRing do
         ~s|<span style="display:inline-flex;align-items:center;gap:3px">| <>
           ~s|<span style="width:6px;height:6px;border-radius:50%;background:#{d.color};display:inline-block"></span>| <>
           "#{d.name}</span>" <>
-          ~s|<span style="color:#888;text-align:right">#{d.count}d</span>| <>
+          ~s|<span style="color:var(--mood-ink-3);text-align:right">#{d.count}d</span>| <>
           "<strong>#{pct}%</strong>"
       end)
 
     ~s|<strong style="font-size:13px">#{label}</strong>| <>
-      ~s|<div style="color:#666;font-size:10px;margin-bottom:6px">#{month.total} days across all years</div>| <>
+      ~s|<div style="color:var(--mood-ink-4);font-size:10px;margin-bottom:6px">#{month.total} days across all years</div>| <>
       ~s|<div style="display:grid;grid-template-columns:auto auto auto;gap:1px 10px">#{rows}</div>|
   end
 

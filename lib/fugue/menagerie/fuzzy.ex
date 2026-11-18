@@ -9,7 +9,7 @@ defmodule Fugue.Menagerie.Fuzzy do
   defmodule MF do
     @moduledoc """
     One triangular membership function: zero at `a` and `c`, one at the
-    peak `b`. `name` is the fuzzy set's label and `color` its hex swatch.
+    peak `b`. `name` is the fuzzy set's label and `color` its CSS color (a `var(--menagerie-temp-*)` reference).
     """
 
     @enforce_keys [:name, :color, :a, :b, :c]
@@ -30,15 +30,16 @@ defmodule Fugue.Menagerie.Fuzzy do
   @typedoc "One day's memberships, keyed by its ISO-8601 date."
   @type band_row :: %{date: String.t(), memberships: memberships()}
 
-  # {name, default_peak_celsius, hex color}. Palette picked for maximum hue
+  # {name, default_peak_celsius, CSS color}. Palette picked for maximum hue
   # contrast between adjacent bands rather than a literal temperature gradient
-  # so stacked bands stay distinguishable without relying on red/green.
+  # so stacked bands stay distinguishable without relying on red/green. The
+  # per-theme values live in assets/css/palettes/menagerie.css.
   @base_mfs [
-    {"cold", 10.0, "#a78bfa"},
-    {"cool", 17.0, "#38bdf8"},
-    {"mild", 24.0, "#facc15"},
-    {"warm", 31.0, "#fb923c"},
-    {"hot", 38.0, "#ec4899"}
+    {"cold", 10.0, "var(--menagerie-temp-cold)"},
+    {"cool", 17.0, "var(--menagerie-temp-cool)"},
+    {"mild", 24.0, "var(--menagerie-temp-mild)"},
+    {"warm", 31.0, "var(--menagerie-temp-warm)"},
+    {"hot", 38.0, "var(--menagerie-temp-hot)"}
   ]
 
   @default_half_width 7.0

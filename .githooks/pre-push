@@ -5,5 +5,10 @@ set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
-echo "==> mix precommit (compile --warnings-as-errors, deps.unlock --unused, format, test)"
+echo "==> mix precommit (compile, format, credo, dialyzer, assets, tests)"
 mix precommit
+
+# CI runs this as its own job on PRs, outside the deploy path. Here it catches
+# a new advisory before the PR does.
+echo "==> mix audit (Hex and npm advisories)"
+mix audit

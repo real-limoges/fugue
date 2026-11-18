@@ -6,7 +6,7 @@ defmodule FugueWeb.MoodLive.DimensionDrift do
 
   use Phoenix.Component
 
-  alias FugueWeb.MoodLive.{DateRange, SvgMath}
+  alias FugueWeb.MoodLive.{DataTransforms, DateRange, SvgMath}
 
   @width 800
   @m_top 6
@@ -15,14 +15,6 @@ defmodule FugueWeb.MoodLive.DimensionDrift do
   @m_left 72
   @row_h 44
   @gap 8
-
-  @dim_colors %{
-    "sleep" => "#42c8e6",
-    "anxiety" => "#e44dbc",
-    "sensitivity" => "#a86ee6",
-    "outlook" => "#6ee64d",
-    "speed" => "#e6a542"
-  }
 
   attr :dimensions, :list, default: []
 
@@ -43,7 +35,7 @@ defmodule FugueWeb.MoodLive.DimensionDrift do
         rows =
           Enum.with_index(dims)
           |> Enum.map(fn {dim, i} ->
-            color = Map.get(@dim_colors, dim.dimension, "#888")
+            color = DataTransforms.dimension_color(dim.dimension)
             values = Enum.map(dim.series, & &1.value)
             y_min = Enum.min(values)
             y_max = Enum.max(values)
@@ -111,13 +103,20 @@ defmodule FugueWeb.MoodLive.DimensionDrift do
       >
         <%= for row <- @rows do %>
           <g transform={"translate(#{@m_left},#{SvgMath.fmt(row.row_y)})"}>
-            <rect width={@inner_w} height={@row_h} fill="rgba(255,255,255,0.015)" rx="3" />
+            <rect
+              width={@inner_w}
+              height={@row_h}
+              fill="var(--mood-line)"
+              fill-opacity="0.015"
+              rx="3"
+            />
             <line
               x1="0"
               x2={@inner_w}
               y1={SvgMath.fmt(row.mean_y)}
               y2={SvgMath.fmt(row.mean_y)}
-              stroke="rgba(255,255,255,0.08)"
+              stroke="var(--mood-line)"
+              stroke-opacity="0.08"
               stroke-width="0.5"
               stroke-dasharray="3,3"
             />
@@ -133,7 +132,7 @@ defmodule FugueWeb.MoodLive.DimensionDrift do
               y={SvgMath.fmt(row.first_y)}
               text-anchor="end"
               dominant-baseline="central"
-              fill="#444"
+              fill="var(--mood-ink-6)"
               font-size="8px"
             >
               {num(row.first_val)}
@@ -142,7 +141,7 @@ defmodule FugueWeb.MoodLive.DimensionDrift do
               x={@inner_w + 4}
               y={SvgMath.fmt(row.last_y)}
               dominant-baseline="central"
-              fill="#555"
+              fill="var(--mood-ink-5)"
               font-size="8px"
             >
               {num(row.last_val)}
@@ -163,14 +162,20 @@ defmodule FugueWeb.MoodLive.DimensionDrift do
         <% end %>
 
         <g transform={@axis_transform}>
-          <line x1="0" y1="0" x2={@inner_w} y2="0" stroke="#444" />
+          <line x1="0" y1="0" x2={@inner_w} y2="0" stroke="var(--mood-ink-6)" />
           <%= for t <- @x_ticks do %>
-            <line x1={SvgMath.fmt(t.x)} y1="0" x2={SvgMath.fmt(t.x)} y2="3" stroke="#444" />
+            <line
+              x1={SvgMath.fmt(t.x)}
+              y1="0"
+              x2={SvgMath.fmt(t.x)}
+              y2="3"
+              stroke="var(--mood-ink-6)"
+            />
             <text
               x={SvgMath.fmt(t.x)}
               y="16"
               text-anchor="middle"
-              fill="#666"
+              fill="var(--mood-ink-4)"
               font-size="10px"
             >
               {t.label}

@@ -2,6 +2,13 @@
    https://tailwindcss.com/docs/configuration */
 
 @import "tailwindcss" source(none);
+
+/* Data and figure colors that daisyUI's tokens don't cover, one value per
+   theme, one file per area. See palettes/README.md. */
+@import "./palettes/site.css";
+@import "./palettes/mood.css";
+@import "./palettes/color.css";
+@import "./palettes/menagerie.css";
 @source "../css";
 @source "../js";
 @source "../../lib/fugue_web";
@@ -57,17 +64,24 @@
   --noise: 0;
 }
 
-/* Phoenix: warm orange on cream paper */
+/* Phoenix: warm orange on cream paper.
+   Guided by the dotfiles palette solver (color/solve-palette.lisp), not run
+   through it: the paper is its light theme's #f2e9d8, warm rather than
+   white, and every text color clears 4.5:1 on it. The ink is darker than
+   the solver's because most quiet text here is ink at reduced opacity
+   (text-base-content/45 and so on), and translucent ink loses contrast
+   faster on paper than it does on the dark theme. Primary sits just over
+   the floor (5.0:1), since contrast beyond it costs color. */
 @plugin "../vendor/daisyui-theme" {
   name: "light";
   default: false;
   prefersdark: false;
   color-scheme: "light";
-  --color-base-100: oklch(97% 0.015 70);
-  --color-base-200: oklch(94% 0.02 70);
-  --color-base-300: oklch(89% 0.025 70);
-  --color-base-content: oklch(24% 0.03 40);
-  --color-primary: oklch(58% 0.19 40);
+  --color-base-100: #f2e9d8;
+  --color-base-200: oklch(90.5% 0.03 78);
+  --color-base-300: oklch(86% 0.035 75);
+  --color-base-content: oklch(18% 0.03 40);
+  --color-primary: oklch(52% 0.19 40);
   --color-primary-content: oklch(98% 0.01 70);
   --color-secondary: oklch(45% 0.11 220);
   --color-secondary-content: oklch(98% 0.01 70);
@@ -79,8 +93,8 @@
   --color-info-content: oklch(98% 0.01 70);
   --color-success: oklch(45% 0.13 145);
   --color-success-content: oklch(98% 0.01 70);
-  --color-warning: oklch(55% 0.16 75);
-  --color-warning-content: oklch(20% 0.02 70);
+  --color-warning: oklch(50% 0.14 75);
+  --color-warning-content: oklch(98% 0.01 70);
   --color-error: oklch(50% 0.2 25);
   --color-error-content: oklch(98% 0.01 70);
   --radius-selector: 0.125rem;
@@ -165,6 +179,15 @@
   color: var(--color-base-content);
   box-shadow: 0 0 0 100vmax var(--color-base-100);
   clip-path: inset(0 -100vmax);
+}
+
+/* Connection banners (`Layouts.connection_status/1`): LiveView puts
+   phx-client-error or phx-server-error on the main view container while the
+   socket is down and removes it on reconnect. Unlayered, so it beats the
+   `hidden` utility the banners start with. */
+body:has([data-phx-main].phx-client-error) #client-error,
+body:has([data-phx-main].phx-server-error) #server-error {
+  display: flex;
 }
 
 /* The /amigos clutter: a marker hand for the scrawls and a typewriter face

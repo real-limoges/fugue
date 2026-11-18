@@ -1,6 +1,22 @@
 import { describe, expect, test } from "vitest"
 import { createThemePoll, mapPixels } from "../js/lib/canvas_loop.js"
-import { buildColorTable } from "../js/lib/theme_colors.js"
+import { buildColorTable, resolveCssVar } from "../js/lib/theme_colors.js"
+
+describe("resolveCssVar", () => {
+  const read = (name) => ({ "--mood-cluster-0": " #a7037b " })[name] ?? ""
+
+  test("a var() reads the property's value", () => {
+    expect(resolveCssVar("var(--mood-cluster-0)", read)).toBe("#a7037b")
+  })
+
+  test("a plain color passes through", () => {
+    expect(resolveCssVar("#42c8e6", read)).toBe("#42c8e6")
+  })
+
+  test("an unset variable comes back as written", () => {
+    expect(resolveCssVar("var(--missing)", read)).toBe("var(--missing)")
+  })
+})
 
 describe("buildColorTable", () => {
   const base = [10, 20, 30]

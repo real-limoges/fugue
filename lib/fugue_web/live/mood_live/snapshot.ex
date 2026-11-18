@@ -168,7 +168,7 @@ defmodule FugueWeb.MoodLive.Snapshot do
       %{
         id: c["id"],
         name: c["name"],
-        color: Map.get(analysis.cluster_colors, c["id"], "#666")
+        color: Map.get(analysis.cluster_colors, c["id"], "var(--mood-ink-4)")
       }
     end)
   end

@@ -41,8 +41,8 @@ const STYLES = `
     z-index: 60;
     border-radius: 8px;
     box-shadow:
-      0 0 0 6px rgba(255, 255, 255, 0.08),
-      0 0 0 9999px rgba(0, 0, 0, 0.78);
+      0 0 0 6px color-mix(in srgb, var(--mood-line) 8%, transparent),
+      0 0 0 9999px var(--mood-tour-backdrop);
     transition: box-shadow 240ms ease-out;
   }
   #mood-tour-card {
@@ -52,12 +52,12 @@ const STYLES = `
     transform: translateX(-50%);
     z-index: 99999;
     width: min(92vw, 34rem);
-    background: #0d0d0d;
-    color: #e5e7eb;
-    border: 1px solid #2a2a2a;
+    background: var(--mood-tour-bg);
+    color: var(--mood-tour-text);
+    border: 1px solid var(--mood-tour-border);
     border-radius: 10px;
     padding: 1rem 1.1rem 0.9rem;
-    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 20px 50px var(--mood-tour-shadow);
     pointer-events: auto;
     font-size: 0.85rem;
     line-height: 1.5;
@@ -66,11 +66,11 @@ const STYLES = `
     font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 0.14em;
-    color: #9ca3af;
+    color: var(--mood-tour-muted);
     margin-bottom: 0.35rem;
   }
   #mood-tour-card .tour-body {
-    color: #e5e7eb;
+    color: var(--mood-tour-text);
     margin-bottom: 0.85rem;
   }
   #mood-tour-card .tour-controls {
@@ -79,7 +79,7 @@ const STYLES = `
     align-items: center;
   }
   #mood-tour-card .tour-counter {
-    color: #6b7280;
+    color: var(--mood-tour-faint);
     font-size: 0.65rem;
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.1em;
@@ -91,7 +91,7 @@ const STYLES = `
   #mood-tour-card button {
     background: none;
     border: none;
-    color: #9ca3af;
+    color: var(--mood-tour-muted);
     cursor: pointer;
     font-size: 0.65rem;
     text-transform: uppercase;
@@ -101,15 +101,15 @@ const STYLES = `
     transition: color 120ms ease, background 120ms ease;
   }
   #mood-tour-card button:hover {
-    color: #f3f4f6;
-    background: rgba(255, 255, 255, 0.05);
+    color: var(--mood-tour-hover);
+    background: color-mix(in srgb, var(--mood-line) 5%, transparent);
   }
   #mood-tour-card button[data-tour-primary] {
-    color: #e5e7eb;
+    color: var(--mood-tour-text);
   }
   #mood-tour-card button[data-tour-primary]:hover {
-    color: #ffffff;
-    background: rgba(255, 255, 255, 0.08);
+    color: var(--mood-tour-bright);
+    background: color-mix(in srgb, var(--mood-line) 8%, transparent);
   }
 `
 

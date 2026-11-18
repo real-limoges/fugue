@@ -69,7 +69,7 @@ export const TemporalBrush = {
       .attr("x2", (d) => x(d))
       .attr("y1", 0)
       .attr("y2", INNER_H)
-      .attr("stroke", "#555")
+      .attr("stroke", "var(--mood-ink-5)")
       .attr("stroke-width", 1)
       .attr("opacity", 0.4)
 
@@ -85,8 +85,8 @@ export const TemporalBrush = {
       .attr("transform", `translate(0,${INNER_H})`)
       .call(axis)
       .selectAll("text,line,path")
-      .attr("stroke", "#666")
-      .attr("fill", "#666")
+      .attr("stroke", "var(--mood-ink-4)")
+      .attr("fill", "var(--mood-ink-4)")
       .attr("font-size", "9px")
 
     // Brush

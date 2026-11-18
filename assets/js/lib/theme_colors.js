@@ -30,6 +30,24 @@ export function resolveThemeColors() {
 }
 
 /**
+ * Turns `var(--name)` into the variable's current value, for canvas code,
+ * which can't paint a CSS variable. Anything that isn't a bare `var(...)`
+ * comes back unchanged, as does a variable with no value.
+ *
+ * @param {string} value
+ * @param {(name: string) => string} [read] looks a custom property up; defaults to the root element's computed style
+ * @returns {string}
+ */
+export function resolveCssVar(
+  value,
+  read = (name) => getComputedStyle(document.documentElement).getPropertyValue(name)
+) {
+  const match = /^var\((--[\w-]+)\)$/.exec(value.trim())
+  if (!match) return value
+  return read(match[1]).trim() || value
+}
+
+/**
  * @param {Rgb} base
  * @param {Rgb} primary
  * @returns {Uint8Array} 256 RGBA entries, base at 0 easing to primary at 255
