@@ -4,6 +4,8 @@ defmodule FugueWeb.MoodLive.DataTransformsTest do
   alias FugueWeb.MoodLive.DataTransforms
   alias FugueWeb.MoodLive.Structs.{AnalysisResult, CalendarDay, GapData}
 
+  doctest DataTransforms
+
   describe "parse_analysis/2" do
     test "assigns cluster_N ids in order" do
       raw = %{

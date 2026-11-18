@@ -32,9 +32,10 @@ defmodule FugueWeb.LabLive.Bayes do
   @chart_height 360
   @search_size 360
 
-  # Section accent (also used by the shaded posterior tail).
-  @posterior_color "#ff8a28"
-  @prior_color "#888888"
+  # Section accent (also used by the shaded posterior tail). Per-theme values
+  # live in assets/css/palettes/menagerie.css.
+  @posterior_color "var(--lab-highlight)"
+  @prior_color "var(--lab-prior)"
 
   @impl true
   def mount(_params, _session, socket) do
@@ -584,12 +585,12 @@ defmodule FugueWeb.LabLive.Bayes do
         cy: y + cell_h / 2 + 4,
         w: cell_w,
         h: cell_h,
-        fill: if(is_searched, do: "#1e1e24", else: prob_color(p, max_p)),
+        fill: if(is_searched, do: "var(--lab-heat-empty)", else: prob_color(p, max_p)),
         stroke:
           cond do
             is_truth -> @posterior_color
-            is_searched -> "#444"
-            true -> "#000"
+            is_searched -> "var(--lab-heat-searched-edge)"
+            true -> "var(--lab-heat-gap)"
           end,
         stroke_width: if(is_truth, do: "2", else: "1"),
         cursor_style: if(interactive?, do: "cursor: pointer;", else: "cursor: default;"),
@@ -608,18 +609,21 @@ defmodule FugueWeb.LabLive.Bayes do
   defp cell_label(_, _, _, _), do: nil
 
   defp cell_label_color(_, _, _, true), do: @posterior_color
-  defp cell_label_color(_, _, true, _), do: "#666"
-  defp cell_label_color(p, max_p, _, _) when max_p > 0 and p / max_p > 0.6, do: "#1e1e24"
-  defp cell_label_color(_, _, _, _), do: "#aaa"
+  defp cell_label_color(_, _, true, _), do: "var(--lab-heat-label-searched)"
 
-  defp prob_color(p, _) when p <= 0, do: "#1e1e24"
+  defp cell_label_color(p, max_p, _, _) when max_p > 0 and p / max_p > 0.6,
+    do: "var(--lab-heat-label-hot)"
 
+  defp cell_label_color(_, _, _, _), do: "var(--lab-heat-label)"
+
+  defp prob_color(p, _) when p <= 0, do: "var(--lab-heat-empty)"
+
+  # A straight sRGB blend from the empty cell to the posterior accent, so the
+  # ramp follows the theme.
   defp prob_color(p, max_p) do
     t = min(1.0, p / max(max_p, 1.0e-9))
-    r = round(30 + (255 - 30) * t)
-    g = round(30 + (138 - 30) * t)
-    b = round(36 + (40 - 36) * t)
-    "rgb(#{r}, #{g}, #{b})"
+    pct = Float.round(t * 100, 1)
+    "color-mix(in srgb, var(--lab-highlight) #{pct}%, var(--lab-heat-empty))"
   end
 
   defp build_rate_chart(%{

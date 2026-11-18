@@ -3,6 +3,8 @@ defmodule FugueWeb.MoodLive.MoodTransitions do
 
   use FugueWeb, :live_component
 
+  alias FugueWeb.MoodLive.DataTransforms
+
   def update(assigns, socket) do
     socket =
       socket
@@ -46,20 +48,20 @@ defmodule FugueWeb.MoodLive.MoodTransitions do
               phx-click="day_selected"
               phx-value-date={t.date}
               data-date={t.date}
-              class={"flex items-center gap-2 px-2 py-1 rounded cursor-pointer text-sm transition-colors #{if t.date in (@highlighted_dates || []), do: "bg-amber-300/15 ring-1 ring-amber-300/60", else: "hover:bg-base-300"}"}
+              class={"flex items-center gap-2 px-2 py-1 rounded cursor-pointer text-sm transition-colors #{if t.date in (@highlighted_dates || []), do: "bg-warning/15 ring-1 ring-warning/60", else: "hover:bg-base-300"}"}
             >
               <span class="text-base-content/60 w-24 shrink-0">{t.date}</span>
               <div class="flex items-center gap-1 flex-1 min-w-0">
                 <span
                   class="px-1.5 py-0.5 rounded text-xs"
-                  style={"background: #{Map.get(@cluster_colors, t.from, "#666")}33; color: #{Map.get(@cluster_colors, t.from, "#aaa")}"}
+                  style={"background: #{DataTransforms.tint(Map.get(@cluster_colors, t.from, "var(--mood-ink-4)"), 20)}; color: #{Map.get(@cluster_colors, t.from, "var(--mood-ink-2)")}"}
                 >
                   {Map.get(@cluster_names, t.from, t.from)}
                 </span>
                 <span class="text-base-content/45">&rarr;</span>
                 <span
                   class="px-1.5 py-0.5 rounded text-xs"
-                  style={"background: #{Map.get(@cluster_colors, t.to, "#666")}33; color: #{Map.get(@cluster_colors, t.to, "#aaa")}"}
+                  style={"background: #{DataTransforms.tint(Map.get(@cluster_colors, t.to, "var(--mood-ink-4)"), 20)}; color: #{Map.get(@cluster_colors, t.to, "var(--mood-ink-2)")}"}
                 >
                   {Map.get(@cluster_names, t.to, t.to)}
                 </span>

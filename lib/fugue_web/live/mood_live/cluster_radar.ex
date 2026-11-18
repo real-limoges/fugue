@@ -49,7 +49,7 @@ defmodule FugueWeb.MoodLive.ClusterRadar do
 
     cells =
       Enum.map(assigns.centroids, fn centroid ->
-        color = Map.get(assigns.cluster_colors, centroid.id, "#666")
+        color = Map.get(assigns.cluster_colors, centroid.id, "var(--mood-ink-4)")
 
         points =
           Enum.with_index(assigns.dimensions)
@@ -107,7 +107,13 @@ defmodule FugueWeb.MoodLive.ClusterRadar do
           >
             <g transform={"translate(#{@center},#{@center})"}>
               <%= for r <- @ring_radii do %>
-                <circle r={fmt(r)} fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="0.5" />
+                <circle
+                  r={fmt(r)}
+                  fill="none"
+                  stroke="var(--mood-line)"
+                  stroke-opacity="0.06"
+                  stroke-width="0.5"
+                />
               <% end %>
 
               <%= for ax <- @axes do %>
@@ -116,7 +122,8 @@ defmodule FugueWeb.MoodLive.ClusterRadar do
                   y1="0"
                   x2={fmt(ax.x2)}
                   y2={fmt(ax.y2)}
-                  stroke="rgba(255,255,255,0.08)"
+                  stroke="var(--mood-line)"
+                  stroke-opacity="0.08"
                   stroke-width="0.5"
                 />
                 <text
@@ -124,7 +131,7 @@ defmodule FugueWeb.MoodLive.ClusterRadar do
                   y={fmt(ax.label_y)}
                   text-anchor="middle"
                   dominant-baseline="middle"
-                  fill="#666"
+                  fill="var(--mood-ink-4)"
                   font-size={@font_size}
                 >
                   {ax.dim}

@@ -29,7 +29,7 @@ defmodule FugueWeb.MoodLive.TransitionSankey do
 
     links =
       Enum.map(layout.links, fn link ->
-        color = Map.get(assigns.cluster_colors, link.to, "#666")
+        color = Map.get(assigns.cluster_colors, link.to, "var(--mood-ink-4)")
 
         Map.merge(link, %{
           color: color,
@@ -39,7 +39,7 @@ defmodule FugueWeb.MoodLive.TransitionSankey do
 
     left_nodes =
       Enum.map(layout.left_nodes, fn n ->
-        color = Map.get(assigns.cluster_colors, n.id, "#666")
+        color = Map.get(assigns.cluster_colors, n.id, "var(--mood-ink-4)")
         name = Map.get(assigns.cluster_names, n.id, n.id)
 
         Map.merge(n, %{
@@ -53,7 +53,7 @@ defmodule FugueWeb.MoodLive.TransitionSankey do
 
     right_nodes =
       Enum.map(layout.right_nodes, fn n ->
-        color = Map.get(assigns.cluster_colors, n.id, "#666")
+        color = Map.get(assigns.cluster_colors, n.id, "var(--mood-ink-4)")
         name = Map.get(assigns.cluster_names, n.id, n.id)
 
         Map.merge(n, %{
@@ -80,7 +80,7 @@ defmodule FugueWeb.MoodLive.TransitionSankey do
       )
 
     ~H"""
-    <div id="transition-sankey" style="width: 100%;">
+    <div id="transition-sankey" phx-hook="SvgButtons" style="width: 100%;">
       <svg
         viewBox={"0 0 #{@svg_width} #{@svg_height}"}
         preserveAspectRatio="xMidYMid meet"
@@ -93,7 +93,7 @@ defmodule FugueWeb.MoodLive.TransitionSankey do
             x={fmt(@from_label_x)}
             y="14"
             text-anchor="middle"
-            fill="#555"
+            fill="var(--mood-ink-5)"
             font-size="10px"
             aria-hidden="true"
           >
@@ -103,7 +103,7 @@ defmodule FugueWeb.MoodLive.TransitionSankey do
             x={fmt(@to_label_x)}
             y="14"
             text-anchor="middle"
-            fill="#555"
+            fill="var(--mood-ink-5)"
             font-size="10px"
             aria-hidden="true"
           >
@@ -122,7 +122,6 @@ defmodule FugueWeb.MoodLive.TransitionSankey do
               stroke={link.color}
               role="img"
               aria-label={"Transition from #{Map.get(@cluster_names, link.from, link.from)} to #{Map.get(@cluster_names, link.to, link.to)}: #{link.count} transitions"}
-              tabindex="0"
             />
           <% end %>
 

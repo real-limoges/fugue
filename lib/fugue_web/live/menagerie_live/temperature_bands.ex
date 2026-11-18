@@ -119,7 +119,11 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
             upper = Enum.map(stacked, fn p -> {p.x, band_y.(slice_edge(p, name, 2))} end)
             lower = Enum.map(stacked, fn p -> {p.x, band_y.(slice_edge(p, name, 1))} end)
 
-            %{name: name, color: Map.get(mf_colors, name, "#666"), d: area_path(upper, lower)}
+            %{
+              name: name,
+              color: Map.get(mf_colors, name, "var(--menagerie-ink-faint)"),
+              d: area_path(upper, lower)
+            }
           end)
 
         year_lines =
@@ -148,7 +152,7 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
                 %{
                   name: name,
                   y: band_y.((y0 + y1) / 2) + 3,
-                  color: Map.get(mf_colors, name, "#666"),
+                  color: Map.get(mf_colors, name, "var(--menagerie-ink-faint)"),
                   visible?: height >= 11
                 }
               end)

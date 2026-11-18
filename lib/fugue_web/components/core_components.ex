@@ -57,11 +57,11 @@ defmodule FugueWeb.CoreComponents do
 
     ~H"""
     <p class={[
-      "mt-12 pt-4 border-t border-base-content/10 font-mono text-[11px] text-base-content/40",
+      "mt-12 pt-4 border-t border-base-content/10 font-mono text-[11px] text-base-content/65 dark:text-base-content/40",
       @class
     ]}>
-      <span class="uppercase tracking-[0.2em] text-base-content/30">source</span>
-      <span :for={{{name, url}, i} <- Enum.with_index(@links)} phx-no-format><span :if={i > 0} class="text-base-content/20 px-1">/</span><a href={url} class="hover:text-primary underline decoration-dotted underline-offset-4 transition-colors">{name}</a></span>
+      <span class="uppercase tracking-[0.2em] text-base-content/60 dark:text-base-content/30">source</span>
+      <span :for={{{name, url}, i} <- Enum.with_index(@links)} phx-no-format><span :if={i > 0} class="text-base-content/45 dark:text-base-content/20 px-1">/</span><a href={url} class="hover:text-primary underline decoration-dotted underline-offset-4 transition-colors">{name}</a></span>
     </p>
     """
   end
@@ -99,11 +99,11 @@ defmodule FugueWeb.CoreComponents do
       )
 
     ~H"""
-    <p class="mt-2 font-mono text-[10px] leading-relaxed text-base-content/30">
+    <p class="mt-2 font-mono text-[10px] leading-relaxed text-base-content/60 dark:text-base-content/30">
       {@note}
       <a
         href={@url}
-        class="ml-1 text-base-content/45 hover:text-primary underline decoration-dotted underline-offset-4 transition-colors"
+        class="ml-1 text-base-content/70 dark:text-base-content/45 hover:text-primary underline decoration-dotted underline-offset-4 transition-colors"
       >
         -&gt; {@label}
       </a>

@@ -1,5 +1,6 @@
 // @ts-check
 import * as THREE from "three"
+import { startRafLoop } from "./lib/canvas_loop.js"
 
 /**
  * One brick in a shape, in integer stud-grid coordinates.
@@ -403,8 +404,6 @@ export function initLego3D(canvasId) {
     camera.position.z = Math.sin(t) * cameraDistance
     camera.position.y = cameraHeight
     camera.lookAt(0, 0, 0)
-
-    renderer.render(scene, camera)
   }
 
   // An arrow, not a function declaration: a hoisted declaration loses the
@@ -422,16 +421,28 @@ export function initLego3D(canvasId) {
   const ro = new ResizeObserver(fitCanvas)
   ro.observe(canvas)
 
-  let rafId = 0
-  /** @param {number} now */
-  function loop(now) {
-    step(now)
-    rafId = requestAnimationFrame(loop)
+  // Under reduced motion the stack is shown built and still: the build runs
+  // in simulated time, 50 ms a tick, until the shape is finished, and then
+  // renders once. The cap only guards against a shape that never finishes.
+  const showBuilt = () => {
+    let now = performance.now()
+    for (let i = 0; i < 5000 && phase === "building"; i++) {
+      step(now)
+      now += 50
+    }
+    renderer.render(scene, camera)
   }
-  rafId = requestAnimationFrame(loop)
+
+  const loop = startRafLoop(
+    (now) => {
+      step(now)
+      renderer.render(scene, camera)
+    },
+    { target: canvas, still: showBuilt }
+  )
 
   return () => {
-    cancelAnimationFrame(rafId)
+    loop.stop()
     ro.disconnect()
     for (const brick of bricks) disposeBrickMesh(brick.mesh)
     renderer.dispose()

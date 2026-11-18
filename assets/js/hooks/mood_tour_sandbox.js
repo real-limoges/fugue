@@ -14,8 +14,9 @@ const BAR_H = 22
 const BAR_GAP = 1.5
 const INNER_W = VB_W - 2 * PAD_X
 
-// Okabe-Ito: colorblind-safe palette, high contrast, up to 5 clusters.
-const COLORS = ["#E69F00", "#56B4E9", "#009E73", "#CC79A7", "#F0E442"]
+// Okabe-Ito on dark, darkened to clear 3:1 on the paper in light; up to 5
+// clusters. Values are per theme in assets/css/palettes/mood.css.
+const COLORS = [0, 1, 2, 3, 4].map((i) => `var(--mood-sandbox-${i})`)
 
 const STYLES = `
   #mood-tour-sandbox .sandbox-svg {
@@ -43,7 +44,7 @@ const STYLES = `
     display: flex;
     align-items: center;
     gap: 1rem;
-    color: #6b7280;
+    color: var(--mood-tour-faint);
   }
   #mood-tour-sandbox .sandbox-sliders .label-text {
     min-width: 5.25rem;
@@ -54,7 +55,7 @@ const STYLES = `
   #mood-tour-sandbox .sandbox-sliders .readout {
     min-width: 2.25rem;
     text-align: right;
-    color: #9ca3af;
+    color: var(--mood-tour-muted);
     font-size: 0.7rem;
     font-variant-numeric: tabular-nums;
   }
@@ -63,7 +64,7 @@ const STYLES = `
     appearance: none;
     flex: 1;
     height: 2px;
-    background: #2f2f2f;
+    background: var(--mood-tour-track);
     border-radius: 1px;
     outline: none;
     cursor: pointer;
@@ -73,14 +74,14 @@ const STYLES = `
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #e5e7eb;
+    background: var(--mood-tour-text);
     border: none;
     cursor: grab;
     transition: transform 120ms ease, background 120ms ease;
   }
   #mood-tour-sandbox input[type=range]::-webkit-slider-thumb:hover {
     transform: scale(1.15);
-    background: #ffffff;
+    background: var(--mood-tour-bright);
   }
   #mood-tour-sandbox input[type=range]::-webkit-slider-thumb:active {
     cursor: grabbing;
@@ -88,7 +89,7 @@ const STYLES = `
   }
   #mood-tour-sandbox input[type=range]::-moz-range-track {
     height: 2px;
-    background: #2f2f2f;
+    background: var(--mood-tour-track);
     border: none;
     border-radius: 1px;
   }
@@ -96,17 +97,17 @@ const STYLES = `
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: #e5e7eb;
+    background: var(--mood-tour-text);
     border: none;
     cursor: grab;
     transition: transform 120ms ease, background 120ms ease;
   }
   #mood-tour-sandbox input[type=range]::-moz-range-thumb:hover {
     transform: scale(1.15);
-    background: #ffffff;
+    background: var(--mood-tour-bright);
   }
   #mood-tour-sandbox input[type=range]:focus-visible {
-    outline: 1px solid #6b7280;
+    outline: 1px solid var(--mood-tour-faint);
     outline-offset: 4px;
     border-radius: 2px;
   }
@@ -173,10 +174,10 @@ export const MoodTourSandbox = {
     this.el.innerHTML = `
       <style>${STYLES}</style>
       <svg class="sandbox-svg" viewBox="0 0 ${VB_W} ${VB_H}" preserveAspectRatio="xMidYMid meet">
-        <line x1="${PAD_X}" y1="${AXIS_Y}" x2="${VB_W - PAD_X}" y2="${AXIS_Y}" stroke="#666" stroke-width="1"/>
+        <line x1="${PAD_X}" y1="${AXIS_Y}" x2="${VB_W - PAD_X}" y2="${AXIS_Y}" stroke="var(--mood-ink-4)" stroke-width="1"/>
         <g class="centers"></g>
         <g class="bar" transform="translate(${PAD_X},${BAR_Y})"></g>
-        <circle class="point" cx="${PAD_X}" cy="${AXIS_Y}" r="8" fill="#f5f5f5" stroke="#111" stroke-width="1"/>
+        <circle class="point" cx="${PAD_X}" cy="${AXIS_Y}" r="8" fill="var(--mood-tour-point)" stroke="var(--mood-tour-point-edge)" stroke-width="1"/>
         <rect class="hitbox" x="${PAD_X - 24}" y="${AXIS_Y - 28}" width="${INNER_W + 48}" height="56"
               fill="transparent" style="cursor:grab"/>
       </svg>

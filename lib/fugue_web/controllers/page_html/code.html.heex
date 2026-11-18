@@ -3,7 +3,7 @@
     <h1 class="text-3xl font-bold tracking-tight text-base-content">
       Code.
     </h1>
-    <p class="text-gray-500 mt-2">
+    <p class="text-base-content/65 dark:text-gray-500 mt-2">
       What's underneath, and where to read it.
     </p>
   </header>
@@ -36,7 +36,7 @@
     <h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/85 mb-2">
       In the shop
     </h2>
-    <p class="text-sm text-base-content/50 leading-relaxed max-w-2xl mb-5">
+    <p class="text-sm text-base-content/65 dark:text-base-content/50 leading-relaxed max-w-2xl mb-5">
       Real and public, but nothing here is running yet.
     </p>
     <ul class="space-y-6">
@@ -50,7 +50,7 @@
     </h2>
     <p class="text-sm text-base-content/65 leading-relaxed max-w-2xl">
       Every page here ends with a
-      <span class="font-mono text-xs text-base-content/50">source</span>
+      <span class="font-mono text-xs text-base-content/65 dark:text-base-content/50">source</span>
       line pointing at the code that draws it, usually straight to the
       directory rather than the repo root. If something on this site
       looks like it shouldn't work, that's the fastest way to check
@@ -59,10 +59,12 @@
     <p class="mt-4 text-sm text-base-content/65 leading-relaxed max-w-2xl">
       The rest is on <a
         href="https://github.com/real-limoges"
-        class="text-amber-300 hover:text-amber-200 underline decoration-dotted underline-offset-4"
+        class="text-warning hover:text-primary dark:text-amber-300 dark:hover:text-amber-200 underline decoration-dotted underline-offset-4"
       >
         GitHub
       </a>, including a fair amount that never made it here.
     </p>
   </section>
+
+  <.source_link repos={[{"fugue", "lib/fugue_web/controllers/page_html.ex"}]} />
 </article>

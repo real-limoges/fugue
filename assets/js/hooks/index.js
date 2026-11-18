@@ -17,6 +17,7 @@ import { LabGam } from "./lab_gam"
 import { IridescenceCanvas } from "./iridescence"
 import { ThemeToggle } from "./theme_toggle"
 import { AmigosScroll } from "./amigos_scroll"
+import { SvgButtons } from "./svg_buttons"
 
 export default {
   CalendarTooltip,
@@ -37,4 +38,5 @@ export default {
   IridescenceCanvas,
   ThemeToggle,
   AmigosScroll,
+  SvgButtons,
 }

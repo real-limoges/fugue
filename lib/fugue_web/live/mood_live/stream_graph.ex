@@ -75,7 +75,7 @@ defmodule FugueWeb.MoodLive.StreamGraph do
         %{
           id: id,
           name: Map.get(assigns.cluster_names, id, id),
-          color: Map.get(assigns.cluster_colors, id, "#888")
+          color: Map.get(assigns.cluster_colors, id, "var(--mood-ink-3)")
         }
       end)
 
@@ -114,20 +114,20 @@ defmodule FugueWeb.MoodLive.StreamGraph do
           <% end %>
 
           <g class="x-axis" transform={"translate(0,#{@inner_h})"}>
-            <line x1="0" y1="0" x2={@inner_w} y2="0" stroke="#444" />
+            <line x1="0" y1="0" x2={@inner_w} y2="0" stroke="var(--mood-ink-6)" />
             <%= for t <- @x_ticks do %>
-              <line x1={t.x} y1="0" x2={t.x} y2="3" stroke="#444" />
-              <text x={t.x} y="14" text-anchor="middle" fill="#666" font-size="10px">
+              <line x1={t.x} y1="0" x2={t.x} y2="3" stroke="var(--mood-ink-6)" />
+              <text x={t.x} y="14" text-anchor="middle" fill="var(--mood-ink-4)" font-size="10px">
                 {t.label}
               </text>
             <% end %>
           </g>
 
           <g class="y-axis">
-            <line x1="0" y1="0" x2="0" y2={@inner_h} stroke="#444" />
+            <line x1="0" y1="0" x2="0" y2={@inner_h} stroke="var(--mood-ink-6)" />
             <%= for t <- @y_ticks do %>
-              <line x1="-3" y1={t.y} x2="0" y2={t.y} stroke="#444" />
-              <text x="-5" y={t.y + 3} text-anchor="end" fill="#666" font-size="9px">
+              <line x1="-3" y1={t.y} x2="0" y2={t.y} stroke="var(--mood-ink-6)" />
+              <text x="-5" y={t.y + 3} text-anchor="end" fill="var(--mood-ink-4)" font-size="9px">
                 {t.label}
               </text>
             <% end %>
@@ -140,7 +140,7 @@ defmodule FugueWeb.MoodLive.StreamGraph do
               x2={@tether_x}
               y1="0"
               y2={@inner_h}
-              stroke="#fff"
+              stroke="var(--mood-ink-0)"
               stroke-width="1.5"
               pointer-events="none"
             />
@@ -217,7 +217,11 @@ defmodule FugueWeb.MoodLive.StreamGraph do
           {p.x, y_to_px(y0)}
         end)
 
-      %{cluster: cid, d: area_path(upper, lower), color: Map.get(cluster_colors, cid, "#666")}
+      %{
+        cluster: cid,
+        d: area_path(upper, lower),
+        color: Map.get(cluster_colors, cid, "var(--mood-ink-4)")
+      }
     end)
   end
 

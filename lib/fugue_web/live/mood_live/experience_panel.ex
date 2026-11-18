@@ -9,15 +9,9 @@ defmodule FugueWeb.MoodLive.ExperiencePanel do
 
   use Phoenix.Component
 
-  @dimensions ~w(sleep anxiety sensitivity outlook speed)
+  alias FugueWeb.MoodLive.DataTransforms
 
-  @dim_colors %{
-    "sleep" => "#42c8e6",
-    "anxiety" => "#e44dbc",
-    "sensitivity" => "#a86ee6",
-    "outlook" => "#6ee64d",
-    "speed" => "#e6a542"
-  }
+  @dimensions ~w(sleep anxiety sensitivity outlook speed)
 
   attr :selected_day, :map, default: nil
   attr :selected_cluster, :any, default: nil
@@ -146,22 +140,26 @@ defmodule FugueWeb.MoodLive.ExperiencePanel do
   # --- Helpers ---
 
   defp ambient_background(%{selected_day: %{dominant: %{id: id}} = day}) when not is_nil(id) do
-    color = cluster_color(day, id)
-    "radial-gradient(ellipse at 60% 40%, #{color}12 0%, transparent 70%)"
+    glow(cluster_color(day, id))
   end
 
   defp ambient_background(%{selected_cluster: cluster, cluster_colors: colors})
        when not is_nil(cluster) do
-    color = Map.get(colors || %{}, cluster, "#333")
-    "radial-gradient(ellipse at 60% 40%, #{color}12 0%, transparent 70%)"
+    glow(Map.get(colors || %{}, cluster, "var(--mood-ink-7)"))
   end
 
   defp ambient_background(_), do: nil
 
-  defp cluster_color(%{cluster_colors: colors}, id), do: Map.get(colors || %{}, id, "#888")
-  defp cluster_color(_, _), do: "#888"
+  defp glow(color),
+    do:
+      "radial-gradient(ellipse at 60% 40%, #{DataTransforms.tint(color, 7)} 0%, transparent 70%)"
 
-  defp dim_color(dim), do: Map.get(@dim_colors, dim, "#888")
+  defp cluster_color(%{cluster_colors: colors}, id),
+    do: Map.get(colors || %{}, id, "var(--mood-ink-3)")
+
+  defp cluster_color(_, _), do: "var(--mood-ink-3)"
+
+  defp dim_color(dim), do: DataTransforms.dimension_color(dim)
 
   defp percent(weight) when is_number(weight), do: round(weight * 100)
   defp percent(_), do: 0

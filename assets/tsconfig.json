@@ -14,6 +14,10 @@
 // glissando is loaded at runtime from the URL priv/static serves it at; the
 // second `paths` entry points that URL at the vendored copy, whose
 // wasm-bindgen JSDoc supplies the types. Vendor files are read, never checked.
+//
+// The petri wrappers are imported as `petri/<sim>.js` (an esbuild alias for
+// vendor/petri/js); `paths` points that at the hand-written declarations in
+// js/types/petri/, since the vendor tree is never edited.
 {
   "compilerOptions": {
     "allowJs": true,
@@ -28,6 +32,7 @@
     "paths": {
       "/vendor/glissando/glissando.js": ["./vendor/glissando/glissando.js"],
       "phoenix": ["./node_modules/@types/phoenix"],
+      "petri/*": ["./js/types/petri/*"],
       "*": ["../deps/*"]
     }
   },

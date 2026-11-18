@@ -1,0 +1,30 @@
+/* /color palettes. See README.md in this directory.
+
+   Only annotation lives here: the cone curve strokes and labels, the gamut
+   triangle outlines and their legend, and the fallback for the red "X"
+   callout. Colors that are the subject of the chapter (spectrum strips,
+   the sRGB gamut fill, metamer patches, WCS chips, the iridescence render)
+   come out of Fugue.Color.* and are never themed. */
+
+/* Cone curves in cone_splash, and the gamut triangles in gamut_splash that
+   reuse the same three hues (Rec.2020 amber, DCI-P3 green, sRGB violet). */
+:root,
+[data-theme=dark] {
+  --chapter-color-cone-s: #a78bfa;
+  --chapter-color-cone-m: #86efac;
+  --chapter-color-cone-l: #fbbf24;
+  --chapter-color-gamut-rec2020: #fbbf24;
+  --chapter-color-gamut-p3: #86efac;
+  --chapter-color-gamut-srgb: #a78bfa;
+  --chapter-color-callout: #ef4444;
+}
+
+[data-theme=light] {
+  --chapter-color-cone-s: #8620d9;
+  --chapter-color-cone-m: #036831;
+  --chapter-color-cone-l: #b33204;
+  --chapter-color-gamut-rec2020: #b33204;
+  --chapter-color-gamut-p3: #036831;
+  --chapter-color-gamut-srgb: #8620d9;
+  --chapter-color-callout: #a1122c;
+}

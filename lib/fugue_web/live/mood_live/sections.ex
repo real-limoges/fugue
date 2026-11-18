@@ -14,6 +14,7 @@ defmodule FugueWeb.MoodLive.Sections do
     AmbiguityHistogram,
     CalendarGrid,
     ClusterRadar,
+    DataTransforms,
     DateRange,
     DimensionDistributions,
     DimensionDrift,
@@ -91,7 +92,7 @@ defmodule FugueWeb.MoodLive.Sections do
           >
             <span
               class="inline-block w-2.5 h-2.5 rounded-full"
-              style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}"}
+              style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "var(--mood-ink-4)")}"}
             ></span>
             <span class={
               if @selected_cluster == cluster["id"],
@@ -105,7 +106,7 @@ defmodule FugueWeb.MoodLive.Sections do
         <%= if @selected_cluster do %>
           <button
             phx-click="clear_highlights"
-            class="text-[10px] text-amber-300 hover:text-amber-200 ml-1 uppercase tracking-wider"
+            class="text-[10px] text-warning hover:text-warning/80 ml-1 uppercase tracking-wider"
           >
             clear
           </button>
@@ -213,7 +214,7 @@ defmodule FugueWeb.MoodLive.Sections do
         Same idea, four years of real days behind it. The clustering found the categories; I named them once I could see them. The algorithm doesn't know anything about bipolar. It just notices when days resemble other days. Some of the names took a while to settle. A couple are still on probation.
         <.link
           navigate="/menagerie"
-          class="text-amber-300 hover:text-amber-200 underline decoration-dotted underline-offset-4"
+          class="text-warning hover:text-warning/80 underline decoration-dotted underline-offset-4"
         >
           Play with the knobs yourself &rsaquo;
         </.link>
@@ -225,7 +226,7 @@ defmodule FugueWeb.MoodLive.Sections do
 
       <p class="text-sm text-base-content/60 mb-6 leading-relaxed">
         <%= if @stats.most_common do %>
-          The one I live in most is <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.most_common.id, "#aaa")}"}>
+          The one I live in most is <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.most_common.id, "var(--mood-ink-2)")}"}>
             {@stats.most_common.name}
           </span>: {@stats.most_common.days} days, about {div(
             @stats.most_common.days * 100,
@@ -233,13 +234,13 @@ defmodule FugueWeb.MoodLive.Sections do
           )}% of everything tracked.
         <% end %>
         <%= if @stats.longest_run do %>
-          My longest uninterrupted stretch was {@stats.longest_run.days} days of <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.longest_run.id, "#aaa")}"}>
+          My longest uninterrupted stretch was {@stats.longest_run.days} days of <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.longest_run.id, "var(--mood-ink-2)")}"}>
             {@stats.longest_run.name}</span>.
         <% end %>
         Click any state to dim everything else; click again to let it back in.
       </p>
 
-      <div class="text-[10px] uppercase tracking-widest text-amber-300/80 mb-1.5">
+      <div class="text-[10px] uppercase tracking-widest text-warning mb-1.5">
         ↓ click a state to isolate it
       </div>
       <div class="flex flex-wrap items-center gap-2">
@@ -247,12 +248,17 @@ defmodule FugueWeb.MoodLive.Sections do
           <button
             phx-click="cluster_selected"
             phx-value-cluster={cluster["id"]}
-            class={"inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer border-2 transition-all #{if @selected_cluster == cluster["id"], do: "ring-2 ring-amber-300 ring-offset-2 ring-offset-base-300 scale-110 shadow-lg", else: "hover:scale-105 hover:brightness-125"}"}
-            style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}#{if @selected_cluster == cluster["id"], do: "aa", else: "38"}; color: #{if @selected_cluster == cluster["id"], do: "#fff", else: Map.get(@analysis.cluster_colors, cluster["id"], "#aaa")}; border-color: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}#{if @selected_cluster == cluster["id"], do: "", else: "88"}; #{if @selected_cluster && @selected_cluster != cluster["id"], do: "opacity:0.25", else: ""}"}
+            class={"inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer border-2 transition-all #{if @selected_cluster == cluster["id"], do: "ring-2 ring-warning ring-offset-2 ring-offset-base-300 scale-110 shadow-lg", else: "hover:scale-105 hover:brightness-125"}"}
+            style={
+              cluster_chip_style(
+                Map.get(@analysis.cluster_colors, cluster["id"], "var(--mood-ink-4)"),
+                chip_state(@selected_cluster, cluster["id"])
+              )
+            }
           >
             <span
               class="inline-block w-2 h-2 rounded-full"
-              style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "#666")}"}
+              style={"background: #{Map.get(@analysis.cluster_colors, cluster["id"], "var(--mood-ink-4)")}"}
             ></span>
             {cluster["name"]}
           </button>
@@ -260,7 +266,7 @@ defmodule FugueWeb.MoodLive.Sections do
         <%= if @selected_cluster do %>
           <button
             phx-click="clear_highlights"
-            class="text-xs text-amber-300 hover:text-amber-200 ml-1 font-medium"
+            class="text-xs text-warning hover:text-warning/80 ml-1 font-medium"
           >
             &times; clear
           </button>
@@ -270,7 +276,7 @@ defmodule FugueWeb.MoodLive.Sections do
         <div class="text-xs text-base-content/60 mt-2">
           Isolating <span
             class="font-semibold"
-            style={"color: #{Map.get(@analysis.cluster_colors, @selected_cluster, "#aaa")}"}
+            style={"color: #{Map.get(@analysis.cluster_colors, @selected_cluster, "var(--mood-ink-2)")}"}
           >
             {Enum.find_value(@analysis.clusters, fn c ->
               c["id"] == @selected_cluster && c["name"]
@@ -331,10 +337,10 @@ defmodule FugueWeb.MoodLive.Sections do
         Every square is a day. Color is the dominant state; brightness is how hard it pulled. White borders mark days where the dominant state changed and stayed changed; wobbles don't count.
         <%= if @stats.first_state && @stats.last_state do %>
           I started in
-          <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.first_state.id, "#aaa")}"}>
+          <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.first_state.id, "var(--mood-ink-2)")}"}>
             {@stats.first_state.name}
           </span>
-          and, for now, I'm in <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.last_state.id, "#aaa")}"}>
+          and, for now, I'm in <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.last_state.id, "var(--mood-ink-2)")}"}>
             {@stats.last_state.name}</span>.
         <% end %>
         Drag across the strip below to zoom into a window, or click any square to see the days around it.
@@ -439,11 +445,11 @@ defmodule FugueWeb.MoodLive.Sections do
         )} days. I only count a flip when the new state holds for at least five days; anything shorter is noise.
         <%= if @stats.biggest_flow && @stats.biggest_flow.from && @stats.biggest_flow.to do %>
           The most-worn path was
-          <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.biggest_flow.from.id, "#aaa")}"}>
+          <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.biggest_flow.from.id, "var(--mood-ink-2)")}"}>
             {@stats.biggest_flow.from.name}
           </span>
           →
-          <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.biggest_flow.to.id, "#aaa")}"}>
+          <span style={"color: #{Map.get(@analysis.cluster_colors, @stats.biggest_flow.to.id, "var(--mood-ink-2)")}"}>
             {@stats.biggest_flow.to.name}
           </span>
           ({@stats.biggest_flow.count}×).
@@ -671,4 +677,22 @@ defmodule FugueWeb.MoodLive.Sections do
     </section>
     """
   end
+
+  # A state chip in the isolate row is the one being isolated, one of the
+  # others while something is isolated, or one of the row with nothing
+  # isolated.
+  defp chip_state(nil, _id), do: :idle
+  defp chip_state(id, id), do: :selected
+  defp chip_state(_selected, _id), do: :dimmed
+
+  defp cluster_chip_style(color, :selected),
+    do: "background: #{DataTransforms.tint(color, 67)}; color: #fff; border-color: #{color};"
+
+  defp cluster_chip_style(color, :idle),
+    do:
+      "background: #{DataTransforms.tint(color, 22)}; color: #{color}; " <>
+        "border-color: #{DataTransforms.tint(color, 53)};"
+
+  defp cluster_chip_style(color, :dimmed),
+    do: cluster_chip_style(color, :idle) <> " opacity: 0.25;"
 end

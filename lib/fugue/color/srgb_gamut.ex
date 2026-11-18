@@ -1,14 +1,23 @@
 defmodule Fugue.Color.SrgbGamut do
   @moduledoc """
-  Tiles the sRGB chromaticity triangle with cells, each colored with the
-  brightest sRGB-displayable color at its (x, y) chromaticity. Used to
-  fill the sRGB region in the gamut splash so the reader sees what a
-  gamut actually contains, instead of an empty triangle.
+  Paints the sRGB chromaticity triangle as a small PNG, one pixel per
+  grid point, each the brightest sRGB-displayable color at its (x, y)
+  chromaticity. The gamut splash stretches it over the triangle and clips
+  it there, so the reader sees what a gamut actually contains instead of
+  an empty triangle.
 
   Per chromaticity we set Y = 1, compute (X, Y, Z), convert to linear
   sRGB, then scale so the brightest channel lands at 1.0 (most saturated
-  displayable color at that chromaticity), apply sRGB gamma, and emit a
-  hex string.
+  displayable color at that chromaticity), and apply sRGB gamma.
+
+  Every pixel in the bounding box gets a color, including the ones outside
+  the triangle (their channels clamp). The splash clips those away, and
+  coloring them keeps the browser's smoothing from blending the triangle's
+  edge toward transparent.
+
+  It used to be one SVG `rect` per in-gamut point, about 4,500 of them:
+  340 KB of `/color`'s HTML, kept again in every LiveView's render tree.
+  The PNG is a few KB.
   """
 
   # CIE XYZ -> linear sRGB, D65 (IEC 61966-2-1).
@@ -22,68 +31,71 @@ defmodule Fugue.Color.SrgbGamut do
   @m32 -0.2040
   @m33 1.0570
 
-  # sRGB primaries in CIE 1931 xy.
-  @red {0.640, 0.330}
-  @green {0.300, 0.600}
-  @blue {0.150, 0.060}
-
   @step 0.005
 
-  @typedoc "One tile: chromaticity `{x, y}` and the sRGB hex it is painted with."
-  @type cell :: {float(), float(), String.t()}
+  # The grid's bounding box in chromaticity, covering the sRGB primaries
+  # R(0.640, 0.330), G(0.300, 0.600), B(0.150, 0.060).
+  @x_min 0.14
+  @x_max 0.65
+  @y_min 0.05
+  @y_max 0.61
+
+  @typedoc """
+  Where the image sits, in chromaticity units: the edges of the outermost
+  pixels, half a step beyond the outermost grid points.
+  """
+  @type bounds :: %{x_min: float(), x_max: float(), y_min: float(), y_max: float()}
 
   @doc """
-  Returns `[{cx, cy, hex}, ...]` covering the sRGB chromaticity triangle.
-  Cached in `:persistent_term` after first call.
+  The gamut as a PNG binary. The top row is the highest y, as on the
+  diagram. Cached in `:persistent_term` after the first call.
   """
-  @spec cells() :: [cell()]
-  def cells do
-    case :persistent_term.get({__MODULE__, :cells}, nil) do
+  @spec png() :: binary()
+  def png do
+    case :persistent_term.get({__MODULE__, :png}, nil) do
       nil ->
-        cs = compute()
-        :persistent_term.put({__MODULE__, :cells}, cs)
-        cs
+        png = encode_png(length(xs()), length(ys()), rows())
+        :persistent_term.put({__MODULE__, :png}, png)
+        :persistent_term.get({__MODULE__, :png})
 
-      cs ->
-        cs
+      png ->
+        png
     end
   end
 
-  @doc "Cell step in chromaticity units."
+  @doc "Where the PNG's outer edges fall, in chromaticity units."
+  @spec bounds() :: bounds()
+  def bounds do
+    half = @step / 2
+
+    %{
+      x_min: @x_min - half,
+      x_max: @x_max + half,
+      y_min: @y_min - half,
+      y_max: @y_max + half
+    }
+  end
+
+  @doc "Grid spacing in chromaticity units; one pixel of the PNG."
   @spec step() :: float()
   def step, do: @step
 
-  defp compute do
-    xs = float_seq(0.14, 0.65, @step)
-    ys = float_seq(0.05, 0.61, @step)
-
-    for x <- xs, y <- ys, y > 0, inside_triangle?(x, y) do
-      {x, y, hex_at(x, y)}
-    end
-  end
+  defp xs, do: float_seq(@x_min, @x_max, @step)
+  defp ys, do: float_seq(@y_min, @y_max, @step)
 
   defp float_seq(a, b, step) do
     n = round((b - a) / step)
     Enum.map(0..n, &(a + &1 * step))
   end
 
-  defp inside_triangle?(px, py) do
-    {ax, ay} = @red
-    {bx, by} = @green
-    {cx, cy} = @blue
-
-    d1 = cross(px - bx, py - by, ax - bx, ay - by)
-    d2 = cross(px - cx, py - cy, bx - cx, by - cy)
-    d3 = cross(px - ax, py - ay, cx - ax, cy - ay)
-
-    has_neg = d1 < 0 or d2 < 0 or d3 < 0
-    has_pos = d1 > 0 or d2 > 0 or d3 > 0
-    not (has_neg and has_pos)
+  # One binary of RGB bytes per row, top row first.
+  defp rows do
+    for y <- Enum.reverse(ys()) do
+      for x <- xs(), into: <<>>, do: rgb_at(x, y)
+    end
   end
 
-  defp cross(ax, ay, bx, by), do: ax * by - bx * ay
-
-  defp hex_at(x, y) do
+  defp rgb_at(x, y) do
     big_x = x / y
     big_y = 1.0
     big_z = (1.0 - x - y) / y
@@ -101,11 +113,17 @@ defmodule Fugue.Color.SrgbGamut do
         {0.0, 0.0, 0.0}
       end
 
-    r = clamp01(r)
-    g = clamp01(g)
-    b = clamp01(b)
+    <<byte(r), byte(g), byte(b)>>
+  end
 
-    "#" <> byte(gamma(r)) <> byte(gamma(g)) <> byte(gamma(b))
+  defp byte(linear) do
+    linear
+    |> clamp01()
+    |> gamma()
+    |> Kernel.*(255)
+    |> round()
+    |> max(0)
+    |> min(255)
   end
 
   defp clamp01(v) when v < 0.0, do: 0.0
@@ -115,13 +133,17 @@ defmodule Fugue.Color.SrgbGamut do
   defp gamma(c) when c <= 0.0031308, do: 12.92 * c
   defp gamma(c), do: 1.055 * :math.pow(c, 1.0 / 2.4) - 0.055
 
-  defp byte(c) do
-    (c * 255)
-    |> max(0)
-    |> min(255)
-    |> round()
-    |> Integer.to_string(16)
-    |> String.pad_leading(2, "0")
-    |> String.downcase()
+  # A minimal truecolor PNG: 8 bits per channel, no alpha, no interlace,
+  # filter type 0 (none) on every row.
+  defp encode_png(width, height, rows) do
+    header = <<width::32, height::32, 8, 2, 0, 0, 0>>
+    pixels = for row <- rows, into: <<>>, do: <<0>> <> row
+
+    <<137, "PNG", 13, 10, 26, 10>> <>
+      chunk("IHDR", header) <> chunk("IDAT", :zlib.compress(pixels)) <> chunk("IEND", <<>>)
+  end
+
+  defp chunk(type, data) do
+    <<byte_size(data)::32, type::binary, data::binary, :erlang.crc32(type <> data)::32>>
   end
 end

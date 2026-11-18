@@ -55,7 +55,7 @@ const membershipsBlock = (mems, clusters) => {
     .map(([id, raw]) => {
       const weight = Number(raw)
       const name = escapeHtml(clusters[id]?.name ?? id)
-      const color = escapeHtml(clusters[id]?.color ?? "#888")
+      const color = escapeHtml(clusters[id]?.color ?? "var(--mood-ink-3)")
       return (
         `<div style="display: flex; align-items: center; gap: 5px; margin: 2px 0">` +
         `<span style="color: ${color}; font-size: 11px; white-space: nowrap">${name}</span>` +

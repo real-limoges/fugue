@@ -405,8 +405,8 @@ defmodule Fugue.Amigos do
       summary:
         "Lucille's private eye keeps turning up in paper-thin disguises, lifting the mask " <>
           "for a Lucille squeal. In Mexico a bearded Gene peels a fake mustache off over his " <>
-          "real one. Lucille calls him the best; the Narrator says he was far from it, and he " <>
-          "never caught George Sr. cheating.",
+          "real one. Lucille calls him the best; the Narrator says he was far from it, and that " <>
+          "he never did find anything on George Sr.",
       beats: [20],
       counted: true,
       connections: [

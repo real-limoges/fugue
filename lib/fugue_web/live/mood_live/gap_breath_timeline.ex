@@ -100,7 +100,8 @@ defmodule FugueWeb.MoodLive.GapBreathTimeline do
             x2={@inner_w}
             y1={SvgMath.fmt(@mid_y)}
             y2={SvgMath.fmt(@mid_y)}
-            stroke="rgba(255,255,255,0.08)"
+            stroke="var(--mood-line)"
+            stroke-opacity="0.08"
             stroke-width="1"
           />
 
@@ -110,7 +111,7 @@ defmodule FugueWeb.MoodLive.GapBreathTimeline do
                 x={SvgMath.fmt(t.x)}
                 y="12"
                 text-anchor="middle"
-                fill="#666"
+                fill="var(--mood-ink-4)"
                 font-size="10px"
               >
                 {t.label}
@@ -123,7 +124,7 @@ defmodule FugueWeb.MoodLive.GapBreathTimeline do
               x={SvgMath.fmt(@inner_w / 2)}
               y={SvgMath.fmt(@mid_y)}
               text-anchor="middle"
-              fill="#666"
+              fill="var(--mood-ink-4)"
               font-size="11px"
             >
               no gaps in range
@@ -169,7 +170,7 @@ defmodule FugueWeb.MoodLive.GapBreathTimeline do
       {samples, totals, peak_half} = walk_gap(start_date, length, imputed, transition)
 
       dominant = totals |> Enum.max_by(fn {_, v} -> v end, fn -> {nil, 0} end) |> elem(0)
-      color = (dominant && Map.get(cluster_colors, dominant)) || "#888"
+      color = (dominant && Map.get(cluster_colors, dominant)) || "var(--mood-ink-3)"
       cluster_name = (dominant && Map.get(cluster_names, dominant, dominant)) || "--"
 
       end_date = Date.add(start_date, max(length - 1, 0))

@@ -5,7 +5,7 @@
         <h1 class="text-3xl font-bold tracking-tight text-base-content">
           About.
         </h1>
-        <p class="text-gray-500 mt-2">
+        <p class="text-base-content/65 dark:text-gray-500 mt-2">
           Who's running this thing, and what it is.
         </p>
       </header>
@@ -73,15 +73,15 @@
         href="/mood"
         class="group block rounded-lg border-t-2 border-primary bg-base-200 p-6 transition hover:bg-base-300"
       >
-        <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-primary/70 mb-3">
+        <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-primary dark:text-primary/70 mb-3">
           Mood
         </p>
         <h3 class="text-lg font-semibold text-base-content mb-2">My mood journal</h3>
-        <p class="text-sm text-base-content/50 leading-relaxed">
+        <p class="text-sm text-base-content/75 dark:text-base-content/50 leading-relaxed">
           Four years of nightly mood ratings (mine), sorted into fuzzy
           states you can scroll through and poke at.
         </p>
-        <p class="mt-4 font-mono text-[11px] text-primary/50 group-hover:text-primary/90 transition">
+        <p class="mt-4 font-mono text-[11px] text-primary dark:text-primary/50 dark:group-hover:text-primary/90 transition">
           explore &rarr;
         </p>
       </a>
@@ -90,15 +90,15 @@
         href="/color"
         class="group block rounded-lg border-t-2 border-accent bg-base-200 p-6 transition hover:bg-base-300"
       >
-        <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-accent/70 mb-3">
+        <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-accent dark:text-accent/70 mb-3">
           Color
         </p>
         <h3 class="text-lg font-semibold text-base-content mb-2">A chapter on color</h3>
-        <p class="text-sm text-base-content/50 leading-relaxed">
+        <p class="text-sm text-base-content/75 dark:text-base-content/50 leading-relaxed">
           What color actually is, written by someone who sees less of
           it than you do.
         </p>
-        <p class="mt-4 font-mono text-[11px] text-accent/50 group-hover:text-accent/90 transition">
+        <p class="mt-4 font-mono text-[11px] text-accent dark:text-accent/50 dark:group-hover:text-accent/90 transition">
           explore &rarr;
         </p>
       </a>
@@ -107,15 +107,15 @@
         href="/menagerie"
         class="group block rounded-lg border-t-2 border-secondary bg-base-200 p-6 transition hover:bg-base-300"
       >
-        <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-secondary/70 mb-3">
+        <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-secondary dark:text-secondary/70 mb-3">
           Menagerie
         </p>
         <h3 class="text-lg font-semibold text-base-content mb-2">Math playgrounds</h3>
-        <p class="text-sm text-base-content/50 leading-relaxed">
+        <p class="text-sm text-base-content/75 dark:text-base-content/50 leading-relaxed">
           Little sims to break on purpose: flocking birds, sandpiles,
           quantum walks, a fuzzy-logic fan. Every one has sliders.
         </p>
-        <p class="mt-4 font-mono text-[11px] text-secondary/50 group-hover:text-secondary/90 transition">
+        <p class="mt-4 font-mono text-[11px] text-secondary dark:text-secondary/50 dark:group-hover:text-secondary/90 transition">
           explore &rarr;
         </p>
       </a>
@@ -124,15 +124,15 @@
         href="/lab"
         class="group block rounded-lg border-t-2 border-warning bg-base-200 p-6 transition hover:bg-base-300"
       >
-        <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-warning/70 mb-3">
+        <p class="font-mono text-[10px] uppercase tracking-[0.2em] text-warning dark:text-warning/70 mb-3">
           Lab
         </p>
         <h3 class="text-lg font-semibold text-base-content mb-2">Statistical experiments</h3>
-        <p class="text-sm text-base-content/50 leading-relaxed">
+        <p class="text-sm text-base-content/75 dark:text-base-content/50 leading-relaxed">
           Stats ideas I wanted to see drawn out: what a GAM can do
           that a line can't, and what "Bayesian" actually hands you.
         </p>
-        <p class="mt-4 font-mono text-[11px] text-warning/50 group-hover:text-warning/90 transition">
+        <p class="mt-4 font-mono text-[11px] text-warning dark:text-warning/50 dark:group-hover:text-warning/90 transition">
           explore &rarr;
         </p>
       </a>
@@ -147,7 +147,7 @@
       <li>
         Code lives on <a
           href="https://github.com/real-limoges"
-          class="text-amber-300 hover:text-amber-200 underline decoration-dotted underline-offset-4"
+          class="text-warning hover:text-primary dark:text-amber-300 dark:hover:text-amber-200 underline decoration-dotted underline-offset-4"
         >
           GitHub
         </a>.
@@ -155,7 +155,7 @@
       <li>
         This page is one corner of <a
           href="https://realcomplex.systems"
-          class="text-amber-300 hover:text-amber-200 underline decoration-dotted underline-offset-4"
+          class="text-warning hover:text-primary dark:text-amber-300 dark:hover:text-amber-200 underline decoration-dotted underline-offset-4"
         >
           realcomplex.systems
         </a>, which is one Phoenix app doing most things in-process.
@@ -167,13 +167,15 @@
     <h2 class="text-sm font-semibold uppercase tracking-widest text-base-content/85 mb-5">
       Colophon
     </h2>
-    <p class="font-mono text-xs text-base-content/45 leading-relaxed max-w-2xl">
+    <p class="font-mono text-xs text-base-content/65 dark:text-base-content/45 leading-relaxed max-w-2xl">
       Built with Phoenix and Elixir, LiveView for the interactive bits,
       D3 for the dataviz, and a couple of WASM kernels (C and Rust)
       doing the heavier lifting; those are the lego bricks. There's a <a
         href="/code"
-        class="text-amber-300 hover:text-amber-200 underline decoration-dotted underline-offset-4"
+        class="text-warning hover:text-primary dark:text-amber-300 dark:hover:text-amber-200 underline decoration-dotted underline-offset-4"
       >full parts list</a>.
     </p>
   </section>
+
+  <.source_link repos={[{"fugue", "lib/fugue_web/controllers/page_html"}]} />
 </article>

@@ -142,6 +142,10 @@ defmodule Fugue.MixProject do
         "dialyzer",
         "assets.format.check",
         "assets.typecheck",
+        # Builds the CSS, so an unknown class in an `@apply` fails here rather
+        # than first showing up in the Docker build. Installs the pinned
+        # tailwind binary on first run.
+        "tailwind fugue",
         "assets.test",
         "test --warnings-as-errors --cover"
       ]

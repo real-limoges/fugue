@@ -1,5 +1,5 @@
 // @ts-check
-import * as sandpile from "../../vendor/petri/js/sandpile.js"
+import * as sandpile from "petri/sandpile.js"
 import * as d3 from "d3"
 import { resolveThemeColors, buildColorTable } from "../lib/theme_colors.js"
 import { startRafLoop, createThemePoll, mapPixels } from "../lib/canvas_loop.js"
@@ -155,7 +155,7 @@ export const SandpileCanvas = {
 
       const initialColors = resolveThemeColors()
       let colorTable = buildColorTable(initialColors.base, initialColors.primary)
-      const rgba = new Uint8ClampedArray(width * height * 4)
+      const image = ctx.createImageData(width, height)
 
       // Avalanche size tracking
       /** @type {Map<number, number>} */
@@ -192,28 +192,33 @@ export const SandpileCanvas = {
       this._onThemeChanged = repollThemeColors
       window.addEventListener("fugue:theme-changed", this._onThemeChanged)
 
-      this._loop = startRafLoop(() => {
-        sandpile.step(dropsPerFrame)
+      // No `still`: the visitor came here to drive this sim, so it keeps
+      // running under reduced motion.
+      this._loop = startRafLoop(
+        () => {
+          sandpile.step(dropsPerFrame)
 
-        const avalSize = sandpile.getLastAvalancheSize()
-        if (avalSize > 0) {
-          avalancheBins.set(avalSize, (avalancheBins.get(avalSize) || 0) + 1)
-          histDirty = true
-        }
+          const avalSize = sandpile.getLastAvalancheSize()
+          if (avalSize > 0) {
+            avalancheBins.set(avalSize, (avalancheBins.get(avalSize) || 0) + 1)
+            histDirty = true
+          }
 
-        if (grainCounter) grainCounter.textContent = sandpile.getTotalGrains().toLocaleString()
+          if (grainCounter) grainCounter.textContent = sandpile.getTotalGrains().toLocaleString()
 
-        repollTheme()
+          repollTheme()
 
-        // Update histogram every 60 frames
-        if (histChart && histDirty && ++frame % 60 === 0) {
-          updateHistogram(histChart, avalancheBins)
-          histDirty = false
-        }
+          // Update histogram every 60 frames
+          if (histChart && histDirty && ++frame % 60 === 0) {
+            updateHistogram(histChart, avalancheBins)
+            histDirty = false
+          }
 
-        mapPixels(sandpile.getPixels(), colorTable, rgba)
-        ctx.putImageData(new ImageData(rgba, width, height), 0, 0)
-      })
+          mapPixels(sandpile.getPixels(), colorTable, image.data)
+          ctx.putImageData(image, 0, 0)
+        },
+        { target: canvas }
+      )
 
       this._width = width
       this._height = height

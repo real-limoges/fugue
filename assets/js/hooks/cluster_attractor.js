@@ -2,10 +2,14 @@
 /** A slowly drawn Thomas strange attractor, tinted by the user's cluster palette.
  *  Generative filler; no data, just a living scribble that rhymes with the trajectory hero. */
 
-import { resolveThemeColors } from "../lib/theme_colors.js"
-import { createThemePoll } from "../lib/canvas_loop.js"
+import { resolveCssVar, resolveThemeColors } from "../lib/theme_colors.js"
+import { createThemePoll, startRafLoop } from "../lib/canvas_loop.js"
 
 const B = 0.208186
+// Under reduced motion the attractor is drawn as one still: this many
+// frames' worth of trail, drawn at once, which is about what the fade
+// leaves visible while it runs.
+const STILL_FRAMES = 400
 const STEP = 0.02
 const SEGS_PER_FRAME = 6
 const WARMUP_STEPS = 6000
@@ -63,7 +67,8 @@ function thomasStep(p) {
  * @property {() => void} _onThemeChanged
  * @property {() => void} _repollTheme
  * @property {() => void} _onResize
- * @property {number} _raf
+ * @property {{stop: () => void}} [_loop]
+ * @property {boolean} [_still] true when reduced motion turned the loop into one still
  * @property {ResizeObserver} [_ro]
  * @property {{xMin: number, xMax: number, yMin: number, yMax: number}} bounds
  * @property {Vec3} p
@@ -88,7 +93,9 @@ function thomasStep(p) {
  * @property {() => void} cacheProjection
  * @property {(p: Vec3) => Vec2} project
  * @property {(p: Vec3) => string} nearestColor
- * @property {() => void} loop
+ * @property {() => void} frame draws one frame of trail
+ * @property {() => void} drawStill
+ * @property {() => void} resize
  */
 
 /** @type {import("../types").LiveHook<State, Methods>} */
@@ -109,20 +116,22 @@ export const ClusterAttractor = {
 
     this.warmup()
     this.setupCanvas()
-    this.loop = this.loop.bind(this)
-    this._raf = requestAnimationFrame(this.loop)
+    this._loop = startRafLoop(() => this.frame(), {
+      target: this.el,
+      still: () => this.drawStill(),
+    })
 
-    this._onResize = () => this.setupCanvas()
+    this._onResize = () => this.resize()
     window.addEventListener("resize", this._onResize)
 
     if (typeof ResizeObserver !== "undefined") {
-      this._ro = new ResizeObserver(() => this.setupCanvas())
+      this._ro = new ResizeObserver(() => this.resize())
       this._ro.observe(this.el)
     }
   },
 
   destroyed() {
-    if (this._raf) cancelAnimationFrame(this._raf)
+    if (this._loop) this._loop.stop()
     window.removeEventListener("resize", this._onResize)
     if (this._ro) this._ro.disconnect()
     if (this._onThemeChanged)
@@ -134,9 +143,11 @@ export const ClusterAttractor = {
     const base = resolveThemeColors().base
     this.bg = `rgb(${base[0]}, ${base[1]}, ${base[2]})`
     this.fade = `rgba(${base[0]}, ${base[1]}, ${base[2]}, ${FADE_ALPHA})`
+    // The server sends cluster colors as var(--mood-cluster-N), which canvas
+    // can't paint; read each variable's value for the current theme.
     this.palette =
       this.customPalette.length > 0
-        ? this.customPalette
+        ? this.customPalette.map((c) => resolveCssVar(c))
         : isLight
           ? LIGHT_FALLBACK_PALETTE
           : DARK_FALLBACK_PALETTE
@@ -244,7 +255,20 @@ export const ClusterAttractor = {
     return this.palette[best.i]
   },
 
-  loop() {
+  // A resize swaps in a fresh, blank canvas; a running loop refills it on
+  // its own, but a still has to be drawn again.
+  resize() {
+    const before = this.canvas
+    this.setupCanvas()
+    if (this._still && this.canvas !== before) this.drawStill()
+  },
+
+  drawStill() {
+    this._still = true
+    for (let i = 0; i < STILL_FRAMES; i++) this.frame()
+  },
+
+  frame() {
     this._repollTheme()
     const ctx = this.ctx
     ctx.fillStyle = this.fade
@@ -266,6 +290,5 @@ export const ClusterAttractor = {
     }
 
     ctx.globalAlpha = 1
-    this._raf = requestAnimationFrame(this.loop)
   },
 }

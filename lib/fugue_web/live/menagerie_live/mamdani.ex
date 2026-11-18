@@ -160,7 +160,10 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
             Defuzzified output
           </span>
           <span class="text-xs font-medium text-base-content/75">fan speed</span>
-          <span class="font-mono text-2xl font-semibold tabular-nums text-amber-300">
+          <span
+            class="font-mono text-2xl font-semibold tabular-nums"
+            style="color: var(--menagerie-centroid-readout)"
+          >
             {format_number(@mamdani_crisp, 1)}
           </span>
           <span class="text-xs text-base-content/45">% of max</span>
@@ -184,7 +187,8 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
           crisp line and dots marking the degree of membership at that input.
           Middle shows each rule's firing strength, colored by the fan speed
           term it votes for. Bottom layers each rule's clipped consequent
-          underneath the aggregated envelope; the white marker is the centroid.
+          underneath the aggregated envelope; the line labeled "centroid" is the
+          fan speed.
         </p>
       </div>
 

@@ -41,12 +41,15 @@ defmodule FugueWeb.MoodLive.AmbiguityHistogram do
             x_right = x_px.(b.x1)
             y_top = y_px.(b.count)
 
+            in_between? = b.x1 <= assigns.threshold
+
             %{
               x: x_left,
               width: max(x_right - x_left - 1, 0),
               y: y_top,
               height: @inner_h - y_top,
-              fill: if(b.x1 <= assigns.threshold, do: "#e6a542", else: "rgba(255,255,255,0.35)")
+              fill: if(in_between?, do: "var(--mood-ambiguous)", else: "var(--mood-line)"),
+              opacity: if(in_between?, do: "0.7", else: "0.245")
             }
           end)
 
@@ -87,7 +90,8 @@ defmodule FugueWeb.MoodLive.AmbiguityHistogram do
             y="0"
             width={fmt(@threshold_x)}
             height={@inner_h}
-            fill="rgba(230,165,66,0.06)"
+            fill="var(--mood-ambiguous)"
+            fill-opacity="0.06"
           />
 
           <%= for b <- @bars do %>
@@ -97,7 +101,7 @@ defmodule FugueWeb.MoodLive.AmbiguityHistogram do
               width={fmt(b.width)}
               height={fmt(b.height)}
               fill={b.fill}
-              fill-opacity="0.7"
+              fill-opacity={b.opacity}
             />
           <% end %>
 
@@ -106,7 +110,7 @@ defmodule FugueWeb.MoodLive.AmbiguityHistogram do
             x2={fmt(@threshold_x)}
             y1="0"
             y2={@inner_h}
-            stroke="#e6a542"
+            stroke="var(--mood-ambiguous)"
             stroke-width="1"
             stroke-dasharray="4,3"
             stroke-opacity="0.8"
@@ -116,7 +120,7 @@ defmodule FugueWeb.MoodLive.AmbiguityHistogram do
             x={fmt(@threshold_x - 4)}
             y="6"
             text-anchor="end"
-            fill="#e6a542"
+            fill="var(--mood-ambiguous)"
             font-size="9px"
             font-weight="600"
           >
@@ -126,7 +130,7 @@ defmodule FugueWeb.MoodLive.AmbiguityHistogram do
             x={fmt(@threshold_x + 4)}
             y="6"
             text-anchor="start"
-            fill="#888"
+            fill="var(--mood-ink-3)"
             font-size="9px"
             font-weight="600"
           >
@@ -134,14 +138,14 @@ defmodule FugueWeb.MoodLive.AmbiguityHistogram do
           </text>
 
           <g transform={"translate(0,#{@inner_h})"}>
-            <line x1="0" y1="0" x2={@inner_w} y2="0" stroke="#444" />
+            <line x1="0" y1="0" x2={@inner_w} y2="0" stroke="var(--mood-ink-6)" />
             <%= for t <- @x_ticks do %>
-              <line x1={fmt(t.x)} y1="0" x2={fmt(t.x)} y2="3" stroke="#444" />
+              <line x1={fmt(t.x)} y1="0" x2={fmt(t.x)} y2="3" stroke="var(--mood-ink-6)" />
               <text
                 x={fmt(t.x)}
                 y="14"
                 text-anchor="middle"
-                fill="#666"
+                fill="var(--mood-ink-4)"
                 font-size="9px"
               >
                 {t.label}
@@ -153,21 +157,21 @@ defmodule FugueWeb.MoodLive.AmbiguityHistogram do
             x={fmt(@inner_w / 2)}
             y={@inner_h + 24}
             text-anchor="middle"
-            fill="#555"
+            fill="var(--mood-ink-5)"
             font-size="9px"
           >
             strongest cluster membership
           </text>
 
           <g>
-            <line x1="0" y1="0" x2="0" y2={@inner_h} stroke="#444" />
+            <line x1="0" y1="0" x2="0" y2={@inner_h} stroke="var(--mood-ink-6)" />
             <%= for t <- @y_ticks do %>
-              <line x1="-3" y1={fmt(t.y)} x2="0" y2={fmt(t.y)} stroke="#444" />
+              <line x1="-3" y1={fmt(t.y)} x2="0" y2={fmt(t.y)} stroke="var(--mood-ink-6)" />
               <text
                 x="-5"
                 y={fmt(t.y + 3)}
                 text-anchor="end"
-                fill="#666"
+                fill="var(--mood-ink-4)"
                 font-size="9px"
               >
                 {t.label}
