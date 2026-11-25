@@ -63,7 +63,7 @@ defmodule FugueWeb.MoodLive.Sections do
               Every night before bed for four years; five numbers about how the day went. This is all of them, flattened onto 2D by PCA. Five dimensions don't fit on a screen and two do, so some of it is gone.
             </p>
             <p>
-              One dot per day, connected in the order they happened. Colors come from clustering, painted back onto the path after the fact. I didn't pick the shape it makes. I can't tell you where it goes next.
+              One dot per day, connected in the order they happened. Colors come from clustering, painted back onto the path after the fact.
             </p>
           </div>
         </div>
@@ -244,7 +244,7 @@ defmodule FugueWeb.MoodLive.Sections do
           <em>the data</em>
           thought my states were, instead of what a diagnostic manual said they should be. The algorithm I ended up using lets a day belong
           <em>partly</em>
-          to more than one state. Closer to how the days actually arrive.
+          to more than one state.
         </p>
         <p class="text-sm text-base-content/75 leading-relaxed">
           If "fuzzy clustering" doesn't mean anything yet, drag the dot below.
@@ -547,7 +547,7 @@ defmodule FugueWeb.MoodLive.Sections do
         <span>How my moods shift</span>
       </h2>
       <p class="text-sm text-base-content/60 mb-4 leading-relaxed">
-        The transitions carry more than the states do. Some hand-offs are well-worn paths; others basically never happen. Knowing the state I'm in tells you less than knowing the one I just left. From the inside, most of bipolar is the moving around; the states are just where the motion idles.
+        Some hand-offs are well-worn paths; others basically never happen. Knowing the state I'm in tells you less than knowing the one I just left. From the inside, most of bipolar is the moving around.
       </p>
       <p class="text-sm text-base-content/60 mb-6 leading-relaxed">
         The dominant state flipped {@stats.transition_count} times across {@stats.entry_count} days, about once every {div(
@@ -654,16 +654,16 @@ defmodule FugueWeb.MoodLive.Sections do
       </h2>
       <p class="text-sm text-base-content/60 mb-4 leading-relaxed">
         So far you've been seeing the <em>output</em>
-        of the model: the named states, how they ebb, how they hand off. This section is the <em>input</em>. Five numbers a night, before anything else happens to them. Sleep, anxiety, sensitivity, outlook, speed; each on its own scale. The whole picture above is built out of that one habit.
+        of the model: the named states, how they ebb, how they hand off. This section is the <em>input</em>. Five numbers a night, before anything else happens to them. Sleep, anxiety, sensitivity, outlook, speed; each on its own scale.
       </p>
       <p class="text-sm text-base-content/60 mb-6 leading-relaxed">
-        The clustering doesn't see anything else about me; every shape further up the page is downstream of these five. Here's what they each do on their own: how they drift across {@stats.entry_count} days; how the distributions shift once the model splits the days into states. Some of it I expected. The rest is why the model was worth the trouble.
+        The clustering doesn't see anything else about me; every shape further up the page is downstream of these five. Here's what they each do on their own: how they drift across {@stats.entry_count} days; how the distributions shift once the model splits the days into states.
       </p>
 
       <div class="bg-base-200 rounded-lg p-4">
         <h3 class="text-sm font-semibold text-base-content/90 mb-2">A flower for every month</h3>
         <p class="text-xs text-base-content/45 mb-3">
-          Each flower is one month. Spokes are the average of the five raw inputs over that month; long means high, short means low. The fill color is whichever cluster ran the month, once the numbers went through the model. Inputs and output, side by side.
+          Each flower is one month. Spokes are the average of the five raw inputs over that month; long means high, short means low. The fill color is whichever cluster ran the month, once the numbers went through the model.
         </p>
         <MoodFlowers.flowers
           flowers={@mood_flowers_list}
@@ -687,7 +687,7 @@ defmodule FugueWeb.MoodLive.Sections do
       </div>
 
       <p class="text-sm text-base-content/60 leading-relaxed mt-6 mb-4">
-        Drift above asks whether the baseline shifted. The next chart asks something different: whether the inputs themselves look the same depending on which state was running, whether "sleep" means the same number on a manic day as on a depressive one.
+        Drift above asks whether the baseline shifted. The next chart asks whether the inputs themselves look the same depending on which state was running, whether "sleep" means the same number on a manic day as on a depressive one.
       </p>
 
       <div class="mt-8">
@@ -729,7 +729,7 @@ defmodule FugueWeb.MoodLive.Sections do
       </p>
       <p class="text-sm text-base-content/60 mb-6 leading-relaxed">
         <%= if @stats.gap_count > 0 do %>
-          I miss days. There are {@stats.gap_count} stretches where I went quiet; most of the time the state I came back in wasn't the state I left. That asymmetry was its own surprise. Click a state above to see which gaps touched it.
+          I miss days. There are {@stats.gap_count} stretches where I went quiet; most of the time the state I came back in wasn't the state I left. Click a state above to see which gaps touched it.
         <% else %>
           No gaps; every day in the window is accounted for.
         <% end %>
@@ -745,7 +745,7 @@ defmodule FugueWeb.MoodLive.Sections do
         cluster_names={@cluster_names}
       />
       <.figure_source
-        note="What the missing nights were probably like, inferred from the states on either side of each gap. Skipping a week tends to say something about the week."
+        note="What the missing nights were probably like, inferred from the states on either side of each gap."
         repo={{"fugue", "lib/fugue/mood/gaps.ex"}}
       />
     </section>

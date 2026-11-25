@@ -391,8 +391,7 @@ defmodule FugueWeb.LabLive.Bayes do
       <p class="mt-5 text-xs text-base-content/45 font-mono leading-relaxed max-w-2xl">
         The shaded area is <code class="text-primary/70">P(rate &gt; threshold | data)</code>.
         Same posterior as the section above; observe more years there and
-        watch the answer here move. Every other question you'd ask about the
-        rate is just a different integral over the same object.
+        watch the answer here move.
       </p>
     </section>
     """
