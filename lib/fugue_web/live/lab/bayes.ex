@@ -41,20 +41,11 @@ defmodule FugueWeb.LabLive.Bayes do
   def mount(_params, _session, socket) do
     {:ok,
      socket
-     |> assign(:rows, @rows)
-     |> assign(:cols, @cols)
-     |> assign(:search_prior, build_search_prior())
-     |> assign(:search_grid, build_search_prior())
-     |> assign(:search_searched, MapSet.new())
-     |> assign(:search_truth, random_cell())
-     |> assign(:search_found, nil)
+     |> new_search()
      |> assign(:observed_count, 0)
      |> assign(:observed_years, 0)
      |> assign(:observation_log, [])
-     |> assign(:decision_threshold, 5.0)
-     |> assign(:threshold_min, @threshold_min)
-     |> assign(:threshold_max, @threshold_max)
-     |> assign(:threshold_step, @threshold_step)}
+     |> assign(:decision_threshold, 5.0)}
   end
 
   @impl true
@@ -62,7 +53,7 @@ defmodule FugueWeb.LabLive.Bayes do
     i = String.to_integer(i)
 
     cond do
-      socket.assigns.search_found != nil -> {:noreply, socket}
+      socket.assigns.search_state != :searching -> {:noreply, socket}
       MapSet.member?(socket.assigns.search_searched, i) -> {:noreply, socket}
       i == socket.assigns.search_truth -> {:noreply, mark_found(socket, i)}
       true -> {:noreply, mark_empty(socket, i)}
@@ -70,12 +61,7 @@ defmodule FugueWeb.LabLive.Bayes do
   end
 
   def handle_event("reset_search", _, socket) do
-    {:noreply,
-     socket
-     |> assign(:search_grid, socket.assigns.search_prior)
-     |> assign(:search_searched, MapSet.new())
-     |> assign(:search_truth, random_cell())
-     |> assign(:search_found, nil)}
+    {:noreply, new_search(socket)}
   end
 
   def handle_event("observe_year", _, socket) do
@@ -107,9 +93,20 @@ defmodule FugueWeb.LabLive.Bayes do
     end
   end
 
+  # A fresh search: the prior again, nothing looked at, keys somewhere new.
+  defp new_search(socket) do
+    assign(socket,
+      search_grid:
+        Math.search_prior(@rows, @cols, {@search_peak_row, @search_peak_col}, @search_sigma),
+      search_searched: MapSet.new(),
+      search_truth: :rand.uniform(@cells) - 1,
+      search_state: :searching
+    )
+  end
+
   defp mark_found(socket, i) do
     socket
-    |> assign(:search_found, i)
+    |> assign(:search_state, {:found, i})
     |> assign(:search_searched, MapSet.put(socket.assigns.search_searched, i))
   end
 
@@ -126,12 +123,6 @@ defmodule FugueWeb.LabLive.Bayes do
       assigns.observed_years
     )
   end
-
-  defp build_search_prior do
-    Math.search_prior(@rows, @cols, {@search_peak_row, @search_peak_col}, @search_sigma)
-  end
-
-  defp random_cell, do: :rand.uniform(@cells) - 1
 
   @impl true
   def render(assigns) do
@@ -165,13 +156,7 @@ defmodule FugueWeb.LabLive.Bayes do
         </p>
       </header>
 
-      <.search_section
-        rows={@rows}
-        cols={@cols}
-        grid={@search_grid}
-        searched={@search_searched}
-        found={@search_found}
-      />
+      <.search_section grid={@search_grid} searched={@search_searched} state={@search_state} />
 
       <.figure_source
         note="Bayes' rule done by hand on a grid: a prior over where the thing is, times the likelihood of not having found it where you already looked, renormalized after every search."
@@ -197,9 +182,6 @@ defmodule FugueWeb.LabLive.Bayes do
         post_alpha={@post_alpha}
         post_beta={@post_beta}
         threshold={@decision_threshold}
-        threshold_min={@threshold_min}
-        threshold_max={@threshold_max}
-        threshold_step={@threshold_step}
       />
 
       <.figure_source
@@ -214,15 +196,15 @@ defmodule FugueWeb.LabLive.Bayes do
 
   ## Section components
 
-  attr :rows, :integer, required: true
-  attr :cols, :integer, required: true
   attr :grid, :list, required: true
   attr :searched, MapSet, required: true
-  attr :found, :integer, default: nil
+  attr :state, :any, required: true, doc: "`:searching` or `{:found, index}`"
 
   defp search_section(assigns) do
     cells = build_search_cells(assigns)
-    assigns = assign(assigns, cells: cells, size: @search_size)
+
+    assigns =
+      assign(assigns, cells: cells, size: @search_size, tries: MapSet.size(assigns.searched))
 
     ~H"""
     <section class="mb-14">
@@ -275,14 +257,14 @@ defmodule FugueWeb.LabLive.Bayes do
 
         <div class="flex-1 space-y-3 text-xs text-base-content/45 font-mono">
           <p>
-            <span class="text-base-content/75">Searches: {MapSet.size(@searched)}</span>
-            <%= if @found != nil do %>
-              ·
-              <span class="text-primary">
-                found in {MapSet.size(@searched)} {if MapSet.size(@searched) == 1,
-                  do: "try",
-                  else: "tries"}
-              </span>
+            <span class="text-base-content/75">Searches: {@tries}</span>
+            <%= case @state do %>
+              <% {:found, _} -> %>
+                ·
+                <span class="text-primary">
+                  found in {@tries} {if @tries == 1, do: "try", else: "tries"}
+                </span>
+              <% :searching -> %>
             <% end %>
           </p>
           <button
@@ -365,13 +347,17 @@ defmodule FugueWeb.LabLive.Bayes do
   attr :post_alpha, :float, required: true
   attr :post_beta, :float, required: true
   attr :threshold, :float, required: true
-  attr :threshold_min, :float, required: true
-  attr :threshold_max, :float, required: true
-  attr :threshold_step, :float, required: true
 
   defp decision_section(assigns) do
     chart = build_decision_chart(assigns)
-    assigns = assign(assigns, chart: chart)
+
+    assigns =
+      assign(assigns,
+        chart: chart,
+        threshold_min: @threshold_min,
+        threshold_max: @threshold_max,
+        threshold_step: @threshold_step
+      )
 
     ~H"""
     <section class="mb-6">
@@ -559,20 +545,20 @@ defmodule FugueWeb.LabLive.Bayes do
 
   ## Per-section data builders
 
-  defp build_search_cells(%{rows: rows, cols: cols, grid: grid, searched: searched, found: found}) do
+  defp build_search_cells(%{grid: grid, searched: searched, state: state}) do
     padding = 12
     gap = 4
     inner = @search_size - 2 * padding
-    cell_w = (inner - gap * (cols - 1)) / cols
-    cell_h = (inner - gap * (rows - 1)) / rows
-    max_p = Enum.max(grid, fn -> 0.0 end)
-    interactive? = found == nil
+    cell_w = (inner - gap * (@cols - 1)) / @cols
+    cell_h = (inner - gap * (@rows - 1)) / @rows
+    max_p = Enum.max(grid)
+    interactive? = state == :searching
 
-    for r <- 0..(rows - 1), c <- 0..(cols - 1) do
-      i = r * cols + c
+    for r <- 0..(@rows - 1), c <- 0..(@cols - 1) do
+      i = r * @cols + c
       p = Enum.at(grid, i)
       is_searched = MapSet.member?(searched, i)
-      is_truth = found == i
+      is_truth = state == {:found, i}
 
       x = padding + c * (cell_w + gap)
       y = padding + r * (cell_h + gap)

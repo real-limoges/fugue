@@ -71,8 +71,7 @@ defmodule FugueWeb.MoodLive.MoodTrajectory do
               date: date,
               color: color,
               focused?: date == focus_date,
-              tooltip:
-                ~s|<strong>#{date}</strong><div style="color:#{color}">#{cluster_name}</div>|
+              tooltip: Tooltip.cluster_line(date, :none, color, cluster_name)
             }
           end)
 
@@ -93,7 +92,9 @@ defmodule FugueWeb.MoodLive.MoodTrajectory do
 
             cluster = val(a.point, :cluster)
             color = color_for(cluster, assigns.cluster_colors)
-            cluster_name = cluster && Map.get(assigns.cluster_names, cluster, cluster)
+
+            cluster_name =
+              if cluster, do: Map.get(assigns.cluster_names, cluster, cluster), else: :none
 
             %{
               px: px,
@@ -104,7 +105,7 @@ defmodule FugueWeb.MoodLive.MoodTrajectory do
               text_y: py + dy,
               label: a.label,
               date: a.date,
-              tooltip: annotation_tooltip(a, cluster_name, color)
+              tooltip: Tooltip.annotation(a, cluster_name, color)
             }
           end)
 
@@ -301,27 +302,5 @@ defmodule FugueWeb.MoodLive.MoodTrajectory do
           point: point
         }
     end
-  end
-
-  defp annotation_tooltip(a, cluster_name, color) do
-    note_html =
-      case a.note do
-        note when is_binary(note) and note != "" ->
-          ~s|<div style="margin-top:4px;color:var(--mood-ink-1);white-space:normal;max-width:240px">#{note}</div>|
-
-        _ ->
-          ""
-      end
-
-    cluster_html =
-      if cluster_name do
-        ~s|<div style="margin-top:4px;color:#{color}">#{cluster_name}</div>|
-      else
-        ""
-      end
-
-    ~s|<div style="font-style:italic;font-family:ui-serif,Georgia,serif;font-size:12px">#{a.label}</div>| <>
-      ~s|<div style="color:var(--mood-ink-3);font-size:10px;margin-top:1px">#{a.date}</div>| <>
-      note_html <> cluster_html
   end
 end

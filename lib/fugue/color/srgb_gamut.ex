@@ -20,6 +20,8 @@ defmodule Fugue.Color.SrgbGamut do
   The PNG is a few KB.
   """
 
+  alias Fugue.Color.Srgb
+
   # CIE XYZ -> linear sRGB, D65 (IEC 61966-2-1).
   @m11 3.2406
   @m12 -1.5372
@@ -56,7 +58,7 @@ defmodule Fugue.Color.SrgbGamut do
       nil ->
         png = encode_png(length(xs()), length(ys()), rows())
         :persistent_term.put({__MODULE__, :png}, png)
-        :persistent_term.get({__MODULE__, :png})
+        png
 
       png ->
         png
@@ -113,25 +115,8 @@ defmodule Fugue.Color.SrgbGamut do
         {0.0, 0.0, 0.0}
       end
 
-    <<byte(r), byte(g), byte(b)>>
+    <<Srgb.encode(r), Srgb.encode(g), Srgb.encode(b)>>
   end
-
-  defp byte(linear) do
-    linear
-    |> clamp01()
-    |> gamma()
-    |> Kernel.*(255)
-    |> round()
-    |> max(0)
-    |> min(255)
-  end
-
-  defp clamp01(v) when v < 0.0, do: 0.0
-  defp clamp01(v) when v > 1.0, do: 1.0
-  defp clamp01(v), do: v
-
-  defp gamma(c) when c <= 0.0031308, do: 12.92 * c
-  defp gamma(c), do: 1.055 * :math.pow(c, 1.0 / 2.4) - 0.055
 
   # A minimal truecolor PNG: 8 bits per channel, no alpha, no interlace,
   # filter type 0 (none) on every row.

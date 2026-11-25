@@ -2,8 +2,12 @@ defmodule Fugue.Mood.Gaps do
   @moduledoc """
   Gap-transition and imputed-membership analysis, ported from Ish's
   `Ish.Analysis.Gaps`. Requires a `Fugue.Mood.Cluster.run/3` result
-  computed against the *same* `spine` (its `dates`/`membership` must be
-  positionally aligned to look up a day's cluster membership).
+  computed against the *same* `spine`.
+
+  Every day that brackets a gap is a complete row (`DataFrame.identify_gaps/1`
+  builds gaps between complete runs), and `Cluster.run/3` clusters exactly
+  the complete rows, so every bracketing day has a membership. The lookup
+  is `Map.fetch!`: a miss means the two were run on different spines.
   """
 
   alias Fugue.Mood.{Cluster, DataFrame}
@@ -11,10 +15,7 @@ defmodule Fugue.Mood.Gaps do
   @typedoc "Membership degree by cluster name."
   @type memberships :: %{String.t() => float()}
 
-  @typedoc """
-  A gap with the memberships of the days that bracket it. Either side is
-  `%{}` when that day was not clustered.
-  """
+  @typedoc "A gap with the memberships of the days that bracket it."
   @type transition :: %{
           gap: DataFrame.gap(),
           before: memberships(),
@@ -37,34 +38,31 @@ defmodule Fugue.Mood.Gaps do
   @spec analyze(DataFrame.spine(), Cluster.result()) :: result()
   def analyze(spine, cluster_result) do
     gaps = DataFrame.identify_gaps(spine)
-
-    date_to_idx = cluster_result.dates |> Enum.with_index() |> Map.new()
-    cluster_names = Enum.map(cluster_result.clusters, & &1.name)
-    lookup = fn day -> lookup_membership(cluster_result, date_to_idx, cluster_names, day) end
+    by_date = memberships_by_date(cluster_result)
 
     %{
-      transitions: Enum.map(gaps, &compute_transition(&1, lookup)),
+      transitions: Enum.map(gaps, &compute_transition(&1, by_date)),
       length_distribution: Enum.frequencies_by(gaps, & &1.length),
-      imputed_memberships: gaps |> Enum.flat_map(&impute_gap(&1, lookup)) |> Map.new()
+      imputed_memberships: gaps |> Enum.flat_map(&impute_gap(&1, by_date)) |> Map.new()
     }
   end
 
-  defp lookup_membership(cluster_result, date_to_idx, cluster_names, day) do
-    case Map.get(date_to_idx, day) do
-      nil -> %{}
-      idx -> cluster_names |> Enum.zip(Enum.at(cluster_result.membership, idx)) |> Map.new()
-    end
+  defp memberships_by_date(cluster_result) do
+    names = Enum.map(cluster_result.clusters, & &1.name)
+
+    cluster_result.dates
+    |> Enum.zip(cluster_result.membership)
+    |> Map.new(fn {date, row} -> {date, names |> Enum.zip(row) |> Map.new()} end)
   end
 
   defp dominant_cluster(membership) do
-    case Enum.max_by(membership, fn {_name, degree} -> degree end, fn -> {"", 0} end) do
-      {name, _degree} -> name
-    end
+    {name, _degree} = Enum.max_by(membership, fn {_name, degree} -> degree end)
+    name
   end
 
-  defp compute_transition(gap, lookup) do
-    before = lookup.(gap.before)
-    after_ = lookup.(gap.after)
+  defp compute_transition(gap, by_date) do
+    before = Map.fetch!(by_date, gap.before)
+    after_ = Map.fetch!(by_date, gap.after)
 
     %{
       gap: gap,
@@ -74,9 +72,9 @@ defmodule Fugue.Mood.Gaps do
     }
   end
 
-  defp impute_gap(gap, lookup) do
-    before = lookup.(gap.before)
-    after_ = lookup.(gap.after)
+  defp impute_gap(gap, by_date) do
+    before = Map.fetch!(by_date, gap.before)
+    after_ = Map.fetch!(by_date, gap.after)
     total_days = Date.diff(gap.after, gap.before)
 
     for day <- Date.range(Date.add(gap.before, 1), Date.add(gap.after, -1)) do
@@ -85,13 +83,9 @@ defmodule Fugue.Mood.Gaps do
     end
   end
 
+  # Both sides carry every cluster name, since both come from one
+  # clustering.
   defp interpolate(before, after_, w) do
-    (Map.keys(before) ++ Map.keys(after_))
-    |> Enum.uniq()
-    |> Map.new(fn name ->
-      b = Map.get(before, name, 0.0)
-      a = Map.get(after_, name, 0.0)
-      {name, (1 - w) * b + w * a}
-    end)
+    Map.new(before, fn {name, b} -> {name, (1 - w) * b + w * Map.fetch!(after_, name)} end)
   end
 end

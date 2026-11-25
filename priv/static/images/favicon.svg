@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- The site's "->" between parens, after the macroexpand-1 avatar. Colors
+       are the dark theme's base-100, secondary and primary, resolved to hex. -->
+  <rect width="512" height="512" rx="96" fill="#140d20"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="44">
+    <path d="M150 104 Q62 256 150 408" stroke="#00d0df"/>
+    <path d="M362 104 Q450 256 362 408" stroke="#00d0df"/>
+    <path d="M178 296 H322 M266 240 L322 296 L266 352" stroke="#f558ed"/>
+  </g>
+  <!-- googly eyes perched on the arrowhead, looking in different directions -->
+  <circle cx="236" cy="196" r="46" fill="#ffffff" stroke="#080312" stroke-width="8"/>
+  <circle cx="318" cy="212" r="36" fill="#ffffff" stroke="#080312" stroke-width="8"/>
+  <circle cx="218" cy="212" r="21" fill="#080312"/>
+  <circle cx="330" cy="196" r="16" fill="#080312"/>
+  <circle cx="211" cy="205" r="6" fill="#ffffff"/>
+  <circle cx="325" cy="191" r="5" fill="#ffffff"/>
+</svg>

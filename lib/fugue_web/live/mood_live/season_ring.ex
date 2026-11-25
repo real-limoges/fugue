@@ -7,6 +7,8 @@ defmodule FugueWeb.MoodLive.SeasonRing do
 
   use Phoenix.Component
 
+  import FugueWeb.MoodLive.SvgMath, only: [fmt: 1]
+
   alias FugueWeb.MoodLive.Tooltip
 
   @size 420
@@ -222,40 +224,24 @@ defmodule FugueWeb.MoodLive.SeasonRing do
   defp arc_class(cluster, cluster), do: "season-arc highlight"
   defp arc_class(_cluster, _selected), do: "season-arc dim"
 
-  # --- Tooltip HTML (embedded as a data attribute; HoverTooltip reads it on hover) ---
+  # --- Tooltip (embedded as a data attribute; HoverTooltip reads it on hover) ---
 
   defp tooltip_html(month, label, cluster_ids, cluster_names, cluster_colors) do
-    sorted =
+    rows =
       cluster_ids
       |> Enum.map(fn cid ->
         count = Map.get(month.counts || %{}, cid, 0)
 
         %{
-          id: cid,
           count: count,
           name: Map.get(cluster_names, cid, cid),
-          color: Map.get(cluster_colors, cid, "var(--mood-ink-3)")
+          color: Map.get(cluster_colors, cid, "var(--mood-ink-3)"),
+          pct: round(count / max(month.total, 1) * 100)
         }
       end)
       |> Enum.filter(&(&1.count > 0))
       |> Enum.sort_by(& &1.count, :desc)
 
-    rows =
-      Enum.map_join(sorted, "", fn d ->
-        pct = round(d.count / max(month.total, 1) * 100)
-
-        ~s|<span style="display:inline-flex;align-items:center;gap:3px">| <>
-          ~s|<span style="width:6px;height:6px;border-radius:50%;background:#{d.color};display:inline-block"></span>| <>
-          "#{d.name}</span>" <>
-          ~s|<span style="color:var(--mood-ink-3);text-align:right">#{d.count}d</span>| <>
-          "<strong>#{pct}%</strong>"
-      end)
-
-    ~s|<strong style="font-size:13px">#{label}</strong>| <>
-      ~s|<div style="color:var(--mood-ink-4);font-size:10px;margin-bottom:6px">#{month.total} days across all years</div>| <>
-      ~s|<div style="display:grid;grid-template-columns:auto auto auto;gap:1px 10px">#{rows}</div>|
+    Tooltip.season_month(label, month.total, rows)
   end
-
-  defp fmt(n) when is_integer(n), do: Integer.to_string(n)
-  defp fmt(n) when is_float(n), do: :erlang.float_to_binary(n, [:compact, decimals: 2])
 end

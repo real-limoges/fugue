@@ -4,9 +4,6 @@ defmodule Fugue.Fuzzy.Inference.MamdaniTest do
   alias Fugue.Fuzzy.Inference.Mamdani
   alias Fugue.Fuzzy.Membership
 
-  # Terms deliberately avoid a==b or b==c: Hazy's (and this port's) triangular
-  # membership function returns 0 at x<=a, even when a==b, so a degenerate
-  # "low" term like triangular(0,0,10) would evaluate to 0 at its own peak.
   # Mirror-image shapes (each spanning the full [lo, hi] domain, peaks at the
   # opposite ends) keep the test's midpoint symmetric.
   setup do

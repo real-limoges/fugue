@@ -1,8 +1,8 @@
 defmodule FugueWeb.MenagerieLive.Parse do
   @moduledoc """
-  Shared slider-input helpers for the non-animated menagerie cards
-  (`fuzzy`, `mamdani`). The animated cards route parameter parsing through
-  `FugueWeb.MenagerieLive.AnimatedCard` instead.
+  Shared slider-input helpers. The non-animated cards (`fuzzy`, `mamdani`)
+  import them; `FugueWeb.MenagerieLive.AnimatedCard` parses with
+  `parse_float/2` too, then clamps.
   """
 
   @doc "Parse a slider's string value to a float, falling back to `default`."

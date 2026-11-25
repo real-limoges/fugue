@@ -9,6 +9,8 @@ defmodule FugueWeb.MoodLive.ClusterRadar do
 
   use Phoenix.Component
 
+  import FugueWeb.MoodLive.SvgMath, only: [fmt: 1]
+
   attr :centroids, :list, default: []
   attr :dimensions, :list, default: []
   attr :cluster_colors, :map, default: %{}
@@ -178,7 +180,4 @@ defmodule FugueWeb.MoodLive.ClusterRadar do
     </div>
     """
   end
-
-  defp fmt(n) when is_integer(n), do: Integer.to_string(n)
-  defp fmt(n) when is_float(n), do: :erlang.float_to_binary(n, [:compact, decimals: 2])
 end

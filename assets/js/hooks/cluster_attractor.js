@@ -3,7 +3,7 @@
  *  Generative filler; no data, just a living scribble that rhymes with the trajectory hero. */
 
 import { resolveCssVar, resolveThemeColors } from "../lib/theme_colors.js"
-import { createThemePoll, startRafLoop } from "../lib/canvas_loop.js"
+import { startRafLoop } from "../lib/canvas_loop.js"
 
 const B = 0.208186
 // Under reduced motion the attractor is drawn as one still: this many
@@ -17,12 +17,6 @@ const FADE_ALPHA = 0.035
 const LINE_WIDTH = 1.1
 const LINE_ALPHA = 0.78
 const FALLBACK_ASPECT = 0.62
-
-// Used only when the server sends no cluster-color data (data-colors empty
-// or unparseable). The real page always supplies cluster_colors from
-// @analysis, so this is a last-resort palette, not the common path.
-const DARK_FALLBACK_PALETTE = ["#b266ff", "#22d3ee", "#f472b6", "#facc15", "#4ade80"]
-const LIGHT_FALLBACK_PALETTE = ["#b45309", "#0e7490", "#7c3aed", "#be185d", "#15803d"]
 
 /** @typedef {[number, number, number]} Vec3 */
 /** @typedef {[number, number]} Vec2 */
@@ -38,11 +32,22 @@ const LIGHT_FALLBACK_PALETTE = ["#b45309", "#0e7490", "#7c3aed", "#be185d", "#15
  */
 
 /**
- * @param {unknown} c
- * @returns {c is string}
+ * The cluster colors the server renders into `data-colors`: a JSON array
+ * of `var(--mood-cluster-N)` strings, one per cluster. Anything else is a
+ * template bug, so it throws rather than painting a made-up palette.
+ * @param {string | undefined} raw
+ * @returns {string[]}
  */
-function isNonEmptyString(c) {
-  return typeof c === "string" && c.length > 0
+function parseColors(raw) {
+  const parsed = JSON.parse(raw ?? "")
+  if (
+    !Array.isArray(parsed) ||
+    parsed.length === 0 ||
+    !parsed.every((c) => typeof c === "string" && c.length > 0)
+  ) {
+    throw new Error(`ClusterAttractor: data-colors must be a non-empty list of colors, got ${raw}`)
+  }
+  return parsed
 }
 
 /**
@@ -60,16 +65,14 @@ function thomasStep(p) {
 
 /**
  * @typedef {object} State
- * @property {string[]} customPalette
- * @property {string[]} palette
+ * @property {string[]} colorVars the cluster colors as CSS variables, from data-colors
+ * @property {string[]} palette colorVars resolved for the current theme
  * @property {string} bg
  * @property {string} fade
  * @property {() => void} _onThemeChanged
- * @property {() => void} _repollTheme
- * @property {() => void} _onResize
  * @property {{stop: () => void}} [_loop]
  * @property {boolean} [_still] true when reduced motion turned the loop into one still
- * @property {ResizeObserver} [_ro]
+ * @property {ResizeObserver} _ro
  * @property {{xMin: number, xMax: number, yMin: number, yMax: number}} bounds
  * @property {Vec3} p
  * @property {Vec2} prev
@@ -101,18 +104,11 @@ function thomasStep(p) {
 /** @type {import("../types").LiveHook<State, Methods>} */
 export const ClusterAttractor = {
   mounted() {
-    const raw = this.el.dataset.colors || "[]"
-    try {
-      const parsed = JSON.parse(raw)
-      this.customPalette = Array.isArray(parsed) ? parsed.filter(isNonEmptyString) : []
-    } catch {
-      this.customPalette = []
-    }
+    this.colorVars = parseColors(this.el.dataset.colors)
 
     this.applyThemeColors()
     this._onThemeChanged = () => this.applyThemeColors()
     window.addEventListener("fugue:theme-changed", this._onThemeChanged)
-    this._repollTheme = createThemePoll({ frames: 120, onChange: this._onThemeChanged })
 
     this.warmup()
     this.setupCanvas()
@@ -121,36 +117,26 @@ export const ClusterAttractor = {
       still: () => this.drawStill(),
     })
 
-    this._onResize = () => this.resize()
-    window.addEventListener("resize", this._onResize)
-
-    if (typeof ResizeObserver !== "undefined") {
-      this._ro = new ResizeObserver(() => this.resize())
-      this._ro.observe(this.el)
-    }
+    // The observer sees every size change a window resize causes, so no
+    // separate resize listener.
+    this._ro = new ResizeObserver(() => this.resize())
+    this._ro.observe(this.el)
   },
 
   destroyed() {
     if (this._loop) this._loop.stop()
-    window.removeEventListener("resize", this._onResize)
     if (this._ro) this._ro.disconnect()
     if (this._onThemeChanged)
       window.removeEventListener("fugue:theme-changed", this._onThemeChanged)
   },
 
   applyThemeColors() {
-    const isLight = document.documentElement.getAttribute("data-theme") === "light"
     const base = resolveThemeColors().base
     this.bg = `rgb(${base[0]}, ${base[1]}, ${base[2]})`
     this.fade = `rgba(${base[0]}, ${base[1]}, ${base[2]}, ${FADE_ALPHA})`
     // The server sends cluster colors as var(--mood-cluster-N), which canvas
     // can't paint; read each variable's value for the current theme.
-    this.palette =
-      this.customPalette.length > 0
-        ? this.customPalette.map((c) => resolveCssVar(c))
-        : isLight
-          ? LIGHT_FALLBACK_PALETTE
-          : DARK_FALLBACK_PALETTE
+    this.palette = this.colorVars.map((c) => resolveCssVar(c))
   },
 
   warmup() {
@@ -269,7 +255,6 @@ export const ClusterAttractor = {
   },
 
   frame() {
-    this._repollTheme()
     const ctx = this.ctx
     ctx.fillStyle = this.fade
     ctx.fillRect(0, 0, this.w, this.h)

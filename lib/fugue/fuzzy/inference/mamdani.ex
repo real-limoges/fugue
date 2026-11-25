@@ -9,6 +9,13 @@ defmodule Fugue.Fuzzy.Inference.Mamdani do
   this module is called directly wherever Hazy's `evaluate` would have
   been. Add a Sugeno port later if a real need shows up.
 
+  Every lookup is strict: a rule naming a variable or term the FIS lacks,
+  or inputs missing one of the FIS's input variables, raises. A rule needs
+  at least one antecedent; `Fugue.Fuzzy.Inference.Wire` refuses an empty
+  one by name. Hazy skipped
+  those quietly, which turned a typo in a rule into a rule that never
+  fires.
+
   See `Fugue.Fuzzy.Inference.Types` for the shapes of `fis` and `inputs`.
   """
 
@@ -18,11 +25,7 @@ defmodule Fugue.Fuzzy.Inference.Mamdani do
   @doc "Fuzzify -> infer -> defuzzify (centroid). Returns `%{output_var => crisp_value}`."
   @spec run(Types.fis(), Types.crisp_inputs()) :: %{String.t() => float()}
   def run(fis, inputs) do
-    fis.rules
-    |> Enum.map(&eval_rule(fis, inputs, &1))
-    |> List.flatten()
-    |> group_consequents()
-    |> Map.new(fn {out_var, pairs} -> {out_var, Defuzzify.defuzzify(:centroid, pairs)} end)
+    fis |> consequents(inputs) |> Map.new(fn {k, pairs} -> {k, Defuzzify.centroid(pairs)} end)
   end
 
   @doc """
@@ -32,63 +35,51 @@ defmodule Fugue.Fuzzy.Inference.Mamdani do
   """
   @spec trace(Types.fis(), Types.crisp_inputs()) :: Types.inference_trace()
   def trace(fis, inputs) do
-    grouped =
-      fis.rules
-      |> Enum.map(&eval_rule(fis, inputs, &1))
-      |> List.flatten()
-      |> group_consequents()
+    grouped = consequents(fis, inputs)
 
     %{
-      input_degrees: input_degrees_at(fis, inputs),
+      input_degrees: input_degrees(fis, inputs),
       rule_strengths: Enum.map(fis.rules, &firing_strength(fis, inputs, &1.antecedent)),
       output_curves:
         Map.new(grouped, fn {k, pairs} -> {k, Defuzzify.sampled_aggregation(pairs)} end),
-      crisp: Map.new(grouped, fn {k, pairs} -> {k, Defuzzify.defuzzify(:centroid, pairs)} end)
+      crisp: Map.new(grouped, fn {k, pairs} -> {k, Defuzzify.centroid(pairs)} end)
     }
   end
 
-  defp input_degrees_at(fis, inputs) do
-    for {var_name, lv} <- fis.inputs,
-        crisp = Map.get(inputs, var_name),
-        not is_nil(crisp),
-        into: %{} do
+  # Every rule's clipped consequents, grouped by output variable.
+  defp consequents(fis, inputs) do
+    fis.rules
+    |> Enum.flat_map(&eval_rule(fis, inputs, &1))
+    |> Enum.group_by(fn {out_var, _fs, _alpha} -> out_var end, fn {_, fs, alpha} ->
+      {fs, alpha}
+    end)
+  end
+
+  defp input_degrees(fis, inputs) do
+    Map.new(fis.inputs, fn {var_name, lv} ->
+      crisp = Map.fetch!(inputs, var_name)
       {var_name, Map.new(lv.terms, fn {term_name, fs} -> {term_name, fs.mf.(crisp)} end)}
-    end
+    end)
   end
 
   defp eval_rule(fis, inputs, rule) do
     alpha = firing_strength(fis, inputs, rule.antecedent)
 
-    for {out_var, term_name} <- rule.consequent,
-        lv = Map.get(fis.outputs, out_var),
-        not is_nil(lv),
-        fs = Map.get(lv.terms, term_name),
-        not is_nil(fs) do
-      {out_var, fs, alpha}
+    for {out_var, term_name} <- rule.consequent do
+      {out_var, term(fis.outputs, out_var, term_name), alpha}
     end
   end
 
   # Antecedent firing strength via min t-norm.
   defp firing_strength(fis, inputs, antecedents) do
-    case antecedents |> Enum.map(&eval_antecedent(fis, inputs, &1)) |> Enum.reject(&is_nil/1) do
-      [] -> 0.0
-      degrees -> Enum.min(degrees)
-    end
-  end
-
-  defp eval_antecedent(fis, inputs, {var_name, term_name}) do
-    with lv when not is_nil(lv) <- Map.get(fis.inputs, var_name),
-         fs when not is_nil(fs) <- Map.get(lv.terms, term_name),
-         crisp when not is_nil(crisp) <- Map.get(inputs, var_name) do
-      fs.mf.(crisp)
-    else
-      _ -> nil
-    end
-  end
-
-  defp group_consequents(triples) do
-    Enum.reduce(triples, %{}, fn {out_var, fs, alpha}, acc ->
-      Map.update(acc, out_var, [{fs, alpha}], &[{fs, alpha} | &1])
+    antecedents
+    |> Enum.map(fn {var_name, term_name} ->
+      term(fis.inputs, var_name, term_name).mf.(Map.fetch!(inputs, var_name))
     end)
+    |> Enum.min()
+  end
+
+  defp term(vars, var_name, term_name) do
+    vars |> Map.fetch!(var_name) |> Map.fetch!(:terms) |> Map.fetch!(term_name)
   end
 end

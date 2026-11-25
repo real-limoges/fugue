@@ -454,8 +454,10 @@ defmodule Fugue.Amigos do
   def last_beat, do: @layers |> Enum.flat_map(& &1.beats) |> Enum.max()
 
   @doc """
-  The beat a margin starts drawing arrows on: callbacks with the first layer
-  that has one, foreshadowing with the first of the forward-pointing notes.
+  The beat a margin starts drawing arrows on. These are staging choices, not
+  the first layer with a connection (earlier layers have some): callbacks
+  start with `:silent_film`, which opens the callback beats, and
+  foreshadowing with `:buster_mexico`, which opens the forward-note beats.
   """
   @spec arrows_from(:callback | :foreshadowing) :: pos_integer()
   def arrows_from(:callback), do: first_beat(layer!(:silent_film))

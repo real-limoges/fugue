@@ -7,6 +7,8 @@ defmodule FugueWeb.MoodLive.TransitionSankey do
 
   use Phoenix.Component
 
+  import FugueWeb.MoodLive.SvgMath, only: [fmt: 1]
+
   @width 700
   @height 280
   @m_top 30
@@ -281,7 +283,4 @@ defmodule FugueWeb.MoodLive.TransitionSankey do
   defp node_class(_id, nil), do: "sankey-node"
   defp node_class(id, id), do: "sankey-node highlight"
   defp node_class(_id, _selected), do: "sankey-node dim"
-
-  defp fmt(n) when is_integer(n), do: Integer.to_string(n)
-  defp fmt(n) when is_float(n), do: :erlang.float_to_binary(n, [:compact, decimals: 2])
 end

@@ -6,6 +6,8 @@
 // /mood diff about 5.8 MB (see FugueWeb.MoodLive.CalendarGrid).
 // Right-anchored so the card clears the calendar even for far-right cells.
 
+import { requireElement } from "../lib/dom.js"
+
 /**
  * @typedef {Record<string, {name: string, color: string}>} Clusters
  *
@@ -90,9 +92,8 @@ export const cardHtml = ({ date, isGap, dims, mems }, clusters) => {
 /** @type {import("../types").LiveHook<State>} */
 export const CalendarTooltip = {
   mounted() {
-    this.tip = document.createElement("div")
-    this.tip.className = "tooltip-card tooltip-card--right"
-    this.el.appendChild(this.tip)
+    // Server-rendered by Tooltip.container and ignored by patches.
+    this.tip = requireElement(this.el, "[data-tooltip-card]", HTMLDivElement)
 
     /** @param {MouseEvent} e */
     this.onEnter = (e) => {
@@ -120,13 +121,6 @@ export const CalendarTooltip = {
 
     this.el.addEventListener("mouseover", this.onEnter)
     this.el.addEventListener("mouseout", this.onLeave)
-  },
-
-  // A LiveView patch to this container drops children the server didn't
-  // render, which includes the card; put it back so hover keeps working
-  // after a selection.
-  updated() {
-    if (!this.tip.isConnected) this.el.appendChild(this.tip)
   },
 
   destroyed() {

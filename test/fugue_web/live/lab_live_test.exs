@@ -49,6 +49,30 @@ defmodule FugueWeb.LabLiveTest do
       render_hook(view, "toggle_layer", %{"layer" => "gam"})
       assert :sys.get_state(view.pid).socket.assigns.layer_state[id]["gam"] == false
     end
+
+    # The LabGam hook reads its state off these attributes; there are no
+    # pushed events, so the attributes are the whole contract.
+    test "the chart's attributes carry the dataset and its layers", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/lab/gam")
+
+      render_hook(view, "toggle_layer", %{"layer" => "gam"})
+      [layers] = view |> element("#gam-viz") |> render() |> attribute("data-layers")
+      assert Jason.decode!(layers) == %{"linear" => false, "gam" => true, "gamlss" => false}
+
+      view |> element("button[phx-value-id=bay_bridge]") |> render_click()
+      html = view |> element("#gam-viz") |> render()
+      assert attribute(html, "data-dataset-id") == ["bay_bridge"]
+
+      assert attribute(html, "data-layers")
+             |> hd()
+             |> Jason.decode!()
+             |> Map.values()
+             |> Enum.all?(&(!&1))
+    end
+  end
+
+  defp attribute(html, name) do
+    html |> LazyHTML.from_fragment() |> LazyHTML.attribute(name)
   end
 
   describe "/lab/bayes mount" do
@@ -75,14 +99,14 @@ defmodule FugueWeb.LabLiveTest do
   end
 
   describe "/lab/bayes: search section" do
-    test "clicking the truth cell sets search_found", %{conn: conn} do
+    test "clicking the truth cell marks it found", %{conn: conn} do
       {:ok, view, _html} = live(conn, "/lab/bayes")
       truth = :sys.get_state(view.pid).socket.assigns.search_truth
 
       render_hook(view, "search_cell", %{"index" => Integer.to_string(truth)})
 
       assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.search_found == truth
+      assert assigns.search_state == {:found, truth}
       assert MapSet.member?(assigns.search_searched, truth)
     end
 
@@ -98,7 +122,7 @@ defmodule FugueWeb.LabLiveTest do
       render_hook(view, "search_cell", %{"index" => Integer.to_string(other)})
       after_ = :sys.get_state(view.pid).socket.assigns
 
-      assert before.search_found == after_.search_found
+      assert before.search_state == after_.search_state
       assert before.search_searched == after_.search_searched
     end
 
@@ -109,7 +133,7 @@ defmodule FugueWeb.LabLiveTest do
       render_hook(view, "reset_search", %{})
 
       assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.search_found == nil
+      assert assigns.search_state == :searching
       assert MapSet.size(assigns.search_searched) == 0
       assert assigns.search_truth in 0..24
     end
@@ -148,15 +172,13 @@ defmodule FugueWeb.LabLiveTest do
       render_hook(view, "set_threshold", %{"value" => "3.7"})
       assert :sys.get_state(view.pid).socket.assigns.decision_threshold == 3.7
 
-      # Above the max clamps down.
+      # Above the max clamps down to the slider's max.
       render_hook(view, "set_threshold", %{"value" => "999"})
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.decision_threshold == assigns.threshold_max
+      assert :sys.get_state(view.pid).socket.assigns.decision_threshold == 10.0
 
-      # Below the min clamps up.
+      # Below the min clamps up to the slider's min.
       render_hook(view, "set_threshold", %{"value" => "-1"})
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.decision_threshold == assigns.threshold_min
+      assert :sys.get_state(view.pid).socket.assigns.decision_threshold == 0.5
     end
 
     test "set_threshold ignores unparseable input", %{conn: conn} do

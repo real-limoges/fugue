@@ -9,6 +9,7 @@
 @import "./palettes/mood.css";
 @import "./palettes/color.css";
 @import "./palettes/menagerie.css";
+@import "./mood_tour.css";
 @source "../css";
 @source "../js";
 @source "../../lib/fugue_web";
@@ -119,27 +120,6 @@
 /* Make LiveView wrapper divs transparent for layout */
 [data-phx-session], [data-phx-teleported-src] { display: contents }
 
-/* This file is for your main application CSS */
-
-/* Theme color variables for consistent theming */
-:root {
-  --chart-primary: oklch(72% 0.25 330);
-  --chart-secondary: oklch(75% 0.2 200);
-  --chart-accent: oklch(78% 0.22 140);
-  --chart-neutral: oklch(30% 0.05 300);
-  --chart-bg: oklch(18% 0.04 300);
-  --chart-text: oklch(92% 0.02 300);
-}
-
-/* Reusable tooltip styles */
-.tooltip-card {
-  @apply absolute pointer-events-none bg-neutral text-neutral-content p-3.5 rounded-lg border border-neutral-content/12 shadow-lg text-sm leading-relaxed whitespace-nowrap z-10 opacity-0 transition-opacity;
-}
-
-.tooltip-card--right {
-  right: 0;
-}
-
 /* Shared tooltip card. Content is server-rendered HTML; the JS hook owns
    only positioning. The `--right` modifier anchors the tooltip to the
    right edge of its container (used by the calendar grid). */
@@ -149,6 +129,38 @@
 
 .tooltip-card--right {
   right: 0;
+}
+
+/* The /color hero when WebGL2 is missing (IridescenceCanvas adds the
+   class): a spectrum strip in the theme accents. Chrome, not the
+   flamboyant-cuttlefish palette the shader paints. */
+.iridescence-fallback {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-secondary) 0%,
+    var(--color-info) 25%,
+    var(--color-accent) 50%,
+    var(--color-warning) 70%,
+    var(--color-primary) 85%,
+    var(--color-error) 100%
+  );
+}
+
+/* The /menagerie/fuzzy bands tooltip (BandsHover): smaller and monospace,
+   in the menagerie palette. */
+.bands-tip {
+  position: absolute;
+  pointer-events: none;
+  background: var(--menagerie-tip-bg);
+  border: 1px solid var(--menagerie-panel-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--menagerie-ink);
+  box-shadow: 0 4px 12px var(--menagerie-tip-shadow);
+  opacity: 0;
+  z-index: 20;
 }
 
 /* /amigos is Arrested Development themed: white type on burnt orange, the

@@ -51,6 +51,7 @@ defmodule FugueWeb.MenagerieLive.AnimatedCard do
   use Phoenix.Component
 
   alias FugueWeb.MenagerieLive.AnimatedCard.Slider
+  alias FugueWeb.MenagerieLive.Parse
 
   @doc """
   Parses a `phx-change` form payload into a new params map. For each
@@ -64,7 +65,7 @@ defmodule FugueWeb.MenagerieLive.AnimatedCard do
     Enum.reduce(sliders, current, fn %Slider{key: key, min: lo, max: hi, cast: cast}, acc ->
       case Map.fetch(form, key) do
         {:ok, raw} ->
-          val = raw |> parse_number(current[key]) |> clamp(lo, hi) |> cast.()
+          val = raw |> Parse.parse_float(current[key]) |> clamp(lo, hi) |> cast.()
           Map.put(acc, key, val)
 
         :error ->
@@ -146,13 +147,6 @@ defmodule FugueWeb.MenagerieLive.AnimatedCard do
       </label>
     </form>
     """
-  end
-
-  defp parse_number(raw, fallback) when is_binary(raw) do
-    case Float.parse(raw) do
-      {val, _} -> val
-      :error -> fallback
-    end
   end
 
   defp clamp(val, lo, hi), do: val |> max(lo) |> min(hi)

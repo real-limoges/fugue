@@ -53,26 +53,20 @@ defmodule Fugue.Mood.DataFrame do
   compute a transition from/to).
   """
   @spec identify_gaps(spine()) :: [gap()]
-  def identify_gaps(spine) when length(spine) < 2, do: []
-
   def identify_gaps(spine) do
-    runs = Enum.chunk_by(spine, &Entry.complete?/1)
-    triplets = Enum.zip([runs, Enum.drop(runs, 1), Enum.drop(runs, 2)])
-
-    triplets
-    |> Enum.flat_map(fn {before, gap, after_run} ->
-      if Entry.complete?(hd(gap)) do
-        []
-      else
-        [
-          %{
-            start: hd(gap).date,
-            length: length(gap),
-            before: List.last(before).date,
-            after: hd(after_run).date
-          }
-        ]
-      end
+    # Runs alternate complete and absent, so a window of three runs whose
+    # middle is absent is a gap with a complete day on each side.
+    spine
+    |> Enum.chunk_by(&Entry.complete?/1)
+    |> Enum.chunk_every(3, 1, :discard)
+    |> Enum.reject(fn [_before, middle, _after] -> Entry.complete?(hd(middle)) end)
+    |> Enum.map(fn [before, gap, after_run] ->
+      %{
+        start: hd(gap).date,
+        length: length(gap),
+        before: List.last(before).date,
+        after: hd(after_run).date
+      }
     end)
   end
 
@@ -83,8 +77,4 @@ defmodule Fugue.Mood.DataFrame do
     |> Enum.filter(&Entry.complete?/1)
     |> Enum.map(&%{date: &1.date, point: Entry.point(&1)})
   end
-
-  @doc "Rows where all 5 dimensions are present, as entries (the inverse of `fill_missing_dates/1`)."
-  @spec extract_entries(spine()) :: [Entry.t()]
-  def extract_entries(spine), do: Enum.filter(spine, &Entry.complete?/1)
 end

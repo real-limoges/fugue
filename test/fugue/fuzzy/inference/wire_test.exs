@@ -28,4 +28,13 @@ defmodule Fugue.Fuzzy.Inference.WireTest do
 
     assert hot["crisp"]["fan_speed"] > cold["crisp"]["fan_speed"]
   end
+
+  test "a rule with no \"if\" clause is refused by name" do
+    request = FanDemo.request(20.0, 50.0)
+    bad_rule = %{"if" => [], "then" => [%{"var" => "fan_speed", "term" => "low"}]}
+
+    assert_raise ArgumentError, ~r/at least one "if" clause/, fn ->
+      Wire.run_request(%{request | "rules" => [bad_rule | request["rules"]]})
+    end
+  end
 end

@@ -1,10 +1,11 @@
 defmodule FugueWeb.CloudsLiveTest do
   use FugueWeb.ConnCase, async: true
 
-  test "mounts the canvas for the CloudsCanvas hook", %{conn: conn} do
+  test "shows the captured frame as an image, with no hook", %{conn: conn} do
     {:ok, view, _html} = live(conn, "/clouds")
 
-    assert has_element?(view, "canvas#clouds-canvas[phx-hook=CloudsCanvas]")
+    assert has_element?(view, ~s(img[src^="/images/clouds.png"]))
+    refute has_element?(view, "[phx-hook]")
   end
 
   test "is a still life, and says so", %{conn: conn} do

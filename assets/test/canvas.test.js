@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest"
-import { createThemePoll, mapPixels } from "../js/lib/canvas_loop.js"
+import { mapPixels } from "../js/lib/canvas_loop.js"
 import { buildColorTable, resolveCssVar } from "../js/lib/theme_colors.js"
 
 describe("resolveCssVar", () => {
@@ -49,16 +49,5 @@ describe("mapPixels", () => {
     mapPixels(intensity, table, rgba)
 
     expect(Array.from(rgba)).toEqual([0, 0, 0, 255, 255, 255, 255, 255])
-  })
-})
-
-describe("createThemePoll", () => {
-  test("fires once every N calls", () => {
-    let fired = 0
-    const poll = createThemePoll({ frames: 3, onChange: () => fired++ })
-
-    for (let i = 0; i < 7; i++) poll()
-
-    expect(fired).toBe(2)
   })
 })

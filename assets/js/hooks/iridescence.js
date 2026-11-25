@@ -149,21 +149,13 @@ function compileShader(gl, type, src) {
   return sh
 }
 
+// Spectrum-strip gradient (`.iridescence-fallback` in app.css) so
+// non-WebGL2 clients still see color. It is drawn from the theme accents,
+// so it follows a theme flip. LiveView leaves the class alone: patches to
+// an ignored element touch only its data-* attributes.
 /** @param {HTMLCanvasElement} canvas */
 function applyFallback(canvas) {
-  // Spectrum-strip CSS gradient so non-WebGL2 clients still see color.
-  // This is chrome, not the flamboyant-cuttlefish content above; it
-  // reads the live theme accents rather than carrying its own palette.
-  const style = getComputedStyle(document.documentElement)
-  const stops = [
-    style.getPropertyValue("--color-secondary").trim(),
-    style.getPropertyValue("--color-info").trim(),
-    style.getPropertyValue("--color-accent").trim(),
-    style.getPropertyValue("--color-warning").trim(),
-    style.getPropertyValue("--color-primary").trim(),
-    style.getPropertyValue("--color-error").trim(),
-  ]
-  canvas.style.background = `linear-gradient(90deg,${stops[0]} 0%,${stops[1]} 25%,${stops[2]} 50%,${stops[3]} 70%,${stops[4]} 85%,${stops[5]} 100%)`
+  canvas.classList.add("iridescence-fallback")
 }
 
 /**

@@ -1,11 +1,10 @@
 // @ts-check
 // Guided spotlight tour over the /mood page.
 // Dims the page via a box-shadow trick, walks through 5 chapters,
-// completion sets the mood-skip-intro flag so the preamble collapses.
+// and finishing it skips the intro, the same way the Skip button does.
+// Styles are in assets/css/mood_tour.css.
 
 import { requireElement } from "../lib/dom.js"
-
-const FLAG_KEY = "mood-skip-intro"
 
 const STEPS = [
   {
@@ -35,92 +34,6 @@ const STEPS = [
   },
 ]
 
-const STYLES = `
-  .mood-tour-spotlight {
-    position: relative;
-    z-index: 60;
-    border-radius: 8px;
-    box-shadow:
-      0 0 0 6px color-mix(in srgb, var(--mood-line) 8%, transparent),
-      0 0 0 9999px var(--mood-tour-backdrop);
-    transition: box-shadow 240ms ease-out;
-  }
-  #mood-tour-card {
-    position: fixed;
-    left: 50%;
-    bottom: 2rem;
-    transform: translateX(-50%);
-    z-index: 99999;
-    width: min(92vw, 34rem);
-    background: var(--mood-tour-bg);
-    color: var(--mood-tour-text);
-    border: 1px solid var(--mood-tour-border);
-    border-radius: 10px;
-    padding: 1rem 1.1rem 0.9rem;
-    box-shadow: 0 20px 50px var(--mood-tour-shadow);
-    pointer-events: auto;
-    font-size: 0.85rem;
-    line-height: 1.5;
-  }
-  #mood-tour-card .tour-title {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
-    color: var(--mood-tour-muted);
-    margin-bottom: 0.35rem;
-  }
-  #mood-tour-card .tour-body {
-    color: var(--mood-tour-text);
-    margin-bottom: 0.85rem;
-  }
-  #mood-tour-card .tour-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  #mood-tour-card .tour-counter {
-    color: var(--mood-tour-faint);
-    font-size: 0.65rem;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.1em;
-  }
-  #mood-tour-card .tour-right {
-    display: flex;
-    gap: 0.4rem;
-  }
-  #mood-tour-card button {
-    background: none;
-    border: none;
-    color: var(--mood-tour-muted);
-    cursor: pointer;
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    padding: 0.3rem 0.55rem;
-    border-radius: 4px;
-    transition: color 120ms ease, background 120ms ease;
-  }
-  #mood-tour-card button:hover {
-    color: var(--mood-tour-hover);
-    background: color-mix(in srgb, var(--mood-line) 5%, transparent);
-  }
-  #mood-tour-card button[data-tour-primary] {
-    color: var(--mood-tour-text);
-  }
-  #mood-tour-card button[data-tour-primary]:hover {
-    color: var(--mood-tour-bright);
-    background: color-mix(in srgb, var(--mood-line) 8%, transparent);
-  }
-`
-
-/** @param {boolean} v */
-function setSkipped(v) {
-  try {
-    if (v) localStorage.setItem(FLAG_KEY, "1")
-    else localStorage.removeItem(FLAG_KEY)
-  } catch (_e) {}
-}
-
 /**
  * A part of the card that buildCard wrote.
  * @param {HTMLElement} card
@@ -143,7 +56,6 @@ const cardPart = (card, selector) => requireElement(card, selector, HTMLElement)
 
 /**
  * @typedef {object} Methods
- * @property {() => void} injectStyles
  * @property {() => void} buildCard
  * @property {() => void} teardownCard
  * @property {() => void} clearSpotlight
@@ -158,7 +70,6 @@ const cardPart = (card, selector) => requireElement(card, selector, HTMLElement)
 /** @type {import("../types").LiveHook<State, Methods>} */
 export const MoodTour = {
   mounted() {
-    this.injectStyles()
     this.index = -1
     this.active = false
     this.currentTarget = null
@@ -196,16 +107,6 @@ export const MoodTour = {
     this.teardownCard()
     if (this.clickHandler) document.removeEventListener("click", this.clickHandler)
     if (this.keyHandler) document.removeEventListener("keydown", this.keyHandler)
-    const style = document.getElementById("mood-tour-styles")
-    if (style && style.parentNode) style.parentNode.removeChild(style)
-  },
-
-  injectStyles() {
-    if (document.getElementById("mood-tour-styles")) return
-    const el = document.createElement("style")
-    el.id = "mood-tour-styles"
-    el.textContent = STYLES
-    document.head.appendChild(el)
   },
 
   buildCard() {
@@ -314,13 +215,10 @@ export const MoodTour = {
     this.clearSpotlight()
     this.teardownCard()
     this.active = false
-    setSkipped(true)
-    const intro = document.getElementById("mood-intro")
-    if (intro) intro.style.display = "none"
-    const link = document.getElementById("mood-show-intro")
-    if (link) link.style.display = "inline-block"
-    const ch1 = document.getElementById("mood-chapter-1")
-    if (ch1) ch1.scrollIntoView({ behavior: "smooth", block: "start" })
+    // Finishing the tour skips the intro, exactly as the Skip button does:
+    // run that button's own command rather than a copy of it.
+    const skip = requireElement(document, "#mood-skip-intro", HTMLButtonElement)
+    this.js().exec(skip.getAttribute("phx-click") ?? "")
   },
 
   cancel() {

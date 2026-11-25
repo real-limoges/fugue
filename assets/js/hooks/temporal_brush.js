@@ -9,43 +9,52 @@ const INNER_H = HEIGHT - MARGIN.top - MARGIN.bottom
 const parseDate = d3.timeParse("%Y-%m-%d")
 
 /**
+ * The entry dates the server renders into `data-dates`: a non-empty JSON
+ * array of ISO days. Anything else is a template bug, so it throws.
+ * @param {HTMLElement} el
+ * @returns {Date[]}
+ */
+function readDates(el) {
+  const parsed = JSON.parse(el.dataset.dates ?? "")
+  const dates = Array.isArray(parsed) ? parsed.map((d) => parseDate(String(d))) : []
+  if (dates.length === 0 || dates.some((d) => d === null)) {
+    throw new Error("TemporalBrush: data-dates must be a non-empty list of ISO dates")
+  }
+  return /** @type {Date[]} */ (dates)
+}
+
+/**
  * @typedef {object} State
- * @property {string[]} dates ISO-8601 days, pushed by the server
  * @property {import("d3").BrushBehavior<unknown> | null} brush
  * @property {import("d3").Selection<SVGGElement, unknown, null, undefined> | null} brushG
- *   the group the brush is drawn into, kept so `clear-brush` can reset it
+ *   the group the brush is drawn into, kept so a clear can reset it
+ * @property {() => void} _onClear
  */
 
 /**
  * @typedef {object} Methods
- * @property {() => void} render
+ * @property {(dates: Date[]) => void} render
  */
 
 /** @type {import("../types").LiveHook<State, Methods>} */
 export const TemporalBrush = {
   mounted() {
-    this.dates = []
     this.brush = null
     this.brushG = null
 
-    this.handleEvent("update-brush-timeline", (/** @type {{dates: string[]}} */ { dates }) => {
-      this.dates = dates
-      this.render()
-    })
+    // The "clear" link dispatches this (Sections.chapter_day_by_day). Moving
+    // the brush to null fires its "end" handler, which tells the server.
+    this._onClear = () => {
+      if (this.brush && this.brushG) this.brushG.call(this.brush.move, null)
+    }
+    this.el.addEventListener("mood:clear-brush", this._onClear)
 
-    this.handleEvent("clear-brush", () => {
-      if (this.brush && this.brushG) {
-        this.brushG.call(this.brush.move, null)
-      }
-    })
+    this.render(readDates(this.el))
   },
 
-  render() {
-    if (this.dates.length === 0) return
-
+  render(allDates) {
     this.el.innerHTML = ""
 
-    const allDates = this.dates.map((d) => parseDate(d)).filter((d) => d !== null)
     const [first, last] = d3.extent(allDates)
     if (!first || !last) return
 
@@ -100,7 +109,7 @@ export const TemporalBrush = {
       ])
       .on("end", (/** @type {import("d3").D3BrushEvent<unknown>} */ event) => {
         if (!event.selection) {
-          this.pushEvent("brush_changed", { start: null, end: null })
+          this.pushEvent("brush_cleared", {})
           return
         }
         // brushX selections are one-dimensional: [x0, x1] in pixels.
@@ -116,6 +125,7 @@ export const TemporalBrush = {
   },
 
   destroyed() {
+    this.el.removeEventListener("mood:clear-brush", this._onClear)
     this.brush = null
     this.brushG = null
   },

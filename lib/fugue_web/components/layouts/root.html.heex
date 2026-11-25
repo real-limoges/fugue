@@ -30,8 +30,19 @@
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="realcomplex.systems" />
     <meta property="og:url" content={page_url(@conn)} />
-    <meta name="twitter:card" content="summary" />
+    <%!-- One share image for every page: the home splash in the dark theme,
+    captured at 1200x630. --%>
+    <meta property="og:image" content={url(~p"/images/og.png")} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Magenta flow lines on a dark field." />
+    <meta name="twitter:card" content="summary_large_image" />
     <link rel="canonical" href={page_url(@conn)} />
+    <%!-- The "->" between parens with googly eyes, after the macroexpand-1
+    avatar. The SVG is the source; the ICO and touch icon are renders of it. --%>
+    <link rel="icon" href={~p"/favicon.ico"} sizes="32x32" />
+    <link rel="icon" href={~p"/images/favicon.svg"} type="image/svg+xml" />
+    <link rel="apple-touch-icon" href={~p"/images/apple-touch-icon.png"} />
     <%!-- Web fonts are per page: only a page that sets `font_stylesheet`
     (today, /amigos) talks to Google Fonts. --%>
     <%= if assigns[:font_stylesheet] do %>

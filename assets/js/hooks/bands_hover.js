@@ -37,6 +37,8 @@
  * @property {(event: MouseEvent) => void} handleMove
  */
 
+import { requireElement } from "../lib/dom.js"
+
 /** @param {string | undefined} attr */
 const splitList = (attr, sep = ",") => (attr ? attr.split(sep) : [])
 
@@ -51,16 +53,8 @@ export const BandsHover = {
     this.mLeft = parseFloat(this.svg.dataset.mLeft || "")
     this.readData()
 
-    this.tip = document.createElement("div")
-    this.tip.style.cssText = `
-      position: absolute; pointer-events: none;
-      background: var(--menagerie-tip-bg); border: 1px solid var(--menagerie-panel-border);
-      border-radius: 6px; padding: 8px 10px;
-      font-family: ui-monospace, monospace; font-size: 11px;
-      color: var(--menagerie-ink); box-shadow: 0 4px 12px var(--menagerie-tip-shadow);
-      opacity: 0; z-index: 20;
-    `
-    this.el.appendChild(this.tip)
+    // Server-rendered (.bands-tip) and ignored by patches.
+    this.tip = requireElement(this.el, "#temperature-bands-tip", HTMLDivElement)
 
     /** @param {MouseEvent} e */
     this.onMove = (e) => this.handleMove(e)
@@ -74,13 +68,11 @@ export const BandsHover = {
   },
 
   updated() {
-    // Server re-rendered (slider change); refresh cached data. The patch
-    // also drops the tooltip, which the server doesn't render.
+    // Server re-rendered (slider change); refresh cached data.
     const svg = this.el.querySelector("#bands-svg")
     if (!(svg instanceof SVGSVGElement)) return
     this.svg = svg
     this.readData()
-    if (!this.tip.isConnected) this.el.appendChild(this.tip)
   },
 
   readData() {

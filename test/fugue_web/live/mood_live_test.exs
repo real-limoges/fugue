@@ -8,10 +8,11 @@ defmodule FugueWeb.MoodLiveTest do
 
       refute html =~ "Loading mood data"
 
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert assigns.loading == false
-      assert assigns.entries != []
-      assert assigns.analysis.clusters != []
+      assert %FugueWeb.MoodLive.Dataset{} =
+               dataset = :sys.get_state(view.pid).socket.assigns.dataset
+
+      assert dataset.entries != []
+      assert dataset.analysis.clusters != []
     end
 
     test "renders a cross-link to /menagerie in chapter 1", %{conn: conn} do
@@ -34,7 +35,7 @@ defmodule FugueWeb.MoodLiveTest do
 
       # Pick the first cluster id from the loaded analysis.
       cluster_id =
-        :sys.get_state(view.pid).socket.assigns.analysis.clusters
+        :sys.get_state(view.pid).socket.assigns.dataset.analysis.clusters
         |> List.first()
         |> Map.fetch!("id")
 
@@ -89,7 +90,7 @@ defmodule FugueWeb.MoodLiveTest do
       # event directly rather than requiring a single unique DOM match,
       # since every one of that cluster's segments fires the same event.
       cluster_id =
-        :sys.get_state(view.pid).socket.assigns.snapshot.timeline_segments
+        :sys.get_state(view.pid).socket.assigns.dataset.snapshot.timeline_segments
         |> List.first()
         |> Map.fetch!(:cluster)
 
@@ -105,7 +106,7 @@ defmodule FugueWeb.MoodLiveTest do
       {:ok, view, _html} = live(conn, "/mood")
 
       cluster_id =
-        :sys.get_state(view.pid).socket.assigns.snapshot.radar_centroids
+        :sys.get_state(view.pid).socket.assigns.dataset.snapshot.radar_centroids
         |> List.first()
         |> Map.fetch!(:id)
 
@@ -120,7 +121,7 @@ defmodule FugueWeb.MoodLiveTest do
       {:ok, view, _html} = live(conn, "/mood")
 
       date =
-        :sys.get_state(view.pid).socket.assigns.snapshot.calendar_days
+        :sys.get_state(view.pid).socket.assigns.dataset.snapshot.calendar_days
         |> Enum.find(&(&1.is_gap == false))
         |> Map.fetch!(:date)
 
@@ -136,7 +137,7 @@ defmodule FugueWeb.MoodLiveTest do
 
       # Prime some selection state.
       cluster_id =
-        :sys.get_state(view.pid).socket.assigns.analysis.clusters
+        :sys.get_state(view.pid).socket.assigns.dataset.analysis.clusters
         |> List.first()
         |> Map.fetch!("id")
 

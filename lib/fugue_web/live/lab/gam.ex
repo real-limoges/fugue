@@ -26,30 +26,15 @@ defmodule FugueWeb.LabLive.Gam do
      |> assign(:layer_state, layer_state)}
   end
 
+  # The chart reads the dataset and its layers off #gam-viz's data
+  # attributes, which LiveView patches even under phx-update="ignore", so a
+  # change here is just an assign; a reconnect re-renders them too.
   @impl true
-  def handle_event("lab_gam:ready", _, socket) do
-    id = socket.assigns.dataset_id
-
-    {:noreply,
-     push_event(socket, "lab_gam:set_dataset", %{
-       dataset_id: id,
-       layers: socket.assigns.layer_state[id]
-     })}
-  end
-
   def handle_event("select_dataset", %{"id" => id}, socket)
       when id != socket.assigns.dataset_id do
     case GamDatasets.fetch(id) do
-      {:ok, _} ->
-        layers = socket.assigns.layer_state[id]
-
-        {:noreply,
-         socket
-         |> assign(:dataset_id, id)
-         |> push_event("lab_gam:set_dataset", %{dataset_id: id, layers: layers})}
-
-      :error ->
-        {:noreply, socket}
+      {:ok, _} -> {:noreply, assign(socket, :dataset_id, id)}
+      :error -> {:noreply, socket}
     end
   end
 
@@ -60,10 +45,7 @@ defmodule FugueWeb.LabLive.Gam do
     updated = Map.update!(socket.assigns.layer_state[id], layer, &(!&1))
     layer_state = Map.put(socket.assigns.layer_state, id, updated)
 
-    {:noreply,
-     socket
-     |> assign(:layer_state, layer_state)
-     |> push_event("lab_gam:set_layers", %{layers: updated})}
+    {:noreply, assign(socket, :layer_state, layer_state)}
   end
 
   @impl true
@@ -99,6 +81,7 @@ defmodule FugueWeb.LabLive.Gam do
         phx-hook="LabGam"
         phx-update="ignore"
         data-dataset-id={@dataset_id}
+        data-layers={Jason.encode!(@layers)}
         class="w-full rounded-lg bg-base-200"
         style="min-height: 420px;"
       />

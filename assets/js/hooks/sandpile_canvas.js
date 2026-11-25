@@ -2,14 +2,11 @@
 import * as sandpile from "petri/sandpile.js"
 import * as d3 from "d3"
 import { resolveThemeColors, buildColorTable } from "../lib/theme_colors.js"
-import { startRafLoop, createThemePoll, mapPixels } from "../lib/canvas_loop.js"
+import { startRafLoop, mapPixels } from "../lib/canvas_loop.js"
 
-function axisColor() {
-  return (
-    getComputedStyle(document.documentElement).getPropertyValue("--color-base-content").trim() ||
-    "#666"
-  )
-}
+// The histogram is SVG, so it can name the variable and follow the theme
+// on its own; only the canvas needs repainting when the theme flips.
+const AXIS = "var(--color-base-content)"
 
 /** @param {HTMLElement} container */
 function setupHistogram(container) {
@@ -31,22 +28,22 @@ function setupHistogram(container) {
     .attr("transform", `translate(0,${innerH})`)
     .call(d3.axisBottom(x).ticks(4, "~s"))
     .selectAll("text, line, path")
-    .attr("stroke", axisColor())
-    .attr("fill", axisColor())
+    .attr("stroke", AXIS)
+    .attr("fill", AXIS)
 
   g.append("g")
     .attr("class", "y-axis")
     .call(d3.axisLeft(y).ticks(4, "~s"))
     .selectAll("text, line, path")
-    .attr("stroke", axisColor())
-    .attr("fill", axisColor())
+    .attr("stroke", AXIS)
+    .attr("fill", AXIS)
 
   svg
     .append("text")
     .attr("x", margin.left + innerW / 2)
     .attr("y", height - 2)
     .attr("text-anchor", "middle")
-    .attr("fill", axisColor())
+    .attr("fill", AXIS)
     .attr("font-size", "10px")
     .text("avalanche size")
 
@@ -54,7 +51,7 @@ function setupHistogram(container) {
     .append("text")
     .attr("transform", `translate(10,${margin.top + innerH / 2}) rotate(-90)`)
     .attr("text-anchor", "middle")
-    .attr("fill", axisColor())
+    .attr("fill", AXIS)
     .attr("font-size", "10px")
     .text("count")
 
@@ -98,13 +95,13 @@ function updateHistogram(chart, bins) {
   xAxisG
     .call(d3.axisBottom(chart.x).ticks(4, "~s"))
     .selectAll("text, line, path")
-    .attr("stroke", axisColor())
-    .attr("fill", axisColor())
+    .attr("stroke", AXIS)
+    .attr("fill", AXIS)
   yAxisG
     .call(d3.axisLeft(chart.y).ticks(4, "~s"))
     .selectAll("text, line, path")
-    .attr("stroke", axisColor())
-    .attr("fill", axisColor())
+    .attr("stroke", AXIS)
+    .attr("fill", AXIS)
 
   // The annotation supplies selectAll's type arguments (element and datum),
   // which JS cannot write inline; every circle here was bound to a HistPoint.
@@ -115,7 +112,7 @@ function updateHistogram(chart, bins) {
     .enter()
     .append("circle")
     .attr("r", 2)
-    .attr("fill", axisColor())
+    .attr("fill", AXIS)
     .attr("opacity", 0.7)
     .merge(dots)
     .attr("cx", (d) => chart.x(d.size))
@@ -171,25 +168,10 @@ export const SandpileCanvas = {
 
       const grainCounter = document.getElementById("sandpile-grain-count")
 
-      const repollThemeColors = () => {
+      this._onThemeChanged = () => {
         const fresh = resolveThemeColors()
         colorTable = buildColorTable(fresh.base, fresh.primary)
-        if (histChart) {
-          histChart.g
-            .select(".x-axis")
-            .selectAll("text, line, path")
-            .attr("stroke", axisColor())
-            .attr("fill", axisColor())
-          histChart.g
-            .select(".y-axis")
-            .selectAll("text, line, path")
-            .attr("stroke", axisColor())
-            .attr("fill", axisColor())
-          histChart.dotsGroup.selectAll("circle").attr("fill", axisColor())
-        }
       }
-      const repollTheme = createThemePoll({ frames: 120, onChange: repollThemeColors })
-      this._onThemeChanged = repollThemeColors
       window.addEventListener("fugue:theme-changed", this._onThemeChanged)
 
       // No `still`: the visitor came here to drive this sim, so it keeps
@@ -205,8 +187,6 @@ export const SandpileCanvas = {
           }
 
           if (grainCounter) grainCounter.textContent = sandpile.getTotalGrains().toLocaleString()
-
-          repollTheme()
 
           // Update histogram every 60 frames
           if (histChart && histDirty && ++frame % 60 === 0) {

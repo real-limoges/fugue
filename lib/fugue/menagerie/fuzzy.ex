@@ -4,6 +4,7 @@ defmodule Fugue.Menagerie.Fuzzy do
   No state, no I/O. Just math that the LiveView re-runs when parameters change.
   """
 
+  alias Fugue.Fuzzy.Membership
   alias Fugue.Menagerie.MelbourneWeather
 
   defmodule MF do
@@ -68,22 +69,11 @@ defmodule Fugue.Menagerie.Fuzzy do
   end
 
   @doc """
-  Triangular membership: 0 outside [a, c], 1 at b, linear ramps on either
-  side. A non-numeric `x` (a missing reading) scores 0.
+  Triangular membership of `x`: `Fugue.Fuzzy.Membership.triangular/3`,
+  applied. A missing reading never gets here; `bands/2` scores it 0.
   """
-  @spec triangular(number() | nil, number(), number(), number()) :: float()
-  def triangular(x, a, b, c)
-      when is_number(x) and is_number(a) and is_number(b) and is_number(c) do
-    cond do
-      x <= a -> 0.0
-      x < b and b > a -> (x - a) / (b - a)
-      x == b -> 1.0
-      x < c and c > b -> (c - x) / (c - b)
-      true -> 0.0
-    end
-  end
-
-  def triangular(_, _, _, _), do: 0.0
+  @spec triangular(number(), number(), number(), number()) :: float()
+  def triangular(x, a, b, c), do: Membership.triangular(a, b, c).(x)
 
   @doc """
   Sample a single MF across `[lo, hi]` at `steps + 1` evenly-spaced x values.

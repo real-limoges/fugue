@@ -10,6 +10,8 @@ defmodule FugueWeb.MoodLive.Sections do
 
   import FugueWeb.CoreComponents, only: [figure_source: 1]
 
+  alias Phoenix.LiveView.JS
+
   alias FugueWeb.MoodLive.{
     AmbiguityHistogram,
     CalendarGrid,
@@ -116,11 +118,118 @@ defmodule FugueWeb.MoodLive.Sections do
     """
   end
 
+  # Hides the intro and shows the "Show intro" link at once, in the browser,
+  # then tells the server so the next patch agrees. The `mood:intro` event
+  # stores the choice in localStorage and scrolls to its target (`app.js`).
+  # The tour's Done runs this same command off the Skip button.
+  #
+  # No @spec on either: Dialyzer reads JS.t()'s opaque ops as violated by
+  # any built command, so a spec here fails precommit without catching
+  # anything.
+  defp skip_intro_js do
+    JS.hide(to: "#mood-intro")
+    |> JS.show(to: "#mood-show-intro", display: "inline-block")
+    |> JS.dispatch("mood:intro", to: "#mood-chapter-1", detail: %{skipped: true})
+    |> JS.push("skip_intro")
+  end
+
+  # The reverse of skip_intro_js/0.
+  defp show_intro_js do
+    JS.show(to: "#mood-intro")
+    |> JS.hide(to: "#mood-show-intro")
+    |> JS.dispatch("mood:intro", to: "#mood-intro", detail: %{skipped: false})
+    |> JS.push("show_intro")
+  end
+
+  # The sandbox's geometry, in viewBox units. MoodTourSandbox reads the ones
+  # it needs off the container's data attributes, so they live only here.
+  @sandbox_w 500
+  @sandbox_h 150
+  @sandbox_pad_x 40
+  @sandbox_axis_y 45
+  @sandbox_bar_y 82
+  @sandbox_bar_h 22
+
+  # The fuzzy-clustering sandbox: a draggable point on an axis, fake
+  # centers, and a bar of the point's memberships. The markup is fixed; the
+  # hook moves the point and redraws the centers and the bar, all in the
+  # browser, since dragging can't wait on the server.
+  defp tour_sandbox(assigns) do
+    inner_w = @sandbox_w - 2 * @sandbox_pad_x
+
+    assigns =
+      assign(assigns,
+        w: @sandbox_w,
+        h: @sandbox_h,
+        pad_x: @sandbox_pad_x,
+        inner_w: inner_w,
+        axis_y: @sandbox_axis_y,
+        bar_y: @sandbox_bar_y,
+        bar_h: @sandbox_bar_h
+      )
+
+    ~H"""
+    <div
+      id="mood-tour-sandbox"
+      phx-hook="MoodTourSandbox"
+      phx-update="ignore"
+      data-pad-x={@pad_x}
+      data-inner-w={@inner_w}
+      data-axis-y={@axis_y}
+      data-bar-h={@bar_h}
+      class="bg-base-200 rounded-lg p-6"
+    >
+      <svg class="sandbox-svg" viewBox={"0 0 #{@w} #{@h}"} preserveAspectRatio="xMidYMid meet">
+        <line
+          x1={@pad_x}
+          y1={@axis_y}
+          x2={@w - @pad_x}
+          y2={@axis_y}
+          stroke="var(--mood-ink-4)"
+          stroke-width="1"
+        />
+        <g class="centers"></g>
+        <g class="bar" transform={"translate(#{@pad_x},#{@bar_y})"}></g>
+        <circle
+          class="point"
+          cx={@pad_x}
+          cy={@axis_y}
+          r="8"
+          fill="var(--mood-tour-point)"
+          stroke="var(--mood-tour-point-edge)"
+          stroke-width="1"
+        />
+        <rect
+          class="hitbox"
+          x={@pad_x - 24}
+          y={@axis_y - 28}
+          width={@inner_w + 48}
+          height="56"
+          fill="transparent"
+        />
+      </svg>
+      <div class="sandbox-sliders">
+        <label>
+          <span class="label-text">Fuzziness</span>
+          <input data-control="m" type="range" min="1.05" max="4" step="0.05" value="2" />
+          <span class="readout" data-readout="m">2.00</span>
+        </label>
+        <label>
+          <span class="label-text">Clusters</span>
+          <input data-control="k" type="range" min="2" max="5" step="1" value="3" />
+          <span class="readout" data-readout="k">3</span>
+        </label>
+      </div>
+    </div>
+    """
+  end
+
   attr :stats, :map, required: true
+  attr :intro, :atom, required: true, values: [:shown, :skipped]
 
   def intro(assigns) do
     ~H"""
-    <div id="mood-intro" phx-hook="MoodIntroGate">
+    <div id="mood-intro" class={@intro == :skipped && "hidden"}>
       <header class="mb-16 max-w-2xl">
         <h1 class="text-3xl font-bold tracking-tight">My Mood Journal</h1>
         <p class="text-base-content/45 mt-2 mb-10">
@@ -156,18 +265,13 @@ defmodule FugueWeb.MoodLive.Sections do
           if you want to reshape the membership curves themselves.
         </p>
 
-        <div
-          id="mood-tour-sandbox"
-          phx-hook="MoodTourSandbox"
-          phx-update="ignore"
-          class="bg-base-200 rounded-lg p-6"
-        >
-        </div>
+        <.tour_sandbox />
 
         <div class="flex justify-between items-center mt-8">
           <button
             type="button"
-            data-skip-intro
+            id="mood-skip-intro"
+            phx-click={skip_intro_js()}
             class="text-xs uppercase tracking-widest text-base-content/35 cursor-pointer hover:text-base-content/60 transition-colors"
           >
             Skip intro
@@ -186,6 +290,7 @@ defmodule FugueWeb.MoodLive.Sections do
   end
 
   attr :stats, :map, required: true
+  attr :intro, :atom, required: true, values: [:shown, :skipped]
   attr :analysis, :map, required: true
   attr :selected_cluster, :any, default: nil
   attr :radar_centroids, :list, default: []
@@ -199,9 +304,11 @@ defmodule FugueWeb.MoodLive.Sections do
       <button
         type="button"
         id="mood-show-intro"
-        data-show-intro
-        class="text-xs uppercase tracking-widest text-base-content/35 cursor-pointer hover:text-base-content/60 transition-colors mb-3 inline-block"
-        style="display:none"
+        phx-click={show_intro_js()}
+        class={[
+          "text-xs uppercase tracking-widest text-base-content/35 cursor-pointer hover:text-base-content/60 transition-colors mb-3",
+          if(@intro == :skipped, do: "inline-block", else: "hidden")
+        ]}
       >
         &lsaquo; Show intro
       </button>
@@ -313,7 +420,8 @@ defmodule FugueWeb.MoodLive.Sections do
 
   attr :stats, :map, required: true
   attr :analysis, :map, required: true
-  attr :date_range, :any, default: nil
+  attr :brush, :any, required: true, doc: "`Focus.brush()`: `:all` or `{start, end}`"
+  attr :dates, :list, required: true, doc: "every entry's ISO date, for the brush's ticks"
   attr :highlighted_dates, :list, default: []
   attr :selected_gap, :any, default: nil
   attr :selected_cluster, :any, default: nil
@@ -351,23 +459,26 @@ defmodule FugueWeb.MoodLive.Sections do
           id="temporal-brush"
           phx-hook="TemporalBrush"
           phx-update="ignore"
+          data-dates={Jason.encode!(@dates)}
           style="min-height: 50px;"
         >
         </div>
-        <%= if @date_range do %>
-          <div class="flex items-center gap-2 mt-1">
-            <span class="text-xs text-base-content/45">
-              {elem(@date_range, 0)} → {elem(@date_range, 1)}
-            </span>
-            <button
-              phx-click="brush_changed"
-              phx-value-start=""
-              phx-value-end=""
-              class="text-xs text-base-content/45 hover:text-base-content/75"
-            >
-              clear
-            </button>
-          </div>
+        <%= case @brush do %>
+          <% :all -> %>
+          <% {start, end_date} -> %>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="text-xs text-base-content/45">
+                {start} → {end_date}
+              </span>
+              <%!-- Clears the d3 brush in the browser; the hook then reports
+                 the empty selection as brush_cleared. --%>
+              <button
+                phx-click={JS.dispatch("mood:clear-brush", to: "#temporal-brush")}
+                class="text-xs text-base-content/45 hover:text-base-content/75"
+              >
+                clear
+              </button>
+            </div>
         <% end %>
       </div>
 

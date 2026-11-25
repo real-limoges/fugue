@@ -11,6 +11,8 @@ defmodule FugueWeb.MoodLive.TransitionTimeline do
 
   use Phoenix.Component
 
+  import FugueWeb.MoodLive.SvgMath, only: [fmt: 1]
+
   @width 800
   @height 50
   @m_top 6
@@ -155,7 +157,4 @@ defmodule FugueWeb.MoodLive.TransitionTimeline do
   defp block_class(_cluster, nil), do: "tl-segment"
   defp block_class(cluster, cluster), do: "tl-segment highlight"
   defp block_class(_cluster, _selected), do: "tl-segment dim"
-
-  defp fmt(n) when is_integer(n), do: Integer.to_string(n)
-  defp fmt(n) when is_float(n), do: :erlang.float_to_binary(n, [:compact, decimals: 2])
 end

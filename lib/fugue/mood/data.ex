@@ -44,8 +44,8 @@ defmodule Fugue.Mood.Data do
   @spec between(Date.t() | nil, Date.t() | nil) :: [Entry.t()]
   def between(from, to) do
     Enum.filter(@entries, fn entry ->
-      (is_nil(from) or Date.compare(entry.date, from) != :lt) and
-        (is_nil(to) or Date.compare(entry.date, to) != :gt)
+      (is_nil(from) or not Date.before?(entry.date, from)) and
+        (is_nil(to) or not Date.after?(entry.date, to))
     end)
   end
 end

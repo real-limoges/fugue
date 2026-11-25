@@ -14,6 +14,8 @@ defmodule Fugue.Color.Daltonize do
   can be added when the chapter wants the gradient.
   """
 
+  alias Fugue.Color.Srgb
+
   @protan {
     {0.152286, 1.052583, -0.204868},
     {0.114503, 0.786281, 0.099216},
@@ -31,7 +33,7 @@ defmodule Fugue.Color.Daltonize do
     |> linearize()
     |> apply_matrix(@protan)
     |> delinearize()
-    |> format_hex()
+    |> Srgb.hex()
   end
 
   defp parse_hex(<<r1, r2, g1, g2, b1, b2>>) do
@@ -40,34 +42,11 @@ defmodule Fugue.Color.Daltonize do
 
   defp hex_byte(c1, c2), do: String.to_integer(<<c1, c2>>, 16)
 
-  defp linearize({r, g, b}) do
-    {srgb_to_lin(r), srgb_to_lin(g), srgb_to_lin(b)}
-  end
-
-  defp srgb_to_lin(c) do
-    n = c / 255.0
-    if n <= 0.04045, do: n / 12.92, else: :math.pow((n + 0.055) / 1.055, 2.4)
-  end
+  defp linearize({r, g, b}), do: {Srgb.decode(r), Srgb.decode(g), Srgb.decode(b)}
 
   defp apply_matrix({r, g, b}, {{a, bb, cc}, {d, e, f}, {gg, h, i}}) do
     {a * r + bb * g + cc * b, d * r + e * g + f * b, gg * r + h * g + i * b}
   end
 
-  defp delinearize({r, g, b}) do
-    {lin_to_srgb(r), lin_to_srgb(g), lin_to_srgb(b)}
-  end
-
-  defp lin_to_srgb(c) do
-    c = c |> max(0.0) |> min(1.0)
-    n = if c <= 0.0031308, do: c * 12.92, else: 1.055 * :math.pow(c, 1.0 / 2.4) - 0.055
-    round(n * 255)
-  end
-
-  defp format_hex({r, g, b}) do
-    "#" <> byte_hex(r) <> byte_hex(g) <> byte_hex(b)
-  end
-
-  defp byte_hex(n) do
-    n |> Integer.to_string(16) |> String.pad_leading(2, "0")
-  end
+  defp delinearize({r, g, b}), do: {Srgb.encode(r), Srgb.encode(g), Srgb.encode(b)}
 end

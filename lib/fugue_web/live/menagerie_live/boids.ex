@@ -7,6 +7,8 @@ defmodule FugueWeb.MenagerieLive.Boids do
   """
   use FugueWeb, :live_view
 
+  import FugueWeb.IndexComponents, only: [menagerie_header: 1]
+
   alias FugueWeb.MenagerieLive.AnimatedCard
   alias FugueWeb.MenagerieLive.AnimatedCard.Slider
 
@@ -110,14 +112,7 @@ defmodule FugueWeb.MenagerieLive.Boids do
   def render(assigns) do
     ~H"""
     <div class="boids-menagerie p-4 max-w-6xl mx-auto">
-      <nav class="mb-6 text-xs">
-        <.link navigate={~p"/menagerie"} class="text-base-content/45 hover:text-base-content/75">
-          ← Menagerie
-        </.link>
-      </nav>
-
-      <div class="mb-4">
-        <h1 class="text-2xl font-bold text-base-content">Boids playground</h1>
+      <.menagerie_header title="Boids playground">
         <p class="text-sm text-base-content/60 mt-1 max-w-3xl leading-relaxed">
           Every bird runs the same three rules: get out of a crowded neighbor's
           way, turn toward wherever the birds around it are heading, and drift
@@ -128,7 +123,7 @@ defmodule FugueWeb.MenagerieLive.Boids do
           the sliders are for finding your own. (It's also the flock running
           behind the home page, if you'd been wondering.)
         </p>
-      </div>
+      </.menagerie_header>
 
       <div class="bg-base-200 rounded-lg overflow-hidden mb-4">
         <canvas
@@ -152,7 +147,7 @@ defmodule FugueWeb.MenagerieLive.Boids do
       </div>
 
       <.figure_source
-        note="Three steering rules (separation, alignment, cohesion) over a neighbor query, stepped in C and compiled to WASM. The sliders write straight into the kernel's parameter struct; nothing round-trips to the server."
+        note="Three steering rules (separation, alignment, cohesion) over a neighbor query, stepped in C and compiled to WASM. A slider change goes to the server and comes back as one event into the kernel's parameter struct; the stepping never leaves the tab."
         repo="petri"
       />
 

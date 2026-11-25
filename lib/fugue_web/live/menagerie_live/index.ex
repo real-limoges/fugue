@@ -6,29 +6,20 @@ defmodule FugueWeb.MenagerieLive.Index do
 
   use FugueWeb, :live_view
 
-  @impl true
-  def mount(_params, _session, socket) do
-    {:ok, socket}
-  end
+  import FugueWeb.IndexComponents
 
   @impl true
   def render(assigns) do
     ~H"""
     <div class="max-w-4xl mx-auto py-8">
-      <header class="mb-10">
-        <p class="font-mono text-[10px] uppercase tracking-[0.25em] text-primary/60 mb-3">
-          / menagerie
-        </p>
-        <h1 class="text-2xl font-mono font-semibold text-base-content mb-3">Math playgrounds</h1>
-        <p class="text-sm text-base-content/50 leading-relaxed max-w-2xl">
-          Little sims to poke at. Most of them are a couple of simple rules
-          run thousands of times, and the sliders are there so you can break
-          them (please do, nothing here minds).
-        </p>
-      </header>
+      <.index_header kicker="menagerie" title="Math playgrounds">
+        Little sims to poke at. Most of them are a couple of simple rules
+        run thousands of times, and the sliders are there so you can break
+        them (please do, nothing here minds).
+      </.index_header>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <.card
+        <.index_card
           href={~p"/menagerie/fuzzy"}
           category="Fuzzy logic"
           title="Triangular temperature bands"
@@ -37,9 +28,9 @@ defmodule FugueWeb.MenagerieLive.Index do
           Four years of Melbourne weather sorted into cold, cool, mild, warm and
           hot, except no day has to pick just one. Drag the sliders and every
           day in the dataset gets re-sorted at once.
-        </.card>
+        </.index_card>
 
-        <.card
+        <.index_card
           href={~p"/menagerie/mamdani"}
           category="Fuzzy logic"
           title="Mamdani fan controller"
@@ -49,9 +40,9 @@ defmodule FugueWeb.MenagerieLive.Index do
           turn it off), written down as seven fuzzy rules. Move the
           temperature and humidity and watch each rule vote on how fast the
           fan should spin.
-        </.card>
+        </.index_card>
 
-        <.card
+        <.index_card
           href={~p"/menagerie/boids"}
           category="Flocking"
           title="Boids playground"
@@ -61,9 +52,9 @@ defmodule FugueWeb.MenagerieLive.Index do
           they're pointing, stay near the group) and nothing about the flock as
           a whole. Push the sliders and it tightens up, streams past itself like
           a school of fish, or falls apart completely.
-        </.card>
+        </.index_card>
 
-        <.card
+        <.index_card
           href={~p"/menagerie/quantum-walk"}
           category="Quantum"
           title="Classical vs quantum walk"
@@ -73,9 +64,9 @@ defmodule FugueWeb.MenagerieLive.Index do
           in a bell curve, like you'd expect; the quantum one ends up mostly at
           the two far edges, which nobody expects the first time. One slider
           drains the quantum back out.
-        </.card>
+        </.index_card>
 
-        <.card
+        <.index_card
           href={~p"/menagerie/quantum-stats"}
           category="Quantum"
           title="Three ways to count"
@@ -85,9 +76,9 @@ defmodule FugueWeb.MenagerieLive.Index do
           it's hot you honestly can't tell which. Cool things down and the three
           curves come apart into shapes that look like they belong to different
           problems.
-        </.card>
+        </.index_card>
 
-        <.card
+        <.index_card
           href={~p"/menagerie/sandpile"}
           category="Self-organized criticality"
           title="Abelian sandpile"
@@ -97,64 +88,11 @@ defmodule FugueWeb.MenagerieLive.Index do
           neighbors, which can tip over theirs, and so on. Nobody tells the pile
           how big its avalanches should be, and the histogram straightens into a
           power law anyway.
-        </.card>
+        </.index_card>
       </div>
 
       <.source_link repos={["petri", {"fugue", "lib/fugue_web/live/menagerie_live"}]} />
     </div>
     """
   end
-
-  attr :href, :string, required: true
-  attr :category, :string, required: true
-  attr :title, :string, required: true
-  attr :accent, :string, required: true, values: ~w(primary accent secondary warning)
-  slot :inner_block, required: true
-
-  defp card(assigns) do
-    ~H"""
-    <.link
-      navigate={@href}
-      class={[
-        "group block rounded-lg border-t-2 bg-base-200 p-6 transition hover:bg-base-300",
-        accent_border(@accent)
-      ]}
-    >
-      <p class={["font-mono text-[10px] uppercase tracking-[0.2em] mb-3", accent_label(@accent)]}>
-        {@category}
-      </p>
-      <h2 class="text-lg font-semibold text-base-content mb-2">{@title}</h2>
-      <p class="text-sm text-base-content/50 leading-relaxed">
-        {render_slot(@inner_block)}
-      </p>
-      <p class={["mt-4 font-mono text-[11px] transition", accent_cta(@accent)]}>
-        explore &rarr;
-      </p>
-    </.link>
-    """
-  end
-
-  defp accent_border("primary"), do: "border-primary"
-  defp accent_border("accent"), do: "border-accent"
-  defp accent_border("secondary"), do: "border-secondary"
-  defp accent_border("warning"), do: "border-warning"
-
-  defp accent_label("primary"), do: "text-primary/70"
-  defp accent_label("accent"), do: "text-accent/70"
-  defp accent_label("secondary"), do: "text-secondary/70"
-  defp accent_label("warning"), do: "text-warning/70"
-
-  # Full strength on light paper, where /50 falls near 2:1; dark keeps the
-  # dim label that brightens on hover.
-  defp accent_cta("primary"),
-    do: "text-primary dark:text-primary/50 dark:group-hover:text-primary/90"
-
-  defp accent_cta("accent"),
-    do: "text-accent dark:text-accent/50 dark:group-hover:text-accent/90"
-
-  defp accent_cta("secondary"),
-    do: "text-secondary dark:text-secondary/50 dark:group-hover:text-secondary/90"
-
-  defp accent_cta("warning"),
-    do: "text-warning dark:text-warning/50 dark:group-hover:text-warning/90"
 end

@@ -1,1 +1,21 @@
 /* Shared chrome and page-level palettes. See README.md in this directory. */
+
+/* Faint captions on the paper. Quiet text is ink at reduced opacity
+   (text-base-content/30 to /45), which reads fine on the dark theme but
+   measures 2.0:1 to 3.0:1 on the light paper. Ink at 60% measures 4.7:1, so
+   on light every faint step lands there; the steps stop being distinct, but
+   the text stays readable. Sites already split with dark: carry their own
+   light value and are not affected.
+
+   :where() keeps the selector at one class of specificity, the same as the
+   utility it overrides. That way it wins over the base utility by coming
+   later, and still loses to hover: and to any explicit
+   [[data-theme=light]_&]: override on the same element. */
+@layer utilities {
+  :where([data-theme=light]) .text-base-content\/30,
+  :where([data-theme=light]) .text-base-content\/35,
+  :where([data-theme=light]) .text-base-content\/40,
+  :where([data-theme=light]) .text-base-content\/45 {
+    color: color-mix(in oklab, var(--color-base-content) 60%, transparent);
+  }
+}

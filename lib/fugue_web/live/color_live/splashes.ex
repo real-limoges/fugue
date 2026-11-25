@@ -42,7 +42,7 @@ defmodule FugueWeb.ColorLive.Splashes do
   # Thin-film interference over a domain-warped fbm thickness field (no
   # cells), in a flamboyant-cuttlefish palette; the cursor nudges the
   # palette's phase. Fragment shader lives in assets/js/hooks/iridescence.js. The canvas is the hook
-  # element directly (matches CloudsCanvas convention); phx-update="ignore"
+  # element directly, as with the menagerie canvases; phx-update="ignore"
   # keeps LiveView from clobbering it on re-render.
 
   def iridescence_splash(assigns) do

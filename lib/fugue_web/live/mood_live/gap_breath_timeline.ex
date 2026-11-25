@@ -198,8 +198,7 @@ defmodule FugueWeb.MoodLive.GapBreathTimeline do
 
       plural = if length == 1, do: "day", else: "days"
 
-      tooltip =
-        ~s|<strong>#{start_str}</strong> · #{length} #{plural}<div style="color:#{color}">#{cluster_name}</div>|
+      tooltip = Tooltip.cluster_line(start_str, "#{length} #{plural}", color, cluster_name)
 
       %{
         start_str: start_str,

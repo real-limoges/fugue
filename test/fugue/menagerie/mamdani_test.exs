@@ -1,6 +1,7 @@
 defmodule Fugue.Menagerie.MamdaniTest do
   use ExUnit.Case, async: true
 
+  alias Fugue.Fuzzy.Inference.Wire
   alias Fugue.Menagerie.Mamdani
 
   describe "defaults" do
@@ -93,6 +94,19 @@ defmodule Fugue.Menagerie.MamdaniTest do
         assert var == "fan_speed"
         assert term in ~w(off low medium high)
       end)
+    end
+  end
+
+  describe "the slider's ends" do
+    # cold and hot are shoulder terms, fully true at 0 and 40. When a
+    # shoulder scored 0 at its own peak, no rule fired at either end and the
+    # centroid fell back to the middle of the output range.
+    test "0 C runs the fan slow and 40 C runs it fast" do
+      %{"crisp" => %{"fan_speed" => cold}} = Wire.run_request(Mamdani.request(0.0, 50.0))
+      %{"crisp" => %{"fan_speed" => hot}} = Wire.run_request(Mamdani.request(40.0, 50.0))
+
+      assert cold < 25.0
+      assert hot > 75.0
     end
   end
 end

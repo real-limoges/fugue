@@ -10,6 +10,8 @@ defmodule Fugue.Color.Spectrum do
   For accurate per-wavelength cone activations use `Fugue.Color.Cones`.
   """
 
+  alias Fugue.Color.Srgb
+
   @gamma 0.8
 
   @doc """
@@ -28,8 +30,7 @@ defmodule Fugue.Color.Spectrum do
   """
   @spec hex(number()) :: String.t()
   def hex(lambda) when is_number(lambda) do
-    {r, g, b} = rgb(lambda)
-    "#" <> byte_hex(r) <> byte_hex(g) <> byte_hex(b)
+    lambda |> rgb() |> Srgb.hex()
   end
 
   defp rgb(lambda) do
@@ -53,12 +54,7 @@ defmodule Fugue.Color.Spectrum do
   defp falloff(l) when l < 781, do: 0.3 + 0.7 * (780 - l) / 80.0
   defp falloff(_), do: 0.0
 
+  # Every base channel and falloff lies in [0, 1], so this stays in 0..255.
   defp gamma(x) when x <= 0, do: 0
   defp gamma(x), do: round(:math.pow(x, @gamma) * 255)
-
-  defp byte_hex(b) do
-    b = max(0, min(255, b))
-    s = Integer.to_string(b, 16)
-    if byte_size(s) == 1, do: "0" <> s, else: s
-  end
 end

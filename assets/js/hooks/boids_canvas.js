@@ -1,7 +1,7 @@
 // @ts-check
 import * as boids from "petri/boids.js"
 import { resolveThemeColors, buildColorTable } from "../lib/theme_colors.js"
-import { startRafLoop, createThemePoll, mapPixels } from "../lib/canvas_loop.js"
+import { startRafLoop, mapPixels } from "../lib/canvas_loop.js"
 
 /** @typedef {keyof typeof boids.DEFAULTS} BoidsParam */
 /** @typedef {Partial<Record<BoidsParam, number>>} BoidsParams */
@@ -71,12 +71,10 @@ export const BoidsCanvas = {
       let colorTable = buildColorTable(initialColors.base, initialColors.primary)
       const image = ctx.createImageData(width, height)
 
-      const repollThemeColors = () => {
+      this._onThemeChanged = () => {
         const fresh = resolveThemeColors()
         colorTable = buildColorTable(fresh.base, fresh.primary)
       }
-      const repollTheme = createThemePoll({ frames: 120, onChange: repollThemeColors })
-      this._onThemeChanged = repollThemeColors
       window.addEventListener("fugue:theme-changed", this._onThemeChanged)
 
       // No `still`: the visitor came here to drive this sim with the sliders,
@@ -84,7 +82,6 @@ export const BoidsCanvas = {
       this._loop = startRafLoop(
         () => {
           boids.step(1)
-          repollTheme()
           mapPixels(boids.getPixels(), colorTable, image.data)
           ctx.putImageData(image, 0, 0)
         },

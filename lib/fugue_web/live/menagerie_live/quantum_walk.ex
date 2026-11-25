@@ -6,6 +6,8 @@ defmodule FugueWeb.MenagerieLive.QuantumWalk do
 
   use FugueWeb, :live_view
 
+  import FugueWeb.IndexComponents, only: [menagerie_header: 1]
+
   alias FugueWeb.MenagerieLive.AnimatedCard
   alias FugueWeb.MenagerieLive.AnimatedCard.Slider
 
@@ -53,14 +55,7 @@ defmodule FugueWeb.MenagerieLive.QuantumWalk do
   def render(assigns) do
     ~H"""
     <div class="quantum-walk-menagerie p-4 max-w-6xl mx-auto">
-      <nav class="mb-6 text-xs">
-        <.link navigate={~p"/menagerie"} class="text-base-content/45 hover:text-base-content/75">
-          ← Menagerie
-        </.link>
-      </nav>
-
-      <div class="mb-4">
-        <h1 class="text-2xl font-bold text-base-content">Classical vs quantum walk</h1>
+      <.menagerie_header title="Classical vs quantum walk">
         <p class="text-sm text-base-content/60 mt-1 max-w-3xl leading-relaxed">
           Both walkers start in the middle and take {@params["steps"]} steps. The
           gray one does an ordinary random walk (flip a coin, step, flip, step)
@@ -75,7 +70,7 @@ defmodule FugueWeb.MenagerieLive.QuantumWalk do
           the same bell curve as the gray one (which is, very roughly, why big
           warm things like you and me act classical).
         </p>
-      </div>
+      </.menagerie_header>
 
       <div class="bg-base-200 rounded-lg overflow-hidden mb-4">
         <canvas

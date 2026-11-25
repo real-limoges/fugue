@@ -7,15 +7,14 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
 
   use FugueWeb, :live_view
 
+  import FugueWeb.IndexComponents, only: [menagerie_header: 1]
+
   alias Fugue.Menagerie.{Fuzzy, MelbourneWeather}
   alias FugueWeb.MenagerieLive.TemperatureBands
   import FugueWeb.MenagerieLive.Parse
 
   @default_center_offset 0.0
   @default_spread 1.0
-
-  @bands_lo 0.0
-  @bands_hi 48.0
 
   @impl true
   def mount(_params, _session, socket) do
@@ -31,10 +30,7 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
         mfs: mfs,
         row_count: MelbourneWeather.count(),
         first_date: first_date,
-        last_date: last_date,
-        bands_series: [],
-        bands_shapes: [],
-        bands_bounds: [@bands_lo, @bands_hi]
+        last_date: last_date
       )
       |> assign_bands()
 
@@ -66,6 +62,7 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
 
   defp assign_bands(socket) do
     mfs = socket.assigns.mfs
+    {lo, hi} = TemperatureBands.bounds()
 
     shapes =
       Enum.map(mfs, fn mf ->
@@ -73,7 +70,7 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
           name: mf.name,
           color: mf.color,
           peak: mf.b,
-          samples: Fuzzy.sample_shape(mf, @bands_lo, @bands_hi)
+          samples: Fuzzy.sample_shape(mf, lo, hi)
         }
       end)
 
@@ -87,14 +84,7 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
   def render(assigns) do
     ~H"""
     <div class="fuzzy-menagerie p-4 max-w-6xl mx-auto">
-      <nav class="mb-6 text-xs">
-        <.link navigate={~p"/menagerie"} class="text-base-content/45 hover:text-base-content/75">
-          ← Menagerie
-        </.link>
-      </nav>
-
-      <div class="mb-4">
-        <h1 class="text-2xl font-bold text-base-content">Fuzzy temperature bands</h1>
+      <.menagerie_header title="Fuzzy temperature bands">
         <p class="text-sm text-base-content/60 mt-1 max-w-3xl leading-relaxed">
           Is 22°C <em>mild</em>? Kind of. It's also a little warm and a little
           cool, and making it pick one box throws that away. Fuzzy sets don't
@@ -106,7 +96,7 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
           Data: {@row_count} days of daily max temperatures from Melbourne Airport
           (GHCN-D {@first_date} → {@last_date}).
         </p>
-      </div>
+      </.menagerie_header>
 
       <form id="fuzzy-params" phx-change="update_fuzzy_params" class="mb-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -174,7 +164,6 @@ defmodule FugueWeb.MenagerieLive.Fuzzy do
           series={@bands_series}
           mfs={@mfs}
           shapes={@bands_shapes}
-          bounds={@bands_bounds}
         />
         <p class="mt-3 max-w-3xl text-xs leading-snug text-base-content/45">
           Top strip: the five triangular membership functions on the temperature
