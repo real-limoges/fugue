@@ -107,7 +107,7 @@ defmodule FugueWeb.ColorLive do
           and those three numbers are everything your brain is ever
           going to be told about what's there. Thousands of
           distinguishable wavelengths in the world, smashed down
-          into a triple. That triple is your color.
+          into a triple.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -165,9 +165,8 @@ defmodule FugueWeb.ColorLive do
           coming off the glass, it's red and green pixels sitting
           next to each other in a ratio your eye averages into
           yellow. No yellow is involved anywhere and your eye
-          doesn't notice. Your phone is doing it, your TV is doing
-          it, every monitor you've ever used has been doing it. The
-          entire industry is built on a loophole in your retina.
+          doesn't notice. Your phone, your TV and every monitor
+          you've ever used work the same way.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -175,8 +174,7 @@ defmodule FugueWeb.ColorLive do
           different one at home. The lights in the store and the
           lights in your kitchen are different spectra, hitting the
           same shirt, getting averaged through your cones into
-          different triples. The shirt never changed; the light did.
-          (Buy clothes outdoors.)
+          different triples. (Buy clothes outdoors.)
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -196,7 +194,7 @@ defmodule FugueWeb.ColorLive do
           knows how to mix. The rings around it are fancier screens.
           The whole horseshoe is the set of colors a real eye can
           have. Every display ever built reaches into that horseshoe
-          and grabs a triangle. None of them get the rest.
+          and grabs a triangle.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -211,8 +209,8 @@ defmodule FugueWeb.ColorLive do
           sRGB is what most monitors are doing. DCI-P3 is what
           newer phones and recent Apple laptops do. Rec.2020 is
           what high-end TV manufacturers gesture at and almost
-          nobody owns. Bigger triangle, bigger triangle, bigger
-          triangle. Still a triangle. Still missing the rim.
+          nobody owns. Each triangle is bigger than the last, and
+          all three still miss the rim.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -229,8 +227,7 @@ defmodule FugueWeb.ColorLive do
         <p class="text-sm text-base-content/65 leading-relaxed">
           And the whole diagram is trichromat. The map of what your
           screen can't reach was itself drawn to be drawable by
-          your screen. The horseshoe you're looking at is already a
-          compromise.
+          your screen.
         </p>
       </.section>
 
@@ -269,13 +266,10 @@ defmodule FugueWeb.ColorLive do
           none of them carve it the way English does. Nafaanra runs
           the whole grid on three words. Tarahumara has one word,
           siyó, stretched across green and blue together, a single
-          color where English insists on two. Whether the seam
-          between green and blue is one thing or two isn't in the
-          chips; it's in the speaker. English speakers tell two
-          chips apart faster when a name-boundary falls between
-          them, so the boundary did some actual work inside the
-          head. The chip on the chart didn't change; <em>you</em>
-          did, when you learned the word for it.
+          color where English insists on two. English speakers tell
+          two chips apart faster when a name-boundary falls between
+          them, so the boundary does some actual work inside the
+          head, and it got there when you learned the word.
         </p>
 
         <Splashes.langs_splash />
@@ -287,9 +281,8 @@ defmodule FugueWeb.ColorLive do
           sky. Hungarian goes the other direction and
           splits red instead. None of these are translation
           problems. They're different cuts of the same continuous
-          ribbon, and every cut goes all the way down. It changes
-          how fast the speaker can tell two chips apart, which is
-          wild if you sit with it.
+          ribbon, and the cut changes how fast the speaker can tell
+          two chips apart, which is wild if you sit with it.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -316,7 +309,7 @@ defmodule FugueWeb.ColorLive do
           water at dusk. The comparison does the work the abstract
           word would do, and it carries more with it; "burned wood"
           tells you more than "brown" does, assuming you've seen
-          burned wood. Whose system is the weird one.
+          burned wood.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -365,11 +358,8 @@ defmodule FugueWeb.ColorLive do
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">
-          There's a smaller problem and a bigger one. The smaller
-          one is that the simulation can't show you what I see. The
-          bigger one is that nothing on this page can show you what <em>you</em>
-          see. Your seeing is happening somewhere this page doesn't
-          reach.
+          The simulation can't show you what I see. The bigger
+          problem is that nothing on this page can show you what <em>you</em> see.
         </p>
 
         <p class="text-sm text-base-content/65 leading-relaxed">

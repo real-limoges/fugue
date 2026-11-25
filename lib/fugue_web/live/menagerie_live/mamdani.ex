@@ -93,9 +93,8 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
           the bottom chart).
         </p>
         <p class="text-xs text-base-content/45 mt-3 max-w-3xl">
-          The math runs server-side in <code class="text-base-content/60">Fugue.Fuzzy</code>,
-          which used to be Hazy, a Haskell library this page called over HTTP;
-          it's plain Elixir now. Drag the sliders and watch which rules light up.
+          The math runs server-side, in plain Elixir, in <code class="text-base-content/60">Fugue.Fuzzy</code>.
+          Drag the sliders and watch which rules light up.
         </p>
       </.menagerie_header>
 

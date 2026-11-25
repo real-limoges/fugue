@@ -130,7 +130,7 @@ defmodule FugueWeb.LabLive.GamDatasets do
           glyph: "◈",
           accent: :primary,
           text:
-            "Beta on a logit link respects the bounds. The orange band squeezes asymmetrically near 0 and 1, which is what uncertainty looks like when it's pinned against a wall."
+            "Beta on a logit link respects the bounds. The orange band squeezes asymmetrically near 0 and 1."
         }
       ]
     }
