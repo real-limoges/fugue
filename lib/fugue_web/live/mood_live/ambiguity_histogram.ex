@@ -6,6 +6,8 @@ defmodule FugueWeb.MoodLive.AmbiguityHistogram do
 
   use Phoenix.Component
 
+  import FugueWeb.MoodLive.SvgMath, only: [fmt: 1]
+
   @width 800
   @height 140
   @m_top 14
@@ -202,7 +204,4 @@ defmodule FugueWeb.MoodLive.AmbiguityHistogram do
 
     round(nice * pow10)
   end
-
-  defp fmt(n) when is_integer(n), do: Integer.to_string(n)
-  defp fmt(n) when is_float(n), do: :erlang.float_to_binary(n, [:compact, decimals: 2])
 end

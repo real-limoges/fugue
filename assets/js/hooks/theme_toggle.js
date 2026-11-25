@@ -4,8 +4,8 @@
 // survives reloads and overrides the system preference from then on;
 // until the user picks one, a matchMedia listener keeps following the OS
 // setting. Dispatches "fugue:theme-changed" so themed canvas hooks
-// (theme_colors.js consumers) can repaint immediately instead of waiting
-// for their next poll. Also points the theme-color meta (the mobile
+// (theme_colors.js consumers) repaint; it is their only signal, so every
+// theme change must go through applyTheme. Also points the theme-color meta (the mobile
 // browser bar) at the new theme's color, which the root layout keeps in
 // that meta's data attributes.
 

@@ -7,21 +7,21 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
 
   use FugueWeb, :live_view
 
+  import FugueWeb.IndexComponents, only: [menagerie_header: 1]
+
   alias Fugue.Fuzzy.Inference.Wire
   alias Fugue.Menagerie.Mamdani, as: MamdaniLogic
   import FugueWeb.MenagerieLive.Parse
 
   @impl true
   def mount(_params, _session, socket) do
-    socket =
-      assign(socket,
-        mamdani_temperature: MamdaniLogic.default_temperature(),
-        mamdani_humidity: MamdaniLogic.default_humidity(),
-        mamdani_response: nil,
-        mamdani_crisp: nil
-      )
+    t = MamdaniLogic.default_temperature()
+    h = MamdaniLogic.default_humidity()
+    crisp = Wire.run_request(MamdaniLogic.request(t, h))["crisp"]["fan_speed"]
 
-    {:ok, socket}
+    # The chart's data waits for the hook's ready message (it needs a
+    # mounted hook to receive it); the crisp readout doesn't.
+    {:ok, assign(socket, mamdani_temperature: t, mamdani_humidity: h, mamdani_crisp: crisp)}
   end
 
   @impl true
@@ -67,7 +67,7 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
     crisp = response["crisp"]
 
     socket
-    |> assign(mamdani_response: response, mamdani_crisp: crisp["fan_speed"])
+    |> assign(:mamdani_crisp, crisp["fan_speed"])
     |> push_event("update-mamdani", %{
       mfs: MamdaniLogic.mfs(),
       rules: rules,
@@ -82,14 +82,7 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
   def render(assigns) do
     ~H"""
     <div class="mamdani-menagerie p-4 max-w-6xl mx-auto">
-      <nav class="mb-6 text-xs">
-        <.link navigate={~p"/menagerie"} class="text-base-content/45 hover:text-base-content/75">
-          ← Menagerie
-        </.link>
-      </nav>
-
-      <div class="mb-4">
-        <h1 class="text-2xl font-bold text-base-content">Mamdani fan controller</h1>
+      <.menagerie_header title="Mamdani fan controller">
         <p class="text-sm text-base-content/60 mt-1 max-w-3xl leading-relaxed">
           An old-school rule of thumb: hot and humid, run the fan hard; cold,
           leave it off. Fuzzy control takes it more or less as-is. The temperature and humidity get read as how
@@ -104,7 +97,7 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
           which used to be Hazy, a Haskell library this page called over HTTP;
           it's plain Elixir now. Drag the sliders and watch which rules light up.
         </p>
-      </div>
+      </.menagerie_header>
 
       <form id="mamdani-inputs" phx-change="update_mamdani_inputs" class="mb-4">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -154,21 +147,19 @@ defmodule FugueWeb.MenagerieLive.Mamdani do
         </div>
       </form>
 
-      <%= if @mamdani_crisp do %>
-        <div class="mb-4 flex items-baseline gap-4 rounded-lg border border-base-content/5 bg-base-200 px-6 py-3">
-          <span class="text-[10px] uppercase tracking-[0.2em] text-base-content/45">
-            Defuzzified output
-          </span>
-          <span class="text-xs font-medium text-base-content/75">fan speed</span>
-          <span
-            class="font-mono text-2xl font-semibold tabular-nums"
-            style="color: var(--menagerie-centroid-readout)"
-          >
-            {format_number(@mamdani_crisp, 1)}
-          </span>
-          <span class="text-xs text-base-content/45">% of max</span>
-        </div>
-      <% end %>
+      <div class="mb-4 flex items-baseline gap-4 rounded-lg border border-base-content/5 bg-base-200 px-6 py-3">
+        <span class="text-[10px] uppercase tracking-[0.2em] text-base-content/45">
+          Defuzzified output
+        </span>
+        <span class="text-xs font-medium text-base-content/75">fan speed</span>
+        <span
+          class="font-mono text-2xl font-semibold tabular-nums"
+          style="color: var(--menagerie-centroid-readout)"
+        >
+          {format_number(@mamdani_crisp, 1)}
+        </span>
+        <span class="text-xs text-base-content/45">% of max</span>
+      </div>
 
       <div class="rounded-lg bg-base-200 p-4">
         <div

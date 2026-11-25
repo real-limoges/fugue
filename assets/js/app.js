@@ -11,9 +11,42 @@ let csrfToken = requireElement(document, "meta[name='csrf-token']", HTMLMetaElem
   "content"
 )
 
+// /mood remembers whether the reader skipped its intro. The server renders
+// from this connect param; the "mood:intro" event that the Skip and Show
+// buttons dispatch (FugueWeb.MoodLive.Sections) writes it back.
+const MOOD_SKIP_INTRO = "mood-skip-intro"
+
+/** @returns {string | null} */
+function readMoodSkipIntro() {
+  try {
+    return localStorage.getItem(MOOD_SKIP_INTRO)
+  } catch (_e) {
+    return null
+  }
+}
+
+window.addEventListener("mood:intro", (e) => {
+  const skipped = e instanceof CustomEvent && e.detail?.skipped === true
+  try {
+    if (skipped) localStorage.setItem(MOOD_SKIP_INTRO, "1")
+    else localStorage.removeItem(MOOD_SKIP_INTRO)
+  } catch (_e) {}
+  // JS.hide/JS.show apply `display` in a requestAnimationFrame, after this
+  // event has fired. Scroll two frames later so it measures the page with
+  // the intro already hidden or shown.
+  const target = e.target
+  if (target instanceof Element) {
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => target.scrollIntoView({ behavior: "smooth", block: "start" }))
+    )
+  }
+})
+
 let liveSocket = new LiveSocket("/live", Socket, {
   longPollFallbackMs: 2500,
-  params: { _csrf_token: csrfToken },
+  // A function, so every join (including a rejoin after a dropped socket)
+  // reads the flag again rather than the value from page load.
+  params: () => ({ _csrf_token: csrfToken, mood_skip_intro: readMoodSkipIntro() }),
   hooks: Hooks,
 })
 

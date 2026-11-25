@@ -54,32 +54,18 @@ defmodule Fugue.Mood.Fuzzify do
     ]
   end
 
-  @doc "Bridge wire-format var defs (as produced by this module) into `Fugue.Fuzzy.Inference.Types.linguistic_var/0`s."
-  @spec build_vars([var_def()]) :: %{String.t() => Types.linguistic_var()}
-  def build_vars(var_defs) do
+  @doc "The mood FIS: `mood_rules/0` over the given membership-function defs."
+  @spec build_mood_fis(defs()) :: Types.fis()
+  def build_mood_fis(defs) do
+    %{inputs: build_vars(defs.inputs), outputs: build_vars(defs.outputs), rules: mood_rules()}
+  end
+
+  defp build_vars(var_defs) do
     Map.new(var_defs, fn v ->
       {v.name,
-       %{
-         name: v.name,
-         bounds: v.bounds,
-         terms:
-           Map.new(v.terms, fn t ->
-             {a, b, c} = t.params
-             {t.name, %{name: t.name, mf: Membership.triangular(a, b, c), universe: v.bounds}}
-           end)
-       }}
+       Membership.triangular_var(v.name, v.bounds, Enum.map(v.terms, &{&1.name, &1.params}))}
     end)
   end
-
-  @doc "Build a generic FIS from an arbitrary rule set plus membership-function defs."
-  @spec build_fis([Types.fuzzy_rule()], defs()) :: Types.fis()
-  def build_fis(rules, defs) do
-    %{inputs: build_vars(defs.inputs), outputs: build_vars(defs.outputs), rules: rules}
-  end
-
-  @doc "Mood-specific wrapper: always uses `mood_rules/0`."
-  @spec build_mood_fis(defs()) :: Types.fis()
-  def build_mood_fis(defs), do: build_fis(mood_rules(), defs)
 
   defp var_def(name, bounds, low, medium, high) do
     %{

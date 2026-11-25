@@ -1,31 +1,21 @@
 defmodule FugueWeb.CloudsLive do
   @moduledoc """
-  `/clouds`: a still cumulus scene over a pixel-art barn. The LiveView is
-  a thin shell that mounts the canvas; all rendering runs client-side via
-  the `CloudsCanvas` hook in `assets/js/hooks/clouds_canvas.js`.
+  `/clouds`: a still cumulus scene over a pixel-art barn, served as a
+  static image (`priv/static/images/clouds.png`).
 
-  The hook loads petri's `clouds.wasm` (2D Boussinesq moist convection)
-  for its `qc` grid, paints Gaussian cloud lobes directly into that grid,
-  and renders a single frame. It does not step the solver: a saturation
-  step would evaporate freshly painted `qc`, because the matching `qv` was
-  never raised to match. Drift and animation are unstarted work rather
-  than something that regressed.
-
-  The canvas is therefore inert, and deliberately so. A click handler used
-  to fire `applyBubble` into the `qc` field, but with nothing stepping the
-  solver the bubble was never integrated and the click did nothing; it and
-  the `cursor: pointer` that advertised it were removed 2026-08-09.
-  Interaction comes back only after the render loop does.
+  The picture came from petri's `clouds.wasm` (2D Boussinesq moist
+  convection): a hook painted Gaussian cloud lobes into the solver's `qc`
+  grid and rendered one frame. It never stepped the solver, because a
+  saturation step would evaporate the painted `qc` (the matching `qv` was
+  never raised). With no randomness, no theme and a fixed 800x400 canvas,
+  every visitor got the same frame, so on 2026-11-25 the frame was captured
+  at native size and the hook deleted. Drift and animation are unstarted
+  work; if they start, the hook comes back from git history.
 
   Not Worley noise. The moduledoc and the on-page caption both said so
   until 2026-08-09, three implementations after it stopped being true.
   """
   use FugueWeb, :live_view
-
-  @impl true
-  def mount(_params, _session, socket) do
-    {:ok, socket}
-  end
 
   @impl true
   def render(assigns) do
@@ -39,17 +29,18 @@ defmodule FugueWeb.CloudsLive do
           ←
         </.link>
 
-        <canvas
-          id="clouds-canvas"
-          phx-hook="CloudsCanvas"
-          phx-update="ignore"
-          class="block w-full"
-          style="aspect-ratio: 2 / 1; image-rendering: pixelated; image-rendering: crisp-edges;"
-        ></canvas>
+        <img
+          src={~p"/images/clouds.png"}
+          alt="Three pixel-art cumulus clouds over a red barn and green fields"
+          width="800"
+          height="400"
+          class="block w-full h-auto"
+          style="image-rendering: pixelated; image-rendering: crisp-edges;"
+        />
       </div>
 
       <.figure_source
-        note="Cloud water painted straight into the grid of a moist-convection solver, then lit as if it were volume: sun-direction surface normals, a short shadow march, two octaves of noise for the cauliflower. The solver is initialized and then never stepped, so this is a still life rather than a simulation."
+        note="Cloud water painted straight into the grid of a moist-convection solver, then lit as if it were volume: sun-direction surface normals, a short shadow march, two octaves of noise for the cauliflower. The solver is initialized and then never stepped, so this is a still life rather than a simulation, and the page shows one captured frame of it."
         repo="petri"
       />
 

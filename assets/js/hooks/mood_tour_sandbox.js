@@ -1,117 +1,17 @@
 // @ts-check
 // Interactive sandbox for teaching fuzzy clustering.
-// Self-contained: fake centers, a draggable point, live-computed memberships.
-// No server round-trips; everything is client-side.
+// The markup and geometry are server-rendered (Sections.tour_sandbox in
+// FugueWeb.MoodLive.Sections); this hook only moves the point and redraws
+// the centers and the membership bar. Everything runs in the browser, since
+// a drag can't wait on a round trip. Styles are in assets/css/mood_tour.css.
 
 import { requireElement } from "../lib/dom.js"
 
-const VB_W = 500
-const VB_H = 150
-const PAD_X = 40
-const AXIS_Y = 45
-const BAR_Y = 82
-const BAR_H = 22
 const BAR_GAP = 1.5
-const INNER_W = VB_W - 2 * PAD_X
 
 // Okabe-Ito on dark, darkened to clear 3:1 on the paper in light; up to 5
 // clusters. Values are per theme in assets/css/palettes/mood.css.
 const COLORS = [0, 1, 2, 3, 4].map((i) => `var(--mood-sandbox-${i})`)
-
-const STYLES = `
-  #mood-tour-sandbox .sandbox-svg {
-    width: 100%;
-    max-width: 640px;
-    display: block;
-    margin: 0 auto;
-    touch-action: none;
-    user-select: none;
-  }
-  #mood-tour-sandbox .bar rect {
-    transition: width 110ms ease-out, x 110ms ease-out;
-  }
-  #mood-tour-sandbox.dragging-point .bar rect {
-    transition: none;
-  }
-  #mood-tour-sandbox .sandbox-sliders {
-    max-width: 640px;
-    margin: 1rem auto 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.7rem;
-  }
-  #mood-tour-sandbox .sandbox-sliders label {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    color: var(--mood-tour-faint);
-  }
-  #mood-tour-sandbox .sandbox-sliders .label-text {
-    min-width: 5.25rem;
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-  }
-  #mood-tour-sandbox .sandbox-sliders .readout {
-    min-width: 2.25rem;
-    text-align: right;
-    color: var(--mood-tour-muted);
-    font-size: 0.7rem;
-    font-variant-numeric: tabular-nums;
-  }
-  #mood-tour-sandbox input[type=range] {
-    -webkit-appearance: none;
-    appearance: none;
-    flex: 1;
-    height: 2px;
-    background: var(--mood-tour-track);
-    border-radius: 1px;
-    outline: none;
-    cursor: pointer;
-  }
-  #mood-tour-sandbox input[type=range]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--mood-tour-text);
-    border: none;
-    cursor: grab;
-    transition: transform 120ms ease, background 120ms ease;
-  }
-  #mood-tour-sandbox input[type=range]::-webkit-slider-thumb:hover {
-    transform: scale(1.15);
-    background: var(--mood-tour-bright);
-  }
-  #mood-tour-sandbox input[type=range]::-webkit-slider-thumb:active {
-    cursor: grabbing;
-    transform: scale(1.25);
-  }
-  #mood-tour-sandbox input[type=range]::-moz-range-track {
-    height: 2px;
-    background: var(--mood-tour-track);
-    border: none;
-    border-radius: 1px;
-  }
-  #mood-tour-sandbox input[type=range]::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--mood-tour-text);
-    border: none;
-    cursor: grab;
-    transition: transform 120ms ease, background 120ms ease;
-  }
-  #mood-tour-sandbox input[type=range]::-moz-range-thumb:hover {
-    transform: scale(1.15);
-    background: var(--mood-tour-bright);
-  }
-  #mood-tour-sandbox input[type=range]:focus-visible {
-    outline: 1px solid var(--mood-tour-faint);
-    outline-offset: 4px;
-    border-radius: 2px;
-  }
-`
 
 /**
  * `k` evenly spaced cluster centers on [0, 1], inset from the ends.
@@ -143,19 +43,29 @@ function memberships(x, centers, m) {
 }
 
 /**
+ * @typedef {object} Geometry
+ * @property {number} padX left edge of the axis, in viewBox units
+ * @property {number} innerW axis length
+ * @property {number} axisY
+ * @property {number} barH
+ */
+
+/**
  * @typedef {object} State
  * @property {{pointX: number, m: number, k: number}} state point on [0, 1], fuzziness, cluster count
  * @property {boolean} dragging
+ * @property {Geometry} geom
  * @property {SVGSVGElement} svg
  * @property {SVGCircleElement} pointEl
  * @property {SVGGElement} centersG
  * @property {SVGGElement} barG
  * @property {SVGRectElement} hitbox
+ * @property {HTMLInputElement} mInput
+ * @property {HTMLInputElement} kInput
  */
 
 /**
  * @typedef {object} Methods
- * @property {() => void} buildDom
  * @property {() => void} wireInteractions
  * @property {() => void} update
  */
@@ -163,46 +73,34 @@ function memberships(x, centers, m) {
 /** @type {import("../types").LiveHook<State, Methods>} */
 export const MoodTourSandbox = {
   mounted() {
-    this.state = { pointX: 0.42, m: 2.0, k: 3 }
-    this.dragging = false
-    this.buildDom()
-    this.wireInteractions()
-    this.update()
-  },
-
-  buildDom() {
-    this.el.innerHTML = `
-      <style>${STYLES}</style>
-      <svg class="sandbox-svg" viewBox="0 0 ${VB_W} ${VB_H}" preserveAspectRatio="xMidYMid meet">
-        <line x1="${PAD_X}" y1="${AXIS_Y}" x2="${VB_W - PAD_X}" y2="${AXIS_Y}" stroke="var(--mood-ink-4)" stroke-width="1"/>
-        <g class="centers"></g>
-        <g class="bar" transform="translate(${PAD_X},${BAR_Y})"></g>
-        <circle class="point" cx="${PAD_X}" cy="${AXIS_Y}" r="8" fill="var(--mood-tour-point)" stroke="var(--mood-tour-point-edge)" stroke-width="1"/>
-        <rect class="hitbox" x="${PAD_X - 24}" y="${AXIS_Y - 28}" width="${INNER_W + 48}" height="56"
-              fill="transparent" style="cursor:grab"/>
-      </svg>
-      <div class="sandbox-sliders">
-        <label>
-          <span class="label-text">Fuzziness</span>
-          <input data-control="m" type="range" min="1.05" max="4" step="0.05" value="2"/>
-          <span class="readout" data-readout="m">2.00</span>
-        </label>
-        <label>
-          <span class="label-text">Clusters</span>
-          <input data-control="k" type="range" min="2" max="5" step="1" value="3"/>
-          <span class="readout" data-readout="k">3</span>
-        </label>
-      </div>
-    `
-
+    const data = this.el.dataset
+    this.geom = {
+      padX: Number(data.padX),
+      innerW: Number(data.innerW),
+      axisY: Number(data.axisY),
+      barH: Number(data.barH),
+    }
     this.svg = requireElement(this.el, ".sandbox-svg", SVGSVGElement)
     this.pointEl = requireElement(this.el, ".point", SVGCircleElement)
     this.centersG = requireElement(this.el, ".centers", SVGGElement)
     this.barG = requireElement(this.el, ".bar", SVGGElement)
     this.hitbox = requireElement(this.el, ".hitbox", SVGRectElement)
+    this.mInput = requireElement(this.el, 'input[data-control="m"]', HTMLInputElement)
+    this.kInput = requireElement(this.el, 'input[data-control="k"]', HTMLInputElement)
+
+    this.state = {
+      pointX: 0.42,
+      m: parseFloat(this.mInput.value),
+      k: parseInt(this.kInput.value, 10),
+    }
+    this.dragging = false
+    this.wireInteractions()
+    this.update()
   },
 
   wireInteractions() {
+    const { padX, innerW } = this.geom
+
     // The pointer's position along the axis, 0 to 1. getScreenCTM is null
     // while the SVG is not rendered; the point then stays where it was.
     /** @param {PointerEvent} e */
@@ -210,14 +108,12 @@ export const MoodTourSandbox = {
       const ctm = this.svg.getScreenCTM()
       if (!ctm) return this.state.pointX
       const svgP = new DOMPoint(e.clientX, e.clientY).matrixTransform(ctm.inverse())
-      return Math.max(0, Math.min(1, (svgP.x - PAD_X) / INNER_W))
+      return Math.max(0, Math.min(1, (svgP.x - padX) / innerW))
     }
 
     this.hitbox.addEventListener("pointerdown", (e) => {
       this.dragging = true
-      this.el.classList.add("dragging-point")
       this.hitbox.setPointerCapture(e.pointerId)
-      this.hitbox.style.cursor = "grabbing"
       this.pointEl.setAttribute("r", "9")
       this.state.pointX = pointerToNorm(e)
       this.update()
@@ -229,45 +125,39 @@ export const MoodTourSandbox = {
     })
     const release = () => {
       this.dragging = false
-      this.el.classList.remove("dragging-point")
-      this.hitbox.style.cursor = "grab"
       this.pointEl.setAttribute("r", "8")
     }
     this.hitbox.addEventListener("pointerup", release)
     this.hitbox.addEventListener("pointercancel", release)
 
-    const mInput = requireElement(this.el, 'input[data-control="m"]', HTMLInputElement)
-    mInput.addEventListener("input", () => {
-      this.state.m = parseFloat(mInput.value)
+    this.mInput.addEventListener("input", () => {
+      this.state.m = parseFloat(this.mInput.value)
       this.update()
     })
-    const kInput = requireElement(this.el, 'input[data-control="k"]', HTMLInputElement)
-    kInput.addEventListener("input", () => {
-      this.state.k = parseInt(kInput.value, 10)
+    this.kInput.addEventListener("input", () => {
+      this.state.k = parseInt(this.kInput.value, 10)
       this.update()
     })
   },
 
   update() {
+    const { padX, innerW, axisY, barH } = this.geom
     const { pointX, m, k } = this.state
     const centers = centersFor(k)
     const ms = memberships(pointX, centers, m)
 
-    this.pointEl.setAttribute("cx", String(PAD_X + pointX * INNER_W))
+    this.pointEl.setAttribute("cx", String(padX + pointX * innerW))
 
     this.centersG.innerHTML = centers
-      .map((c, i) => {
-        const cx = PAD_X + c * INNER_W
-        return `<circle cx="${cx}" cy="${AXIS_Y}" r="4" fill="${COLORS[i]}"/>`
-      })
+      .map((c, i) => `<circle cx="${padX + c * innerW}" cy="${axisY}" r="4" fill="${COLORS[i]}"/>`)
       .join("")
 
     let xAcc = 0
     this.barG.innerHTML = centers
       .map((_, i) => {
-        const rawW = ms[i] * INNER_W
+        const rawW = ms[i] * innerW
         const w = Math.max(0, rawW - BAR_GAP)
-        const seg = `<rect x="${xAcc}" y="0" width="${w}" height="${BAR_H}" rx="2" ry="2" fill="${COLORS[i]}" opacity="0.92"/>`
+        const seg = `<rect x="${xAcc}" y="0" width="${w}" height="${barH}" rx="2" ry="2" fill="${COLORS[i]}" opacity="0.92"/>`
         xAcc += rawW
         return seg
       })

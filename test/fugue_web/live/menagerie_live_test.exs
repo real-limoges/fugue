@@ -104,12 +104,14 @@ defmodule FugueWeb.MenagerieLiveTest do
     end
 
     test "defaults Mamdani inputs to the fixture's starting values", %{conn: conn} do
-      {:ok, view, _html} = live(conn, "/menagerie/mamdani")
+      {:ok, view, html} = live(conn, "/menagerie/mamdani")
 
       assigns = :sys.get_state(view.pid).socket.assigns
       assert assigns.mamdani_temperature == 22.0
       assert assigns.mamdani_humidity == 50.0
-      assert assigns.mamdani_response == nil
+      # The readout is there on the first render, before the hook reports in.
+      assert is_float(assigns.mamdani_crisp)
+      assert html =~ "Defuzzified output"
     end
   end
 
@@ -164,10 +166,8 @@ defmodule FugueWeb.MenagerieLiveTest do
       {:ok, view, _html} = live(conn, "/menagerie/mamdani")
       render_hook(view, "menagerie:mamdani_ready", %{})
 
-      assigns = :sys.get_state(view.pid).socket.assigns
-      assert %{"crisp" => %{"fan_speed" => crisp}} = assigns.mamdani_response
-      assert assigns.mamdani_crisp == crisp
-      assert crisp >= 0.0 and crisp <= 100.0
+      crisp = :sys.get_state(view.pid).socket.assigns.mamdani_crisp
+      assert is_float(crisp) and crisp >= 0.0 and crisp <= 100.0
     end
 
     test "update_mamdani_inputs reassigns inputs and refreshes the response",
@@ -182,7 +182,7 @@ defmodule FugueWeb.MenagerieLiveTest do
       assigns = :sys.get_state(view.pid).socket.assigns
       assert assigns.mamdani_temperature == 30.0
       assert assigns.mamdani_humidity == 75.0
-      assert %{"crisp" => %{"fan_speed" => _}} = assigns.mamdani_response
+      assert is_float(assigns.mamdani_crisp)
     end
 
     test "no-op when the inputs haven't moved", %{conn: conn} do
@@ -292,10 +292,22 @@ defmodule FugueWeb.MenagerieLiveTest do
   end
 
   describe "mount /menagerie/quantum-stats" do
-    test "renders the quantum stats page with the canvas hook anchor", %{conn: conn} do
-      {:ok, _view, html} = live(conn, "/menagerie/quantum-stats")
-      assert html =~ ~s(phx-hook="QuantumStats")
+    test "renders the quantum stats page with a server-rendered chart", %{conn: conn} do
+      {:ok, view, html} = live(conn, "/menagerie/quantum-stats")
       assert html =~ "Three ways to count"
+      assert has_element?(view, "svg#menagerie-quantum-stats-chart")
+      refute has_element?(view, "[phx-hook]")
+    end
+
+    test "a slider change redraws the chart", %{conn: conn} do
+      {:ok, view, _html} = live(conn, "/menagerie/quantum-stats")
+      before = view |> element("svg#menagerie-quantum-stats-chart") |> render()
+
+      view
+      |> element("form[phx-change=update_params]")
+      |> render_change(%{"log_temperature" => "-1.0", "particles" => "18"})
+
+      refute view |> element("svg#menagerie-quantum-stats-chart") |> render() == before
     end
 
     test "update_params parses log_temperature + particles", %{conn: conn} do

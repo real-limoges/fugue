@@ -67,7 +67,7 @@ defmodule Fugue.Mood.Cluster do
     points = Enum.map(present, & &1.point)
     dates = Enum.map(present, & &1.date)
 
-    fcm_config = %{clusters: config.k, fuzziness: config.m, epsilon: 1.0e-5, max_iter: 100}
+    fcm_config = %{FCM.default_config(config.k) | fuzziness: config.m}
     result = FCM.run(fcm_config, points)
 
     %{
@@ -82,6 +82,8 @@ defmodule Fugue.Mood.Cluster do
   defp label_centers(fis, centers, membership) do
     dims = Entry.dimension_order()
     dim_names = Enum.map(dims, &Atom.to_string/1)
+    # A center nothing is closest to has no entry here, and a size of 0.
+    sizes = Enum.frequencies_by(membership, &argmax_index/1)
 
     centers
     |> Enum.with_index()
@@ -98,14 +100,14 @@ defmodule Fugue.Mood.Cluster do
       %{
         name: Enum.map_join(labels, " / ", & &1.name),
         centroid: centroid,
-        size: Enum.count(membership, &(argmax_index(&1) == i)),
+        size: Map.get(sizes, i, 0),
         labels: labels
       }
     end)
   end
 
   defp level(fis, out_var, degree) do
-    {lo, hi} = fis.outputs[out_var].bounds
+    {lo, hi} = Map.fetch!(fis.outputs, out_var).bounds
     third = (hi - lo) / 3
 
     cond do

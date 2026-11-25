@@ -59,15 +59,13 @@ defmodule Fugue.Fuzzy.Inference.Wire do
   end
 
   defp decode_var(%{"name" => name, "bounds" => [lo, hi], "terms" => terms}) do
-    %{
-      name: name,
-      bounds: {lo, hi},
-      terms: Map.new(terms, &decode_term(&1, {lo, hi}))
-    }
+    Membership.triangular_var(name, {lo, hi}, Enum.map(terms, &decode_term/1))
   end
 
-  defp decode_term(%{"name" => name, "params" => [a, b, c]}, universe) do
-    {name, %{name: name, mf: Membership.triangular(a, b, c), universe: universe}}
+  defp decode_term(%{"name" => name, "params" => [a, b, c]}), do: {name, {a, b, c}}
+
+  defp decode_rule(%{"if" => [], "then" => _} = rule) do
+    raise ArgumentError, "a Mamdani rule needs at least one \"if\" clause: #{inspect(rule)}"
   end
 
   defp decode_rule(%{"if" => antecedent, "then" => consequent}) do

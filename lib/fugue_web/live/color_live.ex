@@ -35,33 +35,20 @@ defmodule FugueWeb.ColorLive do
   end
 
   def handle_event("cycle_metamer", %{"dir" => dir}, socket) do
-    n = Splashes.metamer_pair_count()
-    i = socket.assigns.metamer_index
-
-    new_i =
-      case dir do
-        "next" -> rem(i + 1, n)
-        "prev" -> rem(i - 1 + n, n)
-        _ -> i
-      end
-
-    {:noreply, assign(socket, :metamer_index, new_i)}
+    i = cycle(socket.assigns.metamer_index, dir, Splashes.metamer_pair_count())
+    {:noreply, assign(socket, :metamer_index, i)}
   end
 
   def handle_event("cycle_wcs_language", %{"dir" => dir}, socket) do
     langs = Fugue.Color.WCS.languages()
-    n = length(langs)
     i = Enum.find_index(langs, &(&1 == socket.assigns.wcs_language))
-
-    new_i =
-      case dir do
-        "next" -> rem(i + 1, n)
-        "prev" -> rem(i - 1 + n, n)
-        _ -> i
-      end
-
-    {:noreply, assign(socket, :wcs_language, Enum.at(langs, new_i))}
+    {:noreply, assign(socket, :wcs_language, Enum.at(langs, cycle(i, dir, length(langs))))}
   end
+
+  # One step through `n` items, wrapping at both ends. Any other `dir`
+  # raises: the buttons only ever send these two.
+  defp cycle(i, "next", n), do: Integer.mod(i + 1, n)
+  defp cycle(i, "prev", n), do: Integer.mod(i - 1, n)
 
   @impl true
   def render(assigns) do
@@ -76,7 +63,7 @@ defmodule FugueWeb.ColorLive do
         </p>
       </header>
 
-      <.section number="1" id="light">
+      <.section id="light">
         <Splashes.iridescence_splash />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -110,7 +97,7 @@ defmodule FugueWeb.ColorLive do
         </p>
       </.section>
 
-      <.section number="2" id="eye" title="The eye's guesses">
+      <.section id="eye" title="The eye's guesses">
         <Splashes.cone_splash protanope={@protanope} lambda={@lambda} />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -157,7 +144,7 @@ defmodule FugueWeb.ColorLive do
         </p>
       </.section>
 
-      <.section number="3" id="metamerism" title="Two colors, same color">
+      <.section id="metamerism" title="Two colors, same color">
         <p class="text-sm text-base-content/65 leading-relaxed">
           Two patches, two colors. Look at them. Now: underneath,
           the physical light coming off each patch is wildly
@@ -201,7 +188,7 @@ defmodule FugueWeb.ColorLive do
         </p>
       </.section>
 
-      <.section number="4" id="gamut" title="Where the screen can't reach">
+      <.section id="gamut" title="Where the screen can't reach">
         <Splashes.gamut_splash />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -247,7 +234,7 @@ defmodule FugueWeb.ColorLive do
         </p>
       </.section>
 
-      <.section number="5" id="language" title="Language carves it up">
+      <.section id="language" title="Language carves it up">
         <p class="text-sm text-base-content/65 leading-relaxed">
           OK so cones cut up the wavelengths. Then language comes
           in and cuts up the cones, and different languages cut them
@@ -351,7 +338,7 @@ defmodule FugueWeb.ColorLive do
         </p>
       </.section>
 
-      <.section number="6" id="remainder" title="What I can't show you">
+      <.section id="remainder" title="What I can't show you">
         <p class="text-sm text-base-content/65 leading-relaxed">
           Everything so far had a number on it. This part
           doesn't.
@@ -393,7 +380,7 @@ defmodule FugueWeb.ColorLive do
         </p>
       </.section>
 
-      <.section number="7" id="closer" title="After">
+      <.section id="closer" title="After">
         <Splashes.closer_splash />
 
         <p class="text-sm text-base-content/65 leading-relaxed">
@@ -414,7 +401,6 @@ defmodule FugueWeb.ColorLive do
     """
   end
 
-  attr :number, :string, default: nil
   attr :id, :string, required: true
   attr :title, :any, default: nil
 

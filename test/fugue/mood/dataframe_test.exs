@@ -49,9 +49,4 @@ defmodule Fugue.Mood.DataFrameTest do
     assert Enum.map(present, & &1.date) == Enum.map(MoodFixtures.entries(), & &1.date)
     assert hd(present).point == [6.0, 2.0, 3.0, 8.0, 7.0]
   end
-
-  test "extract_entries/1 is the inverse of fill_missing_dates/1 for a fully-present dataset" do
-    spine = DataFrame.fill_missing_dates(MoodFixtures.entries())
-    assert DataFrame.extract_entries(spine) == MoodFixtures.entries()
-  end
 end

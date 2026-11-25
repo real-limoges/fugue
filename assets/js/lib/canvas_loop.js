@@ -115,21 +115,6 @@ export function createFrameGate(fps) {
   }
 }
 
-// Throttle a side effect to every N frames. Caller invokes the returned
-// function inside its RAF step; `onChange` fires when the counter rolls
-// over. Used to repoll theme colors without reading getComputedStyle on
-// every frame.
-/**
- * @param {{frames: number, onChange: () => void}} options
- * @returns {() => void}
- */
-export function createThemePoll({ frames, onChange }) {
-  let n = 0
-  return () => {
-    if (++n % frames === 0) onChange()
-  }
-}
-
 // Map an intensity buffer (one byte per pixel) through a 1024-byte color
 // table (4 bytes per entry, 256 entries) into a packed RGBA buffer. All
 // three buffers must be the same length in pixels.

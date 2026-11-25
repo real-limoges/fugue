@@ -466,6 +466,32 @@ function yieldToBrowser() {
 }
 
 /**
+ * The layer toggles the server renders into `data-layers`. A missing or
+ * malformed attribute is a template bug, so it throws.
+ * @param {HTMLElement} el
+ * @returns {LayerToggles}
+ */
+function readLayers(el) {
+  const parsed = JSON.parse(el.dataset.layers ?? "")
+  /** @type {LayerId[]} */
+  const ids = ["linear", "gam", "gamlss"]
+  if (!ids.every((id) => typeof parsed?.[id] === "boolean")) {
+    throw new Error(`LabGam: bad data-layers ${el.dataset.layers}`)
+  }
+  return { linear: parsed.linear, gam: parsed.gam, gamlss: parsed.gamlss }
+}
+
+/**
+ * @param {HTMLElement} el
+ * @returns {string}
+ */
+function readDatasetId(el) {
+  const id = el.dataset.datasetId
+  if (!id) throw new Error("LabGam: missing data-dataset-id")
+  return id
+}
+
+/**
  * @typedef {object} State
  * @property {typeof import("/vendor/glissando/glissando.js").WasmGamlssModel | null} _wasm
  * @property {Record<string, DatasetFit>} _cache
@@ -493,7 +519,7 @@ export const LabGam = {
   async mounted() {
     this._wasm = null
     this._cache = {}
-    this._layers = { linear: false, gam: false, gamlss: false }
+    this._layers = readLayers(this.el)
     this._destroyed = false
     this._pending = null
     this._currentId = null
@@ -508,29 +534,6 @@ export const LabGam = {
     container.appendChild(loading)
     this._loading = loading
 
-    this.handleEvent(
-      "lab_gam:set_dataset",
-      /** @param {{dataset_id: string, layers?: LayerToggles}} payload */
-      ({ dataset_id, layers }) => {
-        this._layers = layers || this._layers
-        this.switchDataset(dataset_id)
-      }
-    )
-
-    this.handleEvent(
-      "lab_gam:set_layers",
-      /** @param {{layers: LayerToggles}} payload */
-      ({ layers }) => {
-        this._layers = layers
-        this.applyLayers()
-      }
-    )
-
-    // Server replies with the current dataset_id + layers; keeps the JS hook
-    // in sync after a LiveView reconnect, where server-side layer_state
-    // survives but `_layers` here would otherwise reinitialize blank.
-    this.pushEvent("lab_gam:ready", {})
-
     try {
       this._wasm = await loadGlissando()
       if (this._destroyed) return
@@ -538,7 +541,7 @@ export const LabGam = {
       // Pre-fit every dataset now, yielding between fits so the page stays
       // interactive. Each WASM fit blocks the main thread for a beat;
       // doing it on click made dataset switches feel like a freeze.
-      const initial = this._pending || container.dataset.datasetId || "house_price"
+      const initial = this._pending || readDatasetId(container)
       const order = [initial, ...Object.keys(DATASETS).filter((k) => k !== initial)]
 
       for (let i = 0; i < order.length; i++) {
@@ -577,6 +580,16 @@ export const LabGam = {
     } catch (err) {
       this.showError(err)
     }
+  },
+
+  // The server patched data-dataset-id or data-layers (a dataset button, a
+  // layer toggle, or a reconnect). A new dataset re-renders, which applies
+  // the layers too; otherwise only the layers changed.
+  updated() {
+    this._layers = readLayers(this.el)
+    const id = readDatasetId(this.el)
+    if (id !== this._currentId && id !== this._pending) this.switchDataset(id)
+    else this.applyLayers()
   },
 
   destroyed() {

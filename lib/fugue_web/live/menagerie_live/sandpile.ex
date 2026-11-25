@@ -7,6 +7,8 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
   """
   use FugueWeb, :live_view
 
+  import FugueWeb.IndexComponents, only: [menagerie_header: 1]
+
   alias FugueWeb.MenagerieLive.AnimatedCard
   alias FugueWeb.MenagerieLive.AnimatedCard.Slider
 
@@ -51,14 +53,7 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
   def render(assigns) do
     ~H"""
     <div class="sandpile-menagerie p-4 max-w-6xl mx-auto">
-      <nav class="mb-6 text-xs">
-        <.link navigate={~p"/menagerie"} class="text-base-content/45 hover:text-base-content/75">
-          ← Menagerie
-        </.link>
-      </nav>
-
-      <div class="mb-4">
-        <h1 class="text-2xl font-bold text-base-content">Abelian sandpile</h1>
+      <.menagerie_header title="Abelian sandpile">
         <p class="text-sm text-base-content/60 mt-1 max-w-3xl leading-relaxed">
           OK so, every cell holds some sand. Drop a grain, and when a cell gets
           to four it tips over, one grain to each neighbor, and those neighbors
@@ -71,7 +66,7 @@ defmodule FugueWeb.MenagerieLive.Sandpile do
           and it straightens out into a line. Click the grid to drop grains
           yourself.
         </p>
-      </div>
+      </.menagerie_header>
 
       <div class="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-4">
         <div class="bg-base-200 rounded-lg overflow-hidden">

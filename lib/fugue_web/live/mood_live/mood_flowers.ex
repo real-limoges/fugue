@@ -229,17 +229,13 @@ defmodule FugueWeb.MoodLive.MoodFlowers do
     cluster_name =
       if flower.cluster, do: Map.get(cluster_names, flower.cluster, flower.cluster), else: "--"
 
-    dims_rows =
-      Enum.map_join(flower.raw || %{}, "", fn {k, v} ->
-        ~s|<span style="color:var(--mood-ink-3)">#{k}</span><strong>#{:erlang.float_to_binary(v * 1.0, decimals: 1)}</strong>|
-      end)
-
-    entries_word = if flower.count == 1, do: "entry", else: "entries"
-
-    ~s|<strong style="font-size:13px">#{month_label(flower.month, month_names)}</strong>| <>
-      ~s|<div style="color:#{color};font-size:11px;margin-top:2px;font-weight:600">#{cluster_name}</div>| <>
-      ~s|<div style="margin-top:6px;display:grid;grid-template-columns:auto auto;gap:1px 14px">#{dims_rows}</div>| <>
-      ~s|<div style="margin-top:4px;color:var(--mood-ink-4);font-size:10px">#{flower.count} #{entries_word}</div>|
+    Tooltip.flower(
+      month_label(flower.month, month_names),
+      color,
+      cluster_name,
+      Enum.to_list(flower.raw || %{}),
+      flower.count
+    )
   end
 
   defp month_label(month_str, month_names) do

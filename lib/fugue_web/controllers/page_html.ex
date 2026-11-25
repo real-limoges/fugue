@@ -8,8 +8,6 @@ defmodule FugueWeb.PageHTML do
 
   embed_templates "page_html/*"
 
-  @github "https://github.com/real-limoges"
-
   @typedoc """
   One row on `/code`. `pages` pairs a link label with the route it points
   at, and is empty for a repo that serves no page.
@@ -97,14 +95,14 @@ defmodule FugueWeb.PageHTML do
   attr :repo, :map, required: true
 
   def repo_row(assigns) do
-    assigns = assign(assigns, :url, "#{@github}/#{assigns.repo.name}")
+    assigns = assign(assigns, :url, repo_url(assigns.repo.name))
 
     ~H"""
     <li class="border-t border-base-content/10 pt-4">
       <div class="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <a
           href={@url}
-          class="font-mono text-sm text-warning hover:text-primary dark:text-amber-300 dark:hover:text-amber-200 underline decoration-dotted underline-offset-4"
+          class="font-mono text-sm text-warning hover:text-primary underline decoration-dotted underline-offset-4"
         >
           {@repo.name}
         </a>

@@ -1,5 +1,6 @@
 // @ts-check
 import * as d3 from "d3"
+import { requireElement } from "../lib/dom.js"
 
 // The /menagerie/mamdani playground. The server runs the inference and
 // pushes "update-mamdani" with the full result; render() draws it.
@@ -60,6 +61,7 @@ import * as d3 from "d3"
  * @typedef {object} State
  * @property {MamdaniData | null} data
  * @property {(e: Event) => void} _onSliderInput
+ * @property {HTMLFormElement} _form the slider form, #mamdani-inputs (outside this.el)
  */
 
 /**
@@ -167,6 +169,9 @@ export const MamdaniPlayground = {
       this.render()
     })
 
+    // Redraw on every slider tick in the browser, ahead of the server's
+    // answer, so dragging never lags. Scoped to the slider form.
+    this._form = requireElement(document, "#mamdani-inputs", HTMLFormElement)
     /** @param {Event} e */
     this._onSliderInput = (e) => {
       if (!(e.target instanceof HTMLInputElement)) return
@@ -174,23 +179,20 @@ export const MamdaniPlayground = {
       if (e.target.name !== "temperature" && e.target.name !== "humidity") return
       this._updateInputsLocally()
     }
-    document.addEventListener("input", this._onSliderInput)
+    this._form.addEventListener("input", this._onSliderInput)
 
     this.pushEvent("menagerie:mamdani_ready", {})
   },
 
   destroyed() {
-    if (this._onSliderInput) {
-      document.removeEventListener("input", this._onSliderInput)
-    }
+    this._form.removeEventListener("input", this._onSliderInput)
   },
 
   _updateInputsLocally() {
     if (!this.data) return
 
-    const tempEl = document.querySelector('input[name="temperature"]')
-    const humEl = document.querySelector('input[name="humidity"]')
-    if (!(tempEl instanceof HTMLInputElement) || !(humEl instanceof HTMLInputElement)) return
+    const tempEl = requireElement(this._form, 'input[name="temperature"]', HTMLInputElement)
+    const humEl = requireElement(this._form, 'input[name="humidity"]', HTMLInputElement)
 
     /** @type {Record<string, number>} */
     const values = { temperature: parseFloat(tempEl.value), humidity: parseFloat(humEl.value) }

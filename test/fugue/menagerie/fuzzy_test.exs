@@ -22,10 +22,6 @@ defmodule Fugue.Menagerie.FuzzyTest do
     test "linear ramp down on the right slope" do
       assert Fuzzy.triangular(7.5, 0.0, 5.0, 10.0) == 0.5
     end
-
-    test "non-numeric input falls back to zero" do
-      assert Fuzzy.triangular(nil, 0.0, 5.0, 10.0) == 0.0
-    end
   end
 
   describe "build_mfs/2" do

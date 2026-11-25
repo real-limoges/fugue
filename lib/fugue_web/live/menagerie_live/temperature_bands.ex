@@ -22,15 +22,21 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
   @shapes_inner_h @shapes_h - @m_top - @m_bottom
   @bands_inner_h @bands_h - @m_top - @m_bottom
 
-  attr :series, :list, default: []
-  attr :mfs, :list, default: []
-  attr :shapes, :list, default: []
-  attr :bounds, :list, default: [0.0, 48.0]
+  # The temperature axis, in degrees C.
+  @lo 0.0
+  @hi 48.0
+
+  @doc "The temperature axis's `{lo, hi}`, in degrees C; sample shapes across it."
+  @spec bounds() :: {float(), float()}
+  def bounds, do: {@lo, @hi}
+
+  attr :series, :list, required: true
+  attr :mfs, :list, required: true
+  attr :shapes, :list, required: true
 
   def bands(assigns) do
-    [lo, hi] = assigns.bounds
-    temp_span = max(hi - lo, 1.0e-9)
-    temp_x = fn t -> (t - lo) / temp_span * @inner_w end
+    temp_span = @hi - @lo
+    temp_x = fn t -> (t - @lo) / temp_span * @inner_w end
     temp_y = fn v -> @shapes_inner_h - v * @shapes_inner_h end
 
     shapes_rendered =
@@ -74,7 +80,7 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
 
     x_temp_ticks =
       for t <- 0..8,
-          v = lo + t / 8 * temp_span,
+          v = @lo + t / 8 * temp_span,
           do: %{x: temp_x.(v), label: "#{round(v)}°"}
 
     # --- Bands panel ---
@@ -394,6 +400,8 @@ defmodule FugueWeb.MenagerieLive.TemperatureBands do
           </svg>
         </div>
       </div>
+      <%!-- Filled and positioned by BandsHover; ignored by patches. --%>
+      <div id="temperature-bands-tip" class="bands-tip" phx-update="ignore"></div>
     </div>
     """
   end

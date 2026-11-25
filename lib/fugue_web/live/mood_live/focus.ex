@@ -16,6 +16,9 @@ defmodule FugueWeb.MoodLive.Focus do
   @type gap :: %{optional(String.t()) => term()}
   @type t :: :none | {:day, date()} | {:cluster, cluster()} | {:gap, gap()}
 
+  @typedoc "The temporal brush: every day, or an inclusive window of ISO dates."
+  @type brush :: :all | {date(), date()}
+
   # --- Transitions -----------------------------------------------------
 
   @spec select_day(t(), date()) :: t()
@@ -34,13 +37,13 @@ defmodule FugueWeb.MoodLive.Focus do
   # --- Derived projections ---------------------------------------------
 
   @doc """
-  Dates lit on calendar / timeline. Brush range fills the set;
-  `{:day, d}` overrides to `[d]`. Cluster and gap focuses contribute
-  no dates.
+  Dates lit on calendar / timeline. A brushed window fills the set; an
+  unbrushed timeline (`:all`) lights nothing. `{:day, d}` overrides to
+  `[d]`. Cluster and gap focuses contribute no dates.
   """
-  @spec highlights(t(), {date(), date()} | nil, [map()]) :: [date()]
+  @spec highlights(t(), brush(), [map()]) :: [date()]
   def highlights({:day, d}, _brush, _entries), do: [d]
-  def highlights(_focus, nil, _entries), do: []
+  def highlights(_focus, :all, _entries), do: []
 
   def highlights(_focus, {start, end_date}, entries) do
     entries
@@ -53,9 +56,7 @@ defmodule FugueWeb.MoodLive.Focus do
   membership before or after). When not focused on a cluster, returns the
   full transition list. Returns `[]` when gaps haven't loaded.
   """
-  @spec gap_transitions(%GapData{} | nil, t()) :: list()
-  def gap_transitions(nil, _focus), do: []
-
+  @spec gap_transitions(%GapData{}, t()) :: list()
   def gap_transitions(%GapData{transitions: transitions}, {:cluster, cluster}) do
     Enum.filter(transitions, fn t ->
       before = t["before"] || %{}

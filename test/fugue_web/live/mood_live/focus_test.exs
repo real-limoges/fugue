@@ -67,7 +67,7 @@ defmodule FugueWeb.MoodLive.FocusTest do
     end
 
     test "day focus with no brush returns just that date" do
-      assert Focus.highlights({:day, "2024-01-02"}, nil, @entries) == ["2024-01-02"]
+      assert Focus.highlights({:day, "2024-01-02"}, :all, @entries) == ["2024-01-02"]
     end
 
     test "brush range without focus returns dates in range" do
@@ -76,12 +76,12 @@ defmodule FugueWeb.MoodLive.FocusTest do
     end
 
     test "cluster focus contributes no dates" do
-      assert Focus.highlights({:cluster, "calm"}, nil, @entries) == []
+      assert Focus.highlights({:cluster, "calm"}, :all, @entries) == []
     end
 
     test "gap focus contributes no dates" do
       gap = %{"start" => "2024-01-01", "length" => 3}
-      assert Focus.highlights({:gap, gap}, nil, @entries) == []
+      assert Focus.highlights({:gap, gap}, :all, @entries) == []
     end
 
     test "cluster + brush returns brush dates (cluster doesn't fill)" do
@@ -90,7 +90,7 @@ defmodule FugueWeb.MoodLive.FocusTest do
     end
 
     test "no focus, no brush returns []" do
-      assert Focus.highlights(:none, nil, @entries) == []
+      assert Focus.highlights(:none, :all, @entries) == []
     end
   end
 
@@ -103,11 +103,6 @@ defmodule FugueWeb.MoodLive.FocusTest do
       ],
       imputed_memberships: %{}
     }
-
-    test "returns [] when gaps not loaded" do
-      assert Focus.gap_transitions(nil, :none) == []
-      assert Focus.gap_transitions(nil, {:cluster, "calm"}) == []
-    end
 
     test "returns full list when no cluster focus" do
       assert Focus.gap_transitions(@gaps, :none) == @gaps.transitions

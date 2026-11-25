@@ -39,6 +39,16 @@ defmodule FugueWeb.LayoutsTest do
       assert html =~ ~s(<meta property="og:url" content="#{FugueWeb.Endpoint.url()}/code")
       assert html =~ ~s(<link rel="canonical" href="#{FugueWeb.Endpoint.url()}/code")
       assert html =~ ~s(<meta property="og:type" content="website")
+
+      assert html =~
+               ~r/<meta property="og:image" content="#{FugueWeb.Endpoint.url()}\/images\/og[^"]*\.png"/
+
+      assert html =~ ~s(<meta name="twitter:card" content="summary_large_image")
+
+      assert html =~
+               ~r/<link rel="icon" href="\/images\/favicon[^"]*\.svg" type="image\/svg\+xml"/
+
+      assert html =~ ~r/<link rel="apple-touch-icon" href="\/images\/apple-touch-icon[^"]*\.png"/
       assert html =~ ~s(data-dark="#140d20")
       assert html =~ ~s(data-light="#f2e9d8")
     end
